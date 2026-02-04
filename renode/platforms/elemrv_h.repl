@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
 // ElemRV-H Platform Description
-// Hydrogen platform - Minimal configuration (Stage 002)
+// Hydrogen platform - Stage 003: CPU + RAM + FLASH + GPIO
 // CPU: VexRiscv RV32IC @ 50 MHz
 
 using "sysbus"
@@ -27,3 +27,11 @@ flash: Memory.MappedMemory @ sysbus 0xA0000000
 
 // Entry point - start execution from FLASH
 // The firmware links with FLASH as the code region
+
+// GPIO0: 12 pins @ 0xF0000000
+// Simple GPIO controller with input/output/enable registers
+gpio0: Antmicro.Renode.Peripherals.GPIOPort @ sysbus 0xF0000000
+    size: 0x1000
+    numberOfPins: 12
+    // Pin indices 0-11 available for GPIO
+    // No connections yet - will be connected in tests
