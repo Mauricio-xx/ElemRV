@@ -1,0 +1,25 @@
+
+periph_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <_start>:
+80000000:	123457b7          	lui	a5,0x12345
+80000004:	f00036b7          	lui	a3,0xf0003
+80000008:	67878793          	add	a5,a5,1656 # 12345678 <stack_size+0x12345278>
+8000000c:	c29c                	sw	a5,0(a3)
+8000000e:	4294                	lw	a3,0(a3)
+80000010:	deadc737          	lui	a4,0xdeadc
+80000014:	f0002637          	lui	a2,0xf0002
+80000018:	eef70713          	add	a4,a4,-273 # deadbeef <__stack_start+0x5ead9eef>
+8000001c:	aabbd7b7          	lui	a5,0xaabbd
+80000020:	c218                	sw	a4,0(a2)
+80000022:	f00106b7          	lui	a3,0xf0010
+80000026:	cdd78793          	add	a5,a5,-803 # aabbccdd <__stack_start+0x2abbacdd>
+8000002a:	4218                	lw	a4,0(a2)
+8000002c:	c29c                	sw	a5,0(a3)
+8000002e:	429c                	lw	a5,0(a3)
+80000030:	0001                	nop
+80000032:	0001                	nop
+80000034:	bff5                	j	80000030 <_start+0x30>
