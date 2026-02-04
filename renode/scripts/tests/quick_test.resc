@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Quick test script for ElemRV-H platform
+
+mach create "elemrv-h-test"
+echo "Loading platform..."
+machine LoadPlatformDescription @platforms/elemrv_h.repl
+echo "Platform loaded successfully!"
+echo "Available peripherals:"
+peripherals
+echo ""
+echo "CPU info:"
+cpu
+echo ""
+echo "Memory info:"
+sysbus
+echo ""
+echo "GPIO state:"
+gpio0
+echo ""
+echo "UART state:"
+uart0
+echo ""
+echo "Test completed - all peripherals loaded successfully"
+quit
