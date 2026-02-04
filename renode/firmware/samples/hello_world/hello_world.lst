@@ -1,0 +1,99 @@
+
+hello_world.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <delay>:
+80000000:	1141                	add	sp,sp,-16
+80000002:	c602                	sw	zero,12(sp)
+80000004:	47b2                	lw	a5,12(sp)
+80000006:	6709                	lui	a4,0x2
+80000008:	70f70713          	add	a4,a4,1807 # 270f <stack_size+0x230f>
+8000000c:	00f76963          	bltu	a4,a5,8000001e <delay+0x1e>
+80000010:	0001                	nop
+80000012:	47b2                	lw	a5,12(sp)
+80000014:	0785                	add	a5,a5,1
+80000016:	c63e                	sw	a5,12(sp)
+80000018:	47b2                	lw	a5,12(sp)
+8000001a:	fef77be3          	bgeu	a4,a5,80000010 <delay+0x10>
+8000001e:	0141                	add	sp,sp,16
+80000020:	8082                	ret
+
+80000022 <uart_putc>:
+80000022:	f0004737          	lui	a4,0xf0004
+80000026:	0711                	add	a4,a4,4 # f0004004 <__stack_start+0x70002004>
+80000028:	431c                	lw	a5,0(a4)
+8000002a:	fffd                	bnez	a5,80000028 <uart_putc+0x6>
+8000002c:	f00047b7          	lui	a5,0xf0004
+80000030:	c388                	sw	a0,0(a5)
+80000032:	8082                	ret
+
+80000034 <uart_puts>:
+80000034:	00054683          	lbu	a3,0(a0)
+80000038:	ce89                	beqz	a3,80000052 <uart_puts+0x1e>
+8000003a:	f0004737          	lui	a4,0xf0004
+8000003e:	f0004637          	lui	a2,0xf0004
+80000042:	0711                	add	a4,a4,4 # f0004004 <__stack_start+0x70002004>
+80000044:	0505                	add	a0,a0,1
+80000046:	431c                	lw	a5,0(a4)
+80000048:	fffd                	bnez	a5,80000046 <uart_puts+0x12>
+8000004a:	c214                	sw	a3,0(a2)
+8000004c:	00054683          	lbu	a3,0(a0)
+80000050:	faf5                	bnez	a3,80000044 <uart_puts+0x10>
+80000052:	8082                	ret
+
+80000054 <uart_getc>:
+80000054:	f0004737          	lui	a4,0xf0004
+80000058:	0721                	add	a4,a4,8 # f0004008 <__stack_start+0x70002008>
+8000005a:	431c                	lw	a5,0(a4)
+8000005c:	fffd                	bnez	a5,8000005a <uart_getc+0x6>
+8000005e:	f00047b7          	lui	a5,0xf0004
+80000062:	4388                	lw	a0,0(a5)
+80000064:	0ff57513          	zext.b	a0,a0
+80000068:	8082                	ret
+
+8000006a <uart_rx_available>:
+8000006a:	f00047b7          	lui	a5,0xf0004
+8000006e:	4788                	lw	a0,8(a5)
+80000070:	00153513          	seqz	a0,a0
+80000074:	8082                	ret
+
+80000076 <_start>:
+80000076:	80000537          	lui	a0,0x80000
+8000007a:	1141                	add	sp,sp,-16
+8000007c:	0d850513          	add	a0,a0,216 # 800000d8 <_start+0x62>
+80000080:	c606                	sw	ra,12(sp)
+80000082:	3f4d                	jal	80000034 <uart_puts>
+80000084:	f00046b7          	lui	a3,0xf0004
+80000088:	f0004737          	lui	a4,0xf0004
+8000008c:	80000337          	lui	t1,0x80000
+80000090:	0f430313          	add	t1,t1,244 # 800000f4 <_start+0x7e>
+80000094:	06a1                	add	a3,a3,8 # f0004008 <__stack_start+0x70002008>
+80000096:	f0004537          	lui	a0,0xf0004
+8000009a:	0711                	add	a4,a4,4 # f0004004 <__stack_start+0x70002004>
+8000009c:	4835                	li	a6,13
+8000009e:	48a9                	li	a7,10
+800000a0:	429c                	lw	a5,0(a3)
+800000a2:	fffd                	bnez	a5,800000a0 <_start+0x2a>
+800000a4:	429c                	lw	a5,0(a3)
+800000a6:	fffd                	bnez	a5,800000a4 <_start+0x2e>
+800000a8:	410c                	lw	a1,0(a0)
+800000aa:	0ff5f613          	zext.b	a2,a1
+800000ae:	431c                	lw	a5,0(a4)
+800000b0:	fffd                	bnez	a5,800000ae <_start+0x38>
+800000b2:	0ff5f593          	zext.b	a1,a1
+800000b6:	c10c                	sw	a1,0(a0)
+800000b8:	01060e63          	beq	a2,a6,800000d4 <_start+0x5e>
+800000bc:	ff1612e3          	bne	a2,a7,800000a0 <_start+0x2a>
+800000c0:	4635                	li	a2,13
+800000c2:	859a                	mv	a1,t1
+800000c4:	0585                	add	a1,a1,1
+800000c6:	431c                	lw	a5,0(a4)
+800000c8:	fffd                	bnez	a5,800000c6 <_start+0x50>
+800000ca:	c110                	sw	a2,0(a0)
+800000cc:	0005c603          	lbu	a2,0(a1)
+800000d0:	fa75                	bnez	a2,800000c4 <_start+0x4e>
+800000d2:	b7f9                	j	800000a0 <_start+0x2a>
+800000d4:	859a                	mv	a1,t1
+800000d6:	b7fd                	j	800000c4 <_start+0x4e>

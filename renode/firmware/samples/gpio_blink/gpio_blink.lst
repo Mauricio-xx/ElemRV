@@ -1,0 +1,55 @@
+
+gpio_blink.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <delay>:
+80000000:	1141                	add	sp,sp,-16
+80000002:	c602                	sw	zero,12(sp)
+80000004:	47b2                	lw	a5,12(sp)
+80000006:	0007a737          	lui	a4,0x7a
+8000000a:	11f70713          	add	a4,a4,287 # 7a11f <stack_size+0x79d1f>
+8000000e:	00f76963          	bltu	a4,a5,80000020 <delay+0x20>
+80000012:	0001                	nop
+80000014:	47b2                	lw	a5,12(sp)
+80000016:	0785                	add	a5,a5,1
+80000018:	c63e                	sw	a5,12(sp)
+8000001a:	47b2                	lw	a5,12(sp)
+8000001c:	fef77be3          	bgeu	a4,a5,80000012 <delay+0x12>
+80000020:	0141                	add	sp,sp,16
+80000022:	8082                	ret
+
+80000024 <_start>:
+80000024:	4585                	li	a1,1
+80000026:	f0000737          	lui	a4,0xf0000
+8000002a:	c30c                	sw	a1,0(a4)
+8000002c:	f00007b7          	lui	a5,0xf0000
+80000030:	f00006b7          	lui	a3,0xf0000
+80000034:	0007a737          	lui	a4,0x7a
+80000038:	1141                	add	sp,sp,-16
+8000003a:	0691                	add	a3,a3,4 # f0000004 <__stack_start+0x6fffe004>
+8000003c:	4605                	li	a2,1
+8000003e:	11f70713          	add	a4,a4,287 # 7a11f <stack_size+0x79d1f>
+80000042:	c78c                	sw	a1,8(a5)
+80000044:	c290                	sw	a2,0(a3)
+80000046:	c602                	sw	zero,12(sp)
+80000048:	47b2                	lw	a5,12(sp)
+8000004a:	00f76963          	bltu	a4,a5,8000005c <_start+0x38>
+8000004e:	0001                	nop
+80000050:	47b2                	lw	a5,12(sp)
+80000052:	0785                	add	a5,a5,1 # f0000001 <__stack_start+0x6fffe001>
+80000054:	c63e                	sw	a5,12(sp)
+80000056:	47b2                	lw	a5,12(sp)
+80000058:	fef77be3          	bgeu	a4,a5,8000004e <_start+0x2a>
+8000005c:	0006a023          	sw	zero,0(a3)
+80000060:	c402                	sw	zero,8(sp)
+80000062:	47a2                	lw	a5,8(sp)
+80000064:	fef760e3          	bltu	a4,a5,80000044 <_start+0x20>
+80000068:	0001                	nop
+8000006a:	47a2                	lw	a5,8(sp)
+8000006c:	0785                	add	a5,a5,1
+8000006e:	c43e                	sw	a5,8(sp)
+80000070:	47a2                	lw	a5,8(sp)
+80000072:	fef77be3          	bgeu	a4,a5,80000068 <_start+0x44>
+80000076:	b7f9                	j	80000044 <_start+0x20>
