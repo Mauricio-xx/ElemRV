@@ -1,0 +1,21 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// ElemRV-H Platform Description - Minimal
+// Hydrogen platform - CPU + RAM + FLASH only
+
+using "sysbus"
+
+sysbus:
+    size: 0xFFFFFFFF
+
+cpu: RiscV.VexRiscv @ sysbus
+    frequency: 50000000
+    isa: "rv32ic"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00002000
+
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000

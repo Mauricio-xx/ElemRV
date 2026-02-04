@@ -1,0 +1,4 @@
+mach create "elemrv-h"
+machine LoadPlatformDescription @platforms/elemrv_h.repl
+echo "SUCCESS: Platform loaded"
+quit

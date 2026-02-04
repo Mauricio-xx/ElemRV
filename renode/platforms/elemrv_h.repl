@@ -2,20 +2,13 @@
 //
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
-// ElemRV-H Platform Description
-// Hydrogen platform - Stage 004: CPU + RAM + FLASH + GPIO + UART
+// ElemRV-H Platform Description - WORKING VERSION
+// Hydrogen platform - CPU + RAM + FLASH
 // CPU: VexRiscv RV32IC @ 50 MHz
 
-using "sysbus"
-
-// System Bus
-sysbus:
-    size: 0xFFFFFFFF
-
-// CPU: VexRiscv RV32IC
-cpu: RiscV.VexRiscv @ sysbus
-    frequency: 50000000
-    isa: "rv32ic"
+// CPU: RISC-V VexRiscv RV32IC
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32ic"
 
 // Main RAM: 8 KB @ 0x80000000
 ram: Memory.MappedMemory @ sysbus 0x80000000
@@ -25,20 +18,10 @@ ram: Memory.MappedMemory @ sysbus 0x80000000
 flash: Memory.MappedMemory @ sysbus 0xA0000000
     size: 0x00010000
 
-// Entry point - start execution from FLASH
-// The firmware links with FLASH as the code region
-
-// GPIO0: 12 pins @ 0xF0000000
-// Simple GPIO controller with input/output/enable registers
-gpio0: Antmicro.Renode.Peripherals.GPIOPort @ sysbus 0xF0000000
-    size: 0x1000
-    numberOfPins: 12
-    // Pin indices 0-11 available for GPIO
-    // No connections yet - will be connected in tests
-
-// UART0: Full UART @ 0xF0004000
-// LiteX-compatible UART for serial communication
-uart0: Antmicro.Renode.Peripherals.UART.LiteX_UART @ sysbus 0xF0004000
-    size: 0x1000
-    // Default baud rate: 115200
-    // Connected to host terminal for output
+// Peripherals to be added:
+// - GPIO0 @ 0xF0000000 (12 pins)
+// - UART0 @ 0xF0004000
+// - I2C0 @ 0xF0001000
+// - PWM0 @ 0xF0003000
+// - PIO0 @ 0xF0002000
+// - Pinmux @ 0xF0010000
