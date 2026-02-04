@@ -1,0 +1,29 @@
+
+pio_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <_start>:
+80000000:	67b9                	lui	a5,0xe
+80000002:	f0002637          	lui	a2,0xf0002
+80000006:	0785                	add	a5,a5,1 # e001 <stack_size+0xdc01>
+80000008:	c61c                	sw	a5,8(a2)
+8000000a:	4585                	li	a1,1
+8000000c:	f00026b7          	lui	a3,0xf0002
+80000010:	c6cc                	sw	a1,12(a3)
+80000012:	f0002737          	lui	a4,0xf0002
+80000016:	cb0c                	sw	a1,16(a4)
+80000018:	f00027b7          	lui	a5,0xf0002
+8000001c:	cbcc                	sw	a1,20(a5)
+8000001e:	f0002537          	lui	a0,0xf0002
+80000022:	c10c                	sw	a1,0(a0)
+80000024:	0621                	add	a2,a2,8 # f0002008 <__stack_start+0x70000008>
+80000026:	4210                	lw	a2,0(a2)
+80000028:	46d0                	lw	a2,12(a3)
+8000002a:	4b10                	lw	a2,16(a4)
+8000002c:	4bd0                	lw	a2,20(a5)
+8000002e:	4110                	lw	a2,0(a0)
+80000030:	0001                	nop
+80000032:	0001                	nop
+80000034:	bff5                	j	80000030 <_start+0x30>

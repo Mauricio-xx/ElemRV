@@ -1,0 +1,27 @@
+
+i2c_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <_start>:
+80000000:	f0001637          	lui	a2,0xf0001
+80000004:	4705                	li	a4,1
+80000006:	c218                	sw	a4,0(a2)
+80000008:	f00017b7          	lui	a5,0xf0001
+8000000c:	05000693          	li	a3,80
+80000010:	c7d4                	sw	a3,12(a5)
+80000012:	f0001737          	lui	a4,0xf0001
+80000016:	f00016b7          	lui	a3,0xf0001
+8000001a:	0ab00593          	li	a1,171
+8000001e:	c70c                	sw	a1,8(a4)
+80000020:	07b1                	add	a5,a5,12 # f000100c <__stack_start+0x6ffff00c>
+80000022:	0721                	add	a4,a4,8 # f0001008 <__stack_start+0x6ffff008>
+80000024:	0691                	add	a3,a3,4 # f0001004 <__stack_start+0x6ffff004>
+80000026:	4210                	lw	a2,0(a2)
+80000028:	4294                	lw	a3,0(a3)
+8000002a:	4318                	lw	a4,0(a4)
+8000002c:	439c                	lw	a5,0(a5)
+8000002e:	0001                	nop
+80000030:	0001                	nop
+80000032:	bff5                	j	8000002e <_start+0x2e>

@@ -1,0 +1,26 @@
+
+pinmux_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+80000000 <_start>:
+80000000:	f0010637          	lui	a2,0xf0010
+80000004:	00062223          	sw	zero,4(a2) # f0010004 <__stack_start+0x7000e004>
+80000008:	4585                	li	a1,1
+8000000a:	f00106b7          	lui	a3,0xf0010
+8000000e:	c68c                	sw	a1,8(a3)
+80000010:	f0010737          	lui	a4,0xf0010
+80000014:	00072623          	sw	zero,12(a4) # f001000c <__stack_start+0x7000e00c>
+80000018:	f00107b7          	lui	a5,0xf0010
+8000001c:	cb8c                	sw	a1,16(a5)
+8000001e:	f0010537          	lui	a0,0xf0010
+80000022:	c10c                	sw	a1,0(a0)
+80000024:	424c                	lw	a1,4(a2)
+80000026:	468c                	lw	a1,8(a3)
+80000028:	474c                	lw	a1,12(a4)
+8000002a:	4b8c                	lw	a1,16(a5)
+8000002c:	410c                	lw	a1,0(a0)
+8000002e:	0001                	nop
+80000030:	0001                	nop
+80000032:	bff5                	j	8000002e <_start+0x2e>
