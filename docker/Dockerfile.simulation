@@ -1,0 +1,91 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Dockerfile for ElemRV Digital Twin simulation environment
+# Includes: Renode 1.16.0, Verilator, RISC-V toolchain, Python3
+
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install base dependencies
+RUN apt-get update && apt-get install -y \
+    # Core build tools
+    build-essential \
+    git \
+    wget \
+    curl \
+    ca-certificates \
+    # Python
+    python3 \
+    python3-pip \
+    python3-venv \
+    # Mono (for Renode)
+    mono-complete \
+    # GTK dependencies (for Renode GUI)
+    libgtk2.0-0 \
+    libgtk2.0-dev \
+    # Additional libraries
+    libncurses5-dev \
+    libexpat1-dev \
+    libglib2.0-dev \
+    libfdt-dev \
+    libpixman-1-dev \
+    zlib1g-dev \
+    # Verilator dependencies
+    libfl2 \
+    libfl-dev \
+    zlibc \
+    # Utilities
+    screen \
+    uml-utilities \
+    vim \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python3 as default python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Install Renode 1.16.0 (latest stable)
+RUN wget -q https://github.com/renode/renode/releases/download/v1.16.0/renode-1.16.0.linux-portable.tar.gz \
+    && tar -xzf renode-1.16.0.linux-portable.tar.gz -C /opt \
+    && rm renode-1.16.0.linux-portable.tar.gz \
+    && ln -sf /opt/renode-1.16.0.linux-portable/renode /usr/local/bin/renode \
+    && ln -sf /opt/renode-1.16.0.linux-portable/renode-test /usr/local/bin/renode-test
+
+# Install RISC-V GNU toolchain
+RUN wget -q https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v13.2.0-2/xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz \
+    && tar -xzf xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz -C /opt \
+    && rm xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz
+
+# Add RISC-V toolchain to PATH
+ENV PATH="/opt/xpack-riscv-none-elf-gcc-13.2.0-2/bin:${PATH}"
+
+# Install Verilator (latest stable)
+RUN git clone https://github.com/verilator/verilator /tmp/verilator \
+    && cd /tmp/verilator \
+    && git checkout stable \
+    && autoconf \
+    && ./configure --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && rm -rf /tmp/verilator
+
+# Install Python packages
+RUN pip3 install \
+    pyrenode3 \
+    pyserial \
+    robotframework \
+    pexpect
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV RENODE_ROOT=/opt/renode-1.16.0.linux-portable
+ENV VERILATOR_ROOT=/usr/local/share/verilator
+
+# Default command
+CMD ["/bin/bash"]

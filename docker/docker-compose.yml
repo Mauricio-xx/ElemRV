@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+version: '3.8'
+
+services:
+  renode:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulation
+    image: elemrv-renode:latest
+    container_name: elemrv-renode
+    volumes:
+      - ../renode:/workspace/renode
+      - ../hardware:/workspace/hardware
+      - ../software:/workspace/software
+    working_dir: /workspace
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - RENODE_ROOT=/opt/renode-1.16.0.linux-portable
+    # For GUI support on Linux
+    # network_mode: host
+    stdin_open: true
+    tty: true
+    command: /bin/bash
