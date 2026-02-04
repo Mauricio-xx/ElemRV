@@ -1,0 +1,32 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# ElemRV-H Startup Script
+# Minimal configuration - CPU + RAM + FLASH only
+
+# Load the platform
+mach create "elemrv-h"
+machine LoadPlatformDescription @platforms/elemrv_h.repl
+
+# Show machine state
+showMachines
+
+# Log peripheral access (useful for debugging)
+# sysbus LogPeripheralAccess cpu
+
+# Set PC to FLASH start (0xA0000000)
+# The firmware is linked to run from FLASH
+# cpu PC 0xA0000000
+
+# Print info
+echo "ElemRV-H platform loaded"
+echo "CPU: VexRiscv RV32IC @ 50 MHz"
+echo "RAM: 8 KB @ 0x80000000"
+echo "FLASH: 64 KB @ 0xA0000000"
+
+# To load a binary:
+# sysbus LoadBinary @firmware/samples/hello_world/hello_world.bin 0xA0000000
+
+# To start simulation:
+# start

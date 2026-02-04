@@ -1,0 +1,29 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// ElemRV-H Platform Description
+// Hydrogen platform - Minimal configuration (Stage 002)
+// CPU: VexRiscv RV32IC @ 50 MHz
+
+using "sysbus"
+
+// System Bus
+sysbus:
+    size: 0xFFFFFFFF
+
+// CPU: VexRiscv RV32IC
+cpu: RiscV.VexRiscv @ sysbus
+    frequency: 50000000
+    isa: "rv32ic"
+
+// Main RAM: 8 KB @ 0x80000000
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00002000
+
+// FLASH: 64 KB @ 0xA0000000
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000
+
+// Entry point - start execution from FLASH
+// The firmware links with FLASH as the code region
