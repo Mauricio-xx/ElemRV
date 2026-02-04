@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
 // ElemRV-H Platform Description
-// Hydrogen platform - Stage 003: CPU + RAM + FLASH + GPIO
+// Hydrogen platform - Stage 004: CPU + RAM + FLASH + GPIO + UART
 // CPU: VexRiscv RV32IC @ 50 MHz
 
 using "sysbus"
@@ -35,3 +35,10 @@ gpio0: Antmicro.Renode.Peripherals.GPIOPort @ sysbus 0xF0000000
     numberOfPins: 12
     // Pin indices 0-11 available for GPIO
     // No connections yet - will be connected in tests
+
+// UART0: Full UART @ 0xF0004000
+// LiteX-compatible UART for serial communication
+uart0: Antmicro.Renode.Peripherals.UART.LiteX_UART @ sysbus 0xF0004000
+    size: 0x1000
+    // Default baud rate: 115200
+    // Connected to host terminal for output
