@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
-// ElemRV-H Platform Description - WORKING VERSION
-// Hydrogen platform - CPU + RAM + FLASH
+// ElemRV-H Platform Description - WITH PERIPHERALS
+// Hydrogen platform - CPU + RAM + FLASH + Peripherals
 // CPU: VexRiscv RV32IC @ 50 MHz
 
 // CPU: RISC-V VexRiscv RV32IC
@@ -18,10 +18,33 @@ ram: Memory.MappedMemory @ sysbus 0x80000000
 flash: Memory.MappedMemory @ sysbus 0xA0000000
     size: 0x00010000
 
-// Peripherals to be added:
-// - GPIO0 @ 0xF0000000 (12 pins)
-// - UART0 @ 0xF0004000
-// - I2C0 @ 0xF0001000
-// - PWM0 @ 0xF0003000
-// - PIO0 @ 0xF0002000
-// - Pinmux @ 0xF0010000
+// UART0: LiteX UART @ 0xF0004000
+uart0: UART.LiteX_UART @ sysbus 0xF0004000
+    -> cpu@0
+
+// GPIO0: 12 pins @ 0xF0000000
+gpio0: GPIOPort.LiteX_GPIO @ sysbus 0xF0000000
+    type: Type.Out
+
+// I2C0: LiteX I2C @ 0xF0001000
+i2c0: I2C.LiteX_I2C @ sysbus 0xF0001000
+
+// Timer (for delays)
+timer0: Timers.LiteX_Timer @ sysbus 0xF0005000
+    frequency: 50000000
+    -> cpu@1
+
+// PWM0: 2 channels @ 0xF0003000 - Marked as unsupported
+sysbus:
+    init:
+        Tag <0xF0003000 0x1000> "PWM0"
+
+// PIO0: @ 0xF0002000 - Marked as unsupported
+sysbus:
+    init:
+        Tag <0xF0002000 0x1000> "PIO0"
+
+// Pinmux @ 0xF0010000 - Marked as unsupported
+sysbus:
+    init:
+        Tag <0xF0010000 0x1000> "Pinmux"
