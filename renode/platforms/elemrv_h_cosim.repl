@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
-// ElemRV-H Platform Description - WITH PERIPHERALS
-// Hydrogen platform - CPU + RAM + FLASH + Peripherals
+// ElemRV-H Co-simulation Platform Description
+// Hydrogen platform with RTL co-simulation for PWM
 // CPU: VexRiscv RV32IC @ 50 MHz
 
 // CPU: RISC-V VexRiscv RV32IC
@@ -34,9 +34,14 @@ timer0: Timers.LiteX_Timer @ sysbus 0xF0005000
     frequency: 50000000
     -> cpu@1
 
-// Unsupported peripherals (tagged for access logging)
+// PWM0: RTL Co-simulation via Verilator
+// Address: 0xF0003000, Size: 0x1000 (4KB)
+pwm0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
+    frequency: 50000000
+    limitBuffer: 10000
+
+// PIO0 and Pinmux: Marked as unsupported (tagged for access logging)
 sysbus:
     init:
-        Tag <0xF0003000, +0x1000> "PWM0"
         Tag <0xF0002000, +0x1000> "PIO0"
         Tag <0xF0010000, +0x1000> "Pinmux"

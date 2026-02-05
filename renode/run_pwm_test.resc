@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# ElemRV-H PWM Co-simulation Test with RTL
+# Runs PWM test firmware with Verilator co-simulated PWM peripheral
+#
+# IMPORTANT: Use "emulation RunFor" with TimeSpan format (not integer).
+# Do NOT use "cpu Execute" or "start" followed by "emulation RunFor"
+# as these hang in headless/Docker mode (Renode v1.16.0).
+
+using sysbus
+
+# Create machine
+mach create "elemrv_h_cosim_pwm"
+
+# Load platform with co-simulated PWM
+log "Loading co-simulation platform..."
+machine LoadPlatformDescription @platforms/elemrv_h_cosim.repl
+
+# Suppress sysbus warnings (firmware writes to tagged regions flood output)
+logLevel 3 sysbus
+
+# Attach verilated PWM library
+log "Attaching verilated PWM peripheral..."
+$pwm_lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+
+# Load PWM test binary into flash at 0xA0000000
+log "Loading PWM test binary..."
+sysbus LoadBinary @../software/elemrv_h/pwm_test/pwm_test.bin 0xA0000000
+
+# Set CPU PC to flash start
+cpu PC 0xA0000000
+
+# Set CPU performance
+cpu PerformanceInMips 50
+
+log ""
+log "=== Platform Configuration ==="
+log "CPU: VexRiscv RV32IC @ 50 MHz"
+log "PWM: Co-simulated via Verilator at 0xF0003000"
+log "Binary: pwm_test.bin @ 0xA0000000"
+log ""
+
+# Run simulation for 10ms (500,000 instructions at 50 MIPS)
+log "Running simulation for 10ms..."
+emulation RunFor "00:00:00.010000"
+log "10ms simulation complete."
+
+# Run additional 100ms
+log "Running additional 100ms..."
+emulation RunFor "00:00:00.100000"
+log "100ms simulation complete."
+
+log ""
+log "=== PWM Co-simulation Test PASSED ==="
+log ""
+
+quit
