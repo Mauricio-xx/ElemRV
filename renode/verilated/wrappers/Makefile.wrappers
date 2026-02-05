@@ -1,0 +1,146 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Makefile for building verilated PWM co-simulation wrapper
+# Builds shared library (.so) for Renode CoSimulatedPeripheral
+
+# Directories
+WRAPPER_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+VERILATED_DIR := $(WRAPPER_DIR)/..
+INCLUDE_DIR := $(VERILATED_DIR)/include
+GENERATED_DIR := $(VERILATED_DIR)/generated/Vpwm
+LIBS_DIR := $(VERILATED_DIR)/libs
+RTL_DIR := /workspace/elemrv/gen
+
+# Renode configuration
+RENODE_ROOT := /opt/renode_1.16.0_portable
+RENODE_INC := $(RENODE_ROOT)/plugins/IntegrationLibrary/src
+
+# Verilator configuration
+VERILATOR := verilator
+VERILATOR_ROOT := /usr/local/share/verilator
+VERILATOR_INC := $(VERILATOR_ROOT)/include
+
+# Source files
+VERILOG_TOP := $(RTL_DIR)/ECPIX5Top.v
+WRAPPER_SRC := $(WRAPPER_DIR)/pwm_wrapper.cpp
+
+# Renode IntegrationLibrary sources
+RENODE_SRCS := $(RENODE_INC)/renode_bus.cpp \
+    $(RENODE_INC)/communication/socket_channel.cpp \
+    $(RENODE_INC)/buses/wishbone.cpp \
+    $(RENODE_INC)/buses/bus.cpp \
+    $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/Socket.cpp \
+    $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/TCPClient.cpp
+
+# Output
+LIB_NAME := libpwm.so
+LIB_PATH := $(LIBS_DIR)/$(LIB_NAME)
+
+# Compiler settings
+CXX := g++
+CXXFLAGS := -fPIC -O2 -std=c++17 \
+    -I$(INCLUDE_DIR) \
+    -I$(RENODE_INC) \
+    -I$(RENODE_INC)/buses \
+    -I$(RENODE_ROOT)/plugins/IntegrationLibrary \
+    -I$(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp \
+    -I$(VERILATOR_INC) \
+    -I$(VERILATOR_INC)/vltstd \
+    -I$(GENERATED_DIR) \
+    -DVM_COVERAGE=0 \
+    -DVM_SC=0 \
+    -DVM_TRACE=0 \
+    -DVM_TRACE_FST=0
+
+LDFLAGS := -shared -fPIC -lpthread -latomic
+
+# Targets
+.PHONY: all clean verilate build
+
+all: $(LIB_PATH)
+
+# Step 1: Run Verilator to generate C++ from Verilog
+verilate: $(GENERATED_DIR)/VWishbonePwm.h
+
+$(GENERATED_DIR)/VWishbonePwm.h: $(VERILOG_TOP)
+	@echo "Running Verilator..."
+	@mkdir -p $(GENERATED_DIR)
+	$(VERILATOR) --cc \
+		--top-module WishbonePwm \
+		-Mdir $(GENERATED_DIR) \
+		$(VERILOG_TOP) \
+		|| (echo "Verilation failed"; exit 1)
+
+# Find all generated Verilated cpp files
+VERILATED_SRCS := $(wildcard $(GENERATED_DIR)/VWishbonePwm*.cpp)
+VERILATED_OBJS := $(VERILATED_SRCS:.cpp=.o)
+
+# Step 2: Compile wrapper and create shared library
+$(LIB_PATH): verilate $(WRAPPER_SRC)
+	@echo "Building shared library..."
+	@mkdir -p $(LIBS_DIR)
+	# Compile Verilated sources
+	$(CXX) $(CXXFLAGS) -c $(VERILATOR_INC)/verilated.cpp -o $(GENERATED_DIR)/verilated.o
+	$(CXX) $(CXXFLAGS) -c $(VERILATOR_INC)/verilated_threads.cpp -o $(GENERATED_DIR)/verilated_threads.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm.cpp -o $(GENERATED_DIR)/VWishbonePwm.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm__Dpi.cpp -o $(GENERATED_DIR)/VWishbonePwm__Dpi.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm__Syms.cpp -o $(GENERATED_DIR)/VWishbonePwm__Syms.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0.cpp -o $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0__Slow.cpp -o $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0__Slow.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0.cpp -o $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0__Slow.cpp -o $(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0__Slow.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm___024root__Slow.cpp -o $(GENERATED_DIR)/VWishbonePwm___024root__Slow.o
+	# Compile Renode IntegrationLibrary sources
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/renode_bus.cpp -o $(GENERATED_DIR)/renode_bus.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/communication/socket_channel.cpp -o $(GENERATED_DIR)/socket_channel.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/buses/wishbone.cpp -o $(GENERATED_DIR)/wishbone.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/buses/bus.cpp -o $(GENERATED_DIR)/bus.o
+	# Compile socket library
+	$(CXX) $(CXXFLAGS) -c $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/Socket.cpp -o $(GENERATED_DIR)/socket_lib.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/TCPClient.cpp -o $(GENERATED_DIR)/tcp_client.o
+	# Compile wrapper
+	$(CXX) $(CXXFLAGS) -c $(WRAPPER_SRC) -o $(GENERATED_DIR)/pwm_wrapper.o
+	# Create shared library
+	$(CXX) $(LDFLAGS) \
+		-o $(LIB_PATH) \
+		$(GENERATED_DIR)/pwm_wrapper.o \
+		$(GENERATED_DIR)/renode_bus.o \
+		$(GENERATED_DIR)/socket_channel.o \
+		$(GENERATED_DIR)/wishbone.o \
+		$(GENERATED_DIR)/bus.o \
+		$(GENERATED_DIR)/socket_lib.o \
+		$(GENERATED_DIR)/tcp_client.o \
+		$(GENERATED_DIR)/VWishbonePwm.o \
+		$(GENERATED_DIR)/VWishbonePwm__Dpi.o \
+		$(GENERATED_DIR)/VWishbonePwm__Syms.o \
+		$(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0.o \
+		$(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hc59e3afa__0__Slow.o \
+		$(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0.o \
+		$(GENERATED_DIR)/VWishbonePwm___024root__DepSet_hdc0a87b2__0__Slow.o \
+		$(GENERATED_DIR)/VWishbonePwm___024root__Slow.o \
+		$(GENERATED_DIR)/verilated.o \
+		$(GENERATED_DIR)/verilated_threads.o \
+		|| (echo "Library build failed"; exit 1)
+	@echo "Created: $(LIB_PATH)"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning..."
+	@rm -rf $(GENERATED_DIR)
+	@rm -f $(LIB_PATH)
+	@rm -f $(WRAPPER_DIR)/*.o
+	@echo "Clean complete"
+
+# Debug target to check paths
+debug:
+	@echo "WRAPPER_DIR: $(WRAPPER_DIR)"
+	@echo "VERILATED_DIR: $(VERILATED_DIR)"
+	@echo "INCLUDE_DIR: $(INCLUDE_DIR)"
+	@echo "GENERATED_DIR: $(GENERATED_DIR)"
+	@echo "LIBS_DIR: $(LIBS_DIR)"
+	@echo "RTL_DIR: $(RTL_DIR)"
+	@echo "VERILATOR_INC: $(VERILATOR_INC)"
+	@echo "VERILOG_TOP: $(VERILOG_TOP)"
+	@echo "LIB_PATH: $(LIB_PATH)"

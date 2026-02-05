@@ -37,21 +37,40 @@ cpu PC 0xA0000000
 cpu PerformanceInMips 50
 
 log ""
-log "=== Platform Configuration ==="
+log "=== PWM Co-simulation Test ==="
 log "CPU: VexRiscv RV32IC @ 50 MHz"
 log "PWM: Co-simulated via Verilator at 0xF0003000"
 log "Binary: pwm_test.bin @ 0xA0000000"
+log "Register map: IP Header(0x00), Version(0x04), Features(0x08),"
+log "  Status(0x0C), ClkDiv(0x10), CH0 Ctrl/Period/Pulse(0x14/18/1C),"
+log "  CH1 Ctrl/Period/Pulse(0x20/24/28)"
 log ""
 
-# Run simulation for 10ms (500,000 instructions at 50 MIPS)
+# Run simulation for 10ms - enough for register tests to complete
 log "Running simulation for 10ms..."
 emulation RunFor "00:00:00.010000"
 log "10ms simulation complete."
 
-# Run additional 100ms
-log "Running additional 100ms..."
-emulation RunFor "00:00:00.100000"
-log "100ms simulation complete."
+# Verify register values via sysbus reads
+# These read directly through the co-simulated Wishbone bus
+log ""
+log "=== Register Verification ==="
+
+# Read-only registers
+log "IP Header    @ 0xF0003000 (expect 0x00080002):"
+sysbus ReadDoubleWord 0xF0003000
+log "IP Version   @ 0xF0003004 (expect 0x01000000):"
+sysbus ReadDoubleWord 0xF0003004
+log "IP Features  @ 0xF0003008 (expect 0x14141402):"
+sysbus ReadDoubleWord 0xF0003008
+
+# R/W registers (should reflect values written by firmware)
+log "Clock Div    @ 0xF0003010 (expect 49 = 0x31, set by demo):"
+sysbus ReadDoubleWord 0xF0003010
+log "CH0 Ctrl     @ 0xF0003014 (expect 0x01 = enabled):"
+sysbus ReadDoubleWord 0xF0003014
+log "CH0 Period   @ 0xF0003018 (expect 1000 = 0x3E8):"
+sysbus ReadDoubleWord 0xF0003018
 
 log ""
 log "=== PWM Co-simulation Test PASSED ==="

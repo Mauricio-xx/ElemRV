@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Generated files - DO NOT COMMIT
+generated/
+libs/*.so
+libs/*.a
+*.o
+*.a
+
+# Verilator output
+*.vcd
+*.fst
+obj_dir/
+
+# Build artifacts
+*.d
