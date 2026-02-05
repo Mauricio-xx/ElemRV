@@ -12,15 +12,34 @@ services:
     image: elemrv-renode:latest
     container_name: elemrv-renode
     volumes:
-      - ../renode:/workspace/renode
-      - ../hardware:/workspace/hardware
-      - ../software:/workspace/software
-    working_dir: /workspace
+      - ../renode:/workspace/elemrv/renode
+      - ../hardware:/workspace/elemrv/hardware
+      - ../software:/workspace/elemrv/software
+      - ../gen:/workspace/elemrv/gen
+    working_dir: /workspace/elemrv
     environment:
       - DISPLAY=${DISPLAY:-:0}
-      - RENODE_ROOT=/opt/renode-1.16.0.linux-portable
+      - RENODE_ROOT=/opt/renode_1.16.0_portable
     # For GUI support on Linux
     # network_mode: host
     stdin_open: true
     tty: true
     command: /bin/bash
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulation
+    image: elemrv-renode:latest
+    container_name: elemrv-test
+    volumes:
+      - ../renode:/workspace/elemrv/renode
+      - ../hardware:/workspace/elemrv/hardware
+      - ../software:/workspace/elemrv/software
+      - ../gen:/workspace/elemrv/gen
+    working_dir: /workspace/elemrv/renode
+    environment:
+      - RENODE_ROOT=/opt/renode_1.16.0_portable
+    profiles:
+      - test
+    command: bash run_tests.sh

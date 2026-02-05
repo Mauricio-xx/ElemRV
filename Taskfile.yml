@@ -191,6 +191,27 @@ tasks:
         vars:
           board: "SG13G2"
 
+  dt-build-firmware:
+    desc: Compiles bare-metal firmware for digital twin testing.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/software/elemrv_h/pwm_test && make clean && make all && make regtest'
+
+  dt-build-verilated:
+    desc: Builds Verilator co-simulation libraries.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode/verilated/wrappers && make -f Makefile.pwm clean && make -f Makefile.pwm BUILD_MODE=release'
+
+  dt-test:
+    desc: Runs all digital twin co-simulation tests (rebuilds first).
+    deps: [dt-build-firmware, dt-build-verilated]
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-test-quick:
+    desc: Runs digital twin tests without rebuilding (assumes artifacts exist).
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
   default:
     desc: Executes the full IHP SG13G2 RTL-to-GDSII flow and validates the layout afterwards.
     cmds:

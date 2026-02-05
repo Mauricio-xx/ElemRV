@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Builds the headless simulation container, compiles firmware and verilated
+# libraries, then runs the full digital twin test suite.
+
+name: Digital Twin Tests
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'dev-mont/digital-twin'
+    paths:
+      - 'renode/**'
+      - 'software/**'
+      - 'gen/**'
+      - 'docker/**'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - 'renode/**'
+      - 'software/**'
+      - 'gen/**'
+      - 'docker/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build simulation container
+        run: docker build -t elemrv-sim:test -f docker/Dockerfile.simulation docker/
+
+      - name: Start container
+        run: |
+          docker run -d --name elemrv-test \
+            -v ${{ github.workspace }}:/workspace/elemrv \
+            -w /workspace/elemrv \
+            elemrv-sim:test sleep infinity
+
+      - name: Build firmware
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/software/elemrv_h/pwm_test &&
+            make clean && make all && make regtest'
+
+      - name: Build verilated PWM library
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/renode/verilated/wrappers &&
+            make -f Makefile.pwm clean &&
+            make -f Makefile.pwm BUILD_MODE=release'
+
+      - name: Run digital twin tests
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/renode && bash run_tests.sh'
+
+      - name: Collect test logs
+        if: always()
+        run: |
+          mkdir -p test-logs
+          docker cp elemrv-test:/tmp/dt_test_1.log test-logs/ || true
+          docker cp elemrv-test:/tmp/dt_test_2.log test-logs/ || true
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digital-twin-test-logs
+          path: test-logs/
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f elemrv-test || true
