@@ -127,6 +127,15 @@ else
     echo "  I2C scan ELF not found. Build with: west build -b elemrv_h app/i2c_scan -d build-i2c-scan"
 fi
 
+# Test 6: Zephyr PWM Driver (custom WishbonePwm)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-pwm-test/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr PWM Driver" "run_zephyr_pwm.resc" "Zephyr PWM Driver Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr PWM Driver ==="
+    echo "  PWM test ELF not found. Build with: west build -b elemrv_h app/pwm_test -d build-pwm-test"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

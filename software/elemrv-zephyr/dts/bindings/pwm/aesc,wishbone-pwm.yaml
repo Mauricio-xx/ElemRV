@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: AESC WishbonePwm controller (2 channels, 20-bit period/duty)
+
+compatible: "aesc,wishbone-pwm"
+
+include: [pwm-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  "#pwm-cells":
+    const: 2
+
+  clock-frequency:
+    type: int
+    required: true
+    description: |
+      Base input clock frequency in Hz. PWM period and duty cycle
+      registers count in cycles of this clock.
+
+pwm-cells:
+  - channel
+  - flags
