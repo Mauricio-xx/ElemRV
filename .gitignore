@@ -23,3 +23,8 @@ software/modules/
 
 # Zephyr build artifacts
 software/elemrv-zephyr/build*/
+
+# Local development tracking (session logs, devlog, plan)
+renode/docs/DEVLOG.md
+renode/docs/plan.md
+renode/sessions/
