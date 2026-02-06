@@ -154,6 +154,69 @@ else
     echo "  Pinmux test ELF not found. Build with: west build -b elemrv_h app/pinmux_test -d build-pinmux-test"
 fi
 
+# Test 9: PIO Co-simulation (Verilator RTL, register verification)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpio.so" ]; then
+    run_test "PIO Co-simulation" "run_cosim_pio_test.resc" "PIO Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): PIO Co-simulation ==="
+    echo "  libpio.so not found. Build with: make -f Makefile.pio BUILD_MODE=release"
+fi
+
+# Test 10: Pinmux Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpinmux.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpinmux.so" ]; then
+    run_test "Pinmux Co-simulation" "run_cosim_pinmux_test.resc" "Pinmux Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Pinmux Co-simulation ==="
+    echo "  libpinmux.so not found. Build with: make -f Makefile.pinmux BUILD_MODE=release"
+fi
+
+# Test 11: GPIO Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "GPIO Co-simulation" "run_cosim_gpio_test.resc" "GPIO Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): GPIO Co-simulation ==="
+    echo "  libgpio.so not found. Build with: make -f Makefile.gpio BUILD_MODE=release"
+fi
+
+# Test 12: MachineTimer Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libmtimer.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libmtimer.so" ]; then
+    run_test "MachineTimer Co-simulation" "run_cosim_mtimer_test.resc" "MachineTimer Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): MachineTimer Co-simulation ==="
+    echo "  libmtimer.so not found. Build with: make -f Makefile.mtimer BUILD_MODE=release"
+fi
+
+# Test 13: I2C Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c.so" ]; then
+    run_test "I2C Co-simulation" "run_cosim_i2c_test.resc" "I2C Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): I2C Co-simulation ==="
+    echo "  libi2c.so not found. Build with: make -f Makefile.i2c BUILD_MODE=release"
+fi
+
+# Test 14: UART Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libuart.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libuart.so" ]; then
+    run_test "UART Co-simulation" "run_cosim_uart_test.resc" "UART Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): UART Co-simulation ==="
+    echo "  libuart.so not found. Build with: make -f Makefile.uart BUILD_MODE=release"
+fi
+
+# Test 15: Full Co-simulation Integration (all 7 peripherals)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "Full Co-simulation Integration" "run_cosim_full_test.resc" "Full Co-simulation Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Full Co-simulation Integration ==="
+    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

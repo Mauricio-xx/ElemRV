@@ -1,0 +1,36 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// ElemRV-H Platform with UART RTL Co-simulation
+// NOTE: Console output (printk) will NOT work — serial txd/rxd are Verilator
+// I/O pins, not connected to Renode's console subsystem.
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32ic"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00002000
+
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000
+
+// UART0: RTL Co-simulation via Verilator (replaces LiteX_UART)
+uart0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0004000, +0x1000>
+    frequency: 50000000
+    limitBuffer: 10000
+
+gpio0: GPIOPort.LiteX_GPIO @ sysbus 0xF0000000
+    type: Type.Out
+
+i2c0: I2C.LiteX_I2C @ sysbus 0xF0001000
+
+timer0: Timers.LiteX_Timer @ sysbus 0xF0005000
+    frequency: 50000000
+    -> cpu@1
+
+sysbus:
+    init:
+        Tag <0xF0003000, +0x1000> "PWM0"
+        Tag <0xF0002000, +0x1000> "PIO0"
+        Tag <0xF0010000, +0x1000> "Pinmux"

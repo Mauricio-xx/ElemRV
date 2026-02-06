@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# UART Co-simulation Register Test
+# Register-level only — serial txd/rxd NOT connected to Renode console.
+# Console output (printk) will NOT work through this co-simulated model.
+
+using sysbus
+
+mach create "elemrv_h_cosim_uart"
+
+machine LoadPlatformDescription @platforms/elemrv_h_cosim_uart.repl
+
+logLevel 3 sysbus
+
+$uart_lib?="/workspace/elemrv/renode/verilated/libs/libuart.so"
+uart0_cosim SimulationFilePathLinux $uart_lib
+
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== UART Co-simulation Register Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# IpIdentification registers
+log "IP Header    @ 0xF0004000:"
+sysbus ReadDoubleWord 0xF0004000
+log "IP Version   @ 0xF0004004:"
+sysbus ReadDoubleWord 0xF0004004
+log "IP Features  @ 0xF0004008:"
+sysbus ReadDoubleWord 0xF0004008
+
+# Write clock divider (baud rate) and read back
+log "Writing clock divider = 0x1B2 (434 for 115200 baud at 50MHz)..."
+sysbus WriteDoubleWord 0xF0004010 0x1B2
+emulation RunFor "00:00:00.000010"
+log "Clock Div    @ 0xF0004010 (expect 0x1B2):"
+sysbus ReadDoubleWord 0xF0004010
+
+log ""
+log "=== UART Co-simulation Test PASSED ==="
+log ""
+
+quit

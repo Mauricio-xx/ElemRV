@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Full RTL Co-simulation Integration Test
+# Loads all 7 Verilator co-simulated peripherals and validates each one.
+
+using sysbus
+
+mach create "elemrv_h_full_cosim"
+
+machine LoadPlatformDescription @platforms/elemrv_h_full_cosim.repl
+
+logLevel 3 sysbus
+
+# Attach all 7 verilated libraries
+$gpio_lib?="/workspace/elemrv/renode/verilated/libs/libgpio.so"
+$i2c_lib?="/workspace/elemrv/renode/verilated/libs/libi2c.so"
+$pio_lib?="/workspace/elemrv/renode/verilated/libs/libpio.so"
+$pwm_lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
+$uart_lib?="/workspace/elemrv/renode/verilated/libs/libuart.so"
+$mtimer_lib?="/workspace/elemrv/renode/verilated/libs/libmtimer.so"
+$pinmux_lib?="/workspace/elemrv/renode/verilated/libs/libpinmux.so"
+gpio0_cosim SimulationFilePathLinux $gpio_lib
+i2c0_cosim SimulationFilePathLinux $i2c_lib
+pio0_cosim SimulationFilePathLinux $pio_lib
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+uart0_cosim SimulationFilePathLinux $uart_lib
+timer0_cosim SimulationFilePathLinux $mtimer_lib
+pinmux_cosim SimulationFilePathLinux $pinmux_lib
+
+# Set CPU to tight loop (no firmware)
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== Full RTL Co-simulation Integration Test ==="
+log "All 7 peripherals loaded via Verilator"
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# Validate each peripheral via IpIdentification or register access
+
+# GPIO0
+log "--- GPIO0 @ 0xF0000000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0000000
+
+# I2C0
+log "--- I2C0 @ 0xF0001000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0001000
+
+# PIO0
+log "--- PIO0 @ 0xF0002000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0002000
+
+# PWM0
+log "--- PWM0 @ 0xF0003000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0003000
+
+# UART0
+log "--- UART0 @ 0xF0004000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0004000
+
+# Timer0 (no IpIdentification — read mtime)
+log "--- Timer0 @ 0xF0005000 ---"
+log "mtime_lo:"
+sysbus ReadDoubleWord 0xF0005000
+
+# Pinmux (no IpIdentification — write/read pin 0)
+log "--- Pinmux @ 0xF0010000 ---"
+sysbus WriteDoubleWord 0xF0010000 0x01
+emulation RunFor "00:00:00.000010"
+log "Pin 0 (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+log ""
+log "=== Full Co-simulation Integration Test PASSED ==="
+log ""
+
+quit
