@@ -1,0 +1,6 @@
+board:
+  name: elemrv_h
+  full_name: ElemRV Hydrogen RISC-V SoC
+  vendor: aesc
+  socs:
+    - name: elemrv_vexriscv

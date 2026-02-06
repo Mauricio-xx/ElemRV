@@ -61,11 +61,14 @@ run_test() {
     # Check for pass marker, ignoring known benign warnings:
     # - "Could not tokenize" from Tag syntax in .repl files
     # - "Couldn't" from peripheral warnings
+    # - "Zicsr instruction set is not enabled" — Renode 1.16.0 logs this
+    #   for rv32ic CPUs but executes CSR instructions correctly
     local filtered_errors
     filtered_errors=$(grep -i "error" "$logfile" \
         | grep -vi "Could not tokenize" \
         | grep -vi "Couldn't find" \
         | grep -vi "error_count" \
+        | grep -vi "Zicsr instruction set is not enabled" \
         || true)
 
     if grep -q "$pass_marker" "$logfile" && [ -z "$filtered_errors" ]; then
@@ -95,6 +98,16 @@ run_test "Base Platform" "test_base.resc" "Base Platform Test PASSED"
 
 # Test 2: PWM co-simulation (Verilator RTL, register verification)
 run_test "PWM Co-simulation" "run_pwm_test.resc" "PWM Co-simulation Test PASSED"
+
+# Test 3: Zephyr Hello World (UART console boot)
+# Only run if the Zephyr ELF was built
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr Hello World" "run_zephyr_hello.resc" "Zephyr Hello World Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr Hello World ==="
+    echo "  Zephyr ELF not found. Build with: west build -b elemrv_h app/hello_world"
+fi
 
 echo ""
 echo "============================================"

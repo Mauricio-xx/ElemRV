@@ -83,11 +83,43 @@ RUN git clone https://github.com/verilator/verilator /tmp/verilator \
     && make install \
     && rm -rf /tmp/verilator
 
-# Install Python packages
+# Install CMake 3.20+ (required by Zephyr)
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.tar.gz \
+    && tar -xzf cmake-3.28.3-linux-x86_64.tar.gz -C /opt \
+    && rm cmake-3.28.3-linux-x86_64.tar.gz
+ENV PATH="/opt/cmake-3.28.3-linux-x86_64/bin:${PATH}"
+
+# Install Zephyr SDK 0.17.0
+RUN wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz \
+    && tar -xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt \
+    && rm zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz \
+    && cd /opt/zephyr-sdk-0.17.0 \
+    && ./setup.sh -t riscv64-zephyr-elf -c
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.17.0
+
+# Install Python packages (including west + Zephyr deps)
 RUN pip3 install \
     pyserial \
     robotframework \
-    pexpect
+    pexpect \
+    west \
+    pyelftools \
+    pyyaml \
+    pykwalify \
+    canopen \
+    packaging \
+    progress \
+    psutil \
+    anytree \
+    intelhex
+
+# Install device-tree compiler (required by Zephyr)
+RUN apt-get update && apt-get install -y \
+    device-tree-compiler \
+    ninja-build \
+    ccache \
+    dfu-util \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create workspace directory
 WORKDIR /workspace
