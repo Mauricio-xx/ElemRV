@@ -118,6 +118,15 @@ else
     echo "  Blinky ELF not found. Build with: west build -b elemrv_h app/blinky -d build-blinky"
 fi
 
+# Test 5: Zephyr I2C Bus Scan (LiteX I2C driver)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-i2c-scan/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr I2C Scan" "run_zephyr_i2c_scan.resc" "Zephyr I2C Scan Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr I2C Scan ==="
+    echo "  I2C scan ELF not found. Build with: west build -b elemrv_h app/i2c_scan -d build-i2c-scan"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
