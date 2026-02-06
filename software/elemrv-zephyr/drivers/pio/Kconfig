@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config PIO_WISHBONE
+	bool "AESC WishbonePio programmable I/O driver"
+	default y
+	depends on DT_HAS_AESC_WISHBONE_PIO_ENABLED
+	help
+	  Enable driver for the AESC WishbonePio programmable I/O controller.
+	  Exposes a custom API (elemrv/drivers/pio.h) for command-FIFO-based
+	  pin control: HIGH, LOW, WAIT, READ.

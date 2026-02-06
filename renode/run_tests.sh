@@ -136,6 +136,15 @@ else
     echo "  PWM test ELF not found. Build with: west build -b elemrv_h app/pwm_test -d build-pwm-test"
 fi
 
+# Test 7: Zephyr PIO Driver (custom WishbonePio)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-pio-test/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr PIO Driver" "run_zephyr_pio.resc" "Zephyr PIO Driver Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr PIO Driver ==="
+    echo "  PIO test ELF not found. Build with: west build -b elemrv_h app/pio_test -d build-pio-test"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

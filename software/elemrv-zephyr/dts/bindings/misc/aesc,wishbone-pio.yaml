@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: AESC WishbonePio programmable I/O controller
+
+compatible: "aesc,wishbone-pio"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+  clock-frequency:
+    type: int
+    required: true
+    description: Input clock frequency in Hz
+  num-pins:
+    type: int
+    required: true
+    description: Number of PIO pins (1-6)
