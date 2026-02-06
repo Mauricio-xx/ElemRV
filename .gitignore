@@ -22,4 +22,4 @@ software/zephyr/
 software/modules/
 
 # Zephyr build artifacts
-software/elemrv-zephyr/build/
+software/elemrv-zephyr/build*/
