@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// ElemRV-H Hybrid Platform
+// Combines LiteX models (UART, Timer, GPIO, I2C) for interrupt delivery + console
+// with co-simulated peripherals (PWM, PIO, Pinmux) for RTL-accurate registers.
+//
+// This is the first platform where Zephyr firmware can read back *real* RTL
+// register values from PWM/PIO/Pinmux instead of 0 (Tags in the Zephyr platform).
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32ic"
+
+// RAM: 8 KB @ 0x80000000 (real HW size)
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00002000
+
+// FLASH: 64 KB @ 0xA0000000
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000
+
+// --- LiteX models (interrupts + console) ---
+
+// UART0: LiteX UART @ 0xF0004000
+uart0: UART.LiteX_UART @ sysbus 0xF0004000
+    -> cpu@0
+
+// Timer0: LiteX Timer @ 0xF0005000 (CSR32 — matches 32-bit CSR data width)
+timer0: Timers.LiteX_Timer_CSR32 @ sysbus 0xF0005000
+    frequency: 50000000
+    -> cpu@1
+
+// GPIO0: 12 pins @ 0xF0000000
+gpio0: GPIOPort.LiteX_GPIO @ sysbus 0xF0000000
+    type: Type.Out
+
+// I2C0: LiteX I2C @ 0xF0001000
+i2c0: I2C.LiteX_I2C @ sysbus 0xF0001000
+
+// --- Co-simulated peripherals (RTL-accurate registers) ---
+
+// PWM0: RTL Co-simulation @ 0xF0003000
+pwm0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
+    frequency: 50000000
+    limitBuffer: 10000
+
+// PIO0: RTL Co-simulation @ 0xF0002000
+pio0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0002000, +0x1000>
+    frequency: 50000000
+    limitBuffer: 10000
+
+// Pinmux: RTL Co-simulation @ 0xF0010000
+pinmux_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0010000, +0x1000>
+    frequency: 50000000
+    limitBuffer: 10000

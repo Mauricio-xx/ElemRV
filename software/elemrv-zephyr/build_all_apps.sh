@@ -46,6 +46,10 @@ build_app app/i2c_scan       build-i2c-scan
 build_app app/pwm_test       build-pwm-test
 build_app app/pio_test       build-pio-test
 build_app app/pinmux_test    build-pinmux-test
+build_app app/timer_uart_test       build-timer-uart-test
+build_app app/hybrid_pinmux_pwm_test  build-hybrid-pinmux-pwm
+build_app app/hybrid_pio_uart_test    build-hybrid-pio-uart
+build_app app/hybrid_multi_cosim_test build-hybrid-multi-cosim
 
 echo ""
 echo "============================================"

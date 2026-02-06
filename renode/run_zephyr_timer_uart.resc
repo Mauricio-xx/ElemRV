@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-H Zephyr Timer-UART Integration Test
+# Validates: Timer HW IRQ -> VexRiscv -> Zephyr scheduler -> k_timer callback -> UART TX.
+#
+# Build: west build -b elemrv_h app/timer_uart_test -d build-timer-uart-test
+
+using sysbus
+
+mach create "elemrv_h_timer_uart"
+
+machine LoadPlatformDescription @platforms/elemrv_h_zephyr.repl
+
+# Suppress sysbus warnings for tagged regions
+logLevel 3 sysbus
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr ELF
+sysbus LoadELF @../software/elemrv-zephyr/build-timer-uart-test/zephyr/zephyr.elf
+
+log ""
+log "=== Zephyr Timer-UART Integration Test ==="
+log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
+log "App: timer_uart_test"
+log ""
+
+# Run for 2s — 500ms for timer callbacks + boot time margin
+emulation RunFor "00:00:02.000000"
+
+log ""
+log "=== Zephyr Timer-UART Integration Test PASSED ==="
+log ""
+
+quit
