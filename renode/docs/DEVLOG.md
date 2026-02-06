@@ -22,7 +22,7 @@
 - [x] C1b: Enable XIP — .text in Flash, 8 KB RAM matches real HW
 - [x] C2: GPIO + Timer drivers (LiteX) — blinky app, LiteX_Timer_CSR32 fix
 - [x] C3: I2C driver (LiteX) — bus scan app, soc.h CSR width fix
-- [ ] C4: Custom PWM Zephyr driver
+- [x] C4: Custom WishbonePwm Zephyr driver — DT binding, DEVICE_API, volatile MMIO
 - [ ] C5: Custom PIO Zephyr driver
 - [ ] C6: Custom Pinmux/Pinctrl driver
 - [ ] C7: Integration tests + CI

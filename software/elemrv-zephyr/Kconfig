@@ -1,3 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # ElemRV Zephyr module Kconfig
+
+rsource "drivers/pwm/Kconfig"

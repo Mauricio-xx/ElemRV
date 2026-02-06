@@ -1,3 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# ElemRV Zephyr module - no module-level sources
+# ElemRV Zephyr module
+
+add_subdirectory_ifdef(CONFIG_PWM drivers/pwm)
