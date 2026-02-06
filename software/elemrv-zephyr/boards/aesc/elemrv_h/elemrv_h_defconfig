@@ -6,8 +6,8 @@ CONFIG_SERIAL=y
 CONFIG_UART_CONSOLE=y
 CONFIG_UART_INTERRUPT_DRIVEN=y
 
-# No XIP — execute from RAM
-CONFIG_XIP=n
+# XIP — code executes from Flash, only data in RAM (matches real HW: 8 KB SRAM)
+CONFIG_XIP=y
 
 # Size optimization for constrained RAM
 CONFIG_SIZE_OPTIMIZATIONS=y
