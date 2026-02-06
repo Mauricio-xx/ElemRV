@@ -3,3 +3,4 @@
 # ElemRV Zephyr module Kconfig
 
 rsource "drivers/pwm/Kconfig"
+rsource "drivers/pio/Kconfig"

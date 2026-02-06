@@ -63,3 +63,7 @@
 &pwm0 {
 	status = "okay";
 };
+
+&pio0 {
+	status = "okay";
+};
