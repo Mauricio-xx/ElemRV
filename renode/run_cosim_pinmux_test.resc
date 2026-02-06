@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Pinmux Co-simulation Register Test
+# No IpIdentification — register map starts at offset 0x00.
+# 12 pins, each with 1-bit mux select at pin*4.
+
+using sysbus
+
+mach create "elemrv_h_cosim_pinmux"
+
+machine LoadPlatformDescription @platforms/elemrv_h_cosim_pinmux.repl
+
+logLevel 3 sysbus
+
+$pinmux_lib?="/workspace/elemrv/renode/verilated/libs/libpinmux.so"
+pinmux_cosim SimulationFilePathLinux $pinmux_lib
+
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== Pinmux Co-simulation Register Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# Write and read back all 12 pin mux registers
+log "Pin 0 write 0x01..."
+sysbus WriteDoubleWord 0xF0010000 0x01
+emulation RunFor "00:00:00.000010"
+log "Pin 0 read (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+log "Pin 1 write 0x00..."
+sysbus WriteDoubleWord 0xF0010004 0x00
+emulation RunFor "00:00:00.000010"
+log "Pin 1 read (expect 0x00):"
+sysbus ReadDoubleWord 0xF0010004
+
+log "Pin 5 write 0x01..."
+sysbus WriteDoubleWord 0xF0010014 0x01
+emulation RunFor "00:00:00.000010"
+log "Pin 5 read (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010014
+
+log "Pin 11 write 0x01..."
+sysbus WriteDoubleWord 0xF001002C 0x01
+emulation RunFor "00:00:00.000010"
+log "Pin 11 read (expect 0x01):"
+sysbus ReadDoubleWord 0xF001002C
+
+log ""
+log "=== Pinmux Co-simulation Test PASSED ==="
+log ""
+
+quit

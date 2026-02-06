@@ -38,12 +38,11 @@ jobs:
             cd /workspace/elemrv/software/elemrv_h/pwm_test &&
             make clean && make all && make regtest'
 
-      - name: Build verilated PWM library
+      - name: Build all verilated co-simulation libraries
         run: |
           docker exec elemrv-test bash -c '
             cd /workspace/elemrv/renode/verilated/wrappers &&
-            make -f Makefile.pwm clean &&
-            make -f Makefile.pwm BUILD_MODE=release'
+            bash build_all_cosim.sh release'
 
       - name: Initialize Zephyr workspace
         run: |
@@ -68,7 +67,7 @@ jobs:
         if: always()
         run: |
           mkdir -p test-logs
-          for i in $(seq 1 8); do
+          for i in $(seq 1 15); do
             docker cp elemrv-test:/tmp/dt_test_${i}.log test-logs/ 2>/dev/null || true
           done
 
