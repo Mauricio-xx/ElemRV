@@ -109,6 +109,15 @@ else
     echo "  Zephyr ELF not found. Build with: west build -b elemrv_h app/hello_world"
 fi
 
+# Test 4: Zephyr Blinky (GPIO output + Timer k_sleep)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-blinky/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr Blinky (GPIO+Timer)" "run_zephyr_blinky.resc" "Zephyr Blinky Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr Blinky ==="
+    echo "  Blinky ELF not found. Build with: west build -b elemrv_h app/blinky -d build-blinky"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

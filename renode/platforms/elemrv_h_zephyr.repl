@@ -19,8 +19,8 @@ flash: Memory.MappedMemory @ sysbus 0xA0000000
 uart0: UART.LiteX_UART @ sysbus 0xF0004000
     -> cpu@0
 
-// Timer0: LiteX Timer @ 0xF0005000
-timer0: Timers.LiteX_Timer @ sysbus 0xF0005000
+// Timer0: LiteX Timer @ 0xF0005000 (CSR32 — matches 32-bit CSR data width)
+timer0: Timers.LiteX_Timer_CSR32 @ sysbus 0xF0005000
     frequency: 50000000
     -> cpu@1
 
