@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// ElemRV-H Platform for Zephyr RTOS
-// Extended RAM (32 KB) to fit Zephyr kernel
+// ElemRV-H Platform for Zephyr RTOS (XIP)
+// Code executes from Flash, data in 8 KB SRAM — matches real HW
 // CPU: VexRiscv RV32IC @ 50 MHz
 
 cpu: CPU.VexRiscv @ sysbus
     cpuType: "rv32ic"
 
-// RAM: 32 KB @ 0x80000000 (extended for Zephyr)
+// RAM: 8 KB @ 0x80000000 (real HW size)
 ram: Memory.MappedMemory @ sysbus 0x80000000
-    size: 0x00008000
+    size: 0x00002000
 
 // FLASH: 64 KB @ 0xA0000000
 flash: Memory.MappedMemory @ sysbus 0xA0000000

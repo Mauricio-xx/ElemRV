@@ -19,7 +19,7 @@
 
 ## Phase C: Zephyr RTOS Integration
 - [x] C1: West workspace + board BSP + UART console boot — `c70b265`
-- [ ] C1b: Enable XIP — .text in Flash, restore 8 KB RAM to match real HW
+- [x] C1b: Enable XIP — .text in Flash, 8 KB RAM matches real HW
 - [ ] C2: GPIO + Timer drivers (LiteX)
 - [ ] C3: I2C driver (LiteX)
 - [ ] C4: Custom PWM Zephyr driver
