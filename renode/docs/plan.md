@@ -100,6 +100,18 @@ Total: 3 interrupts
 | 019 | Mixed-Signal | Ngspice bridge (optional) | Analog co-simulation |
 | 020 | CI/CD | GitHub Actions | Automated testing |
 
+### Phase 4: Zephyr RTOS Integration
+
+| Stage | Name | Deliverable | Description |
+|-------|------|-------------|-------------|
+| 021 | C1: West + BSP | West workspace, board def, UART boot | Zephyr boots hello_world on Renode |
+| 022 | C2: GPIO + Timer | LiteX GPIO/Timer drivers enabled | Blinky + k_sleep validated |
+| 023 | C3: I2C | LiteX I2C driver enabled | I2C scan app on Renode |
+| 024 | C4: PWM Driver | Custom WishbonePwm Zephyr driver | PWM via Zephyr API, co-sim validated |
+| 025 | C5: PIO Driver | Custom WishbonePio Zephyr driver | PIO register access on Renode |
+| 026 | C6: Pinctrl | Custom WishbonePinmux pinctrl driver | Pin routing via Zephyr pinctrl API |
+| 027 | C7: Integration | Full test suite + CI | Twister tests, CI pipeline green |
+
 ---
 
 ## Directory Structure
@@ -173,6 +185,6 @@ Context for future sessions
 
 ---
 
-**Current Stage**: 001 - Infrastructure  
-**Branch**: dev-mont/digital-twin  
-**Last Updated**: 2025-02-04
+**Current Stage**: 021 - Zephyr West + BSP
+**Branch**: dev-mont/digital-twin
+**Last Updated**: 2026-02-05

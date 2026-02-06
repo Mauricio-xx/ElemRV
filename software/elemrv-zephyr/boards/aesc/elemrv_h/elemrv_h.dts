@@ -1,0 +1,35 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * ElemRV Hydrogen board device tree.
+ * VexRiscv RV32IC @ 50 MHz, 32 KB RAM (Renode), 64 KB Flash.
+ */
+
+/dts-v1/;
+
+#include <riscv32-elemrv-vexriscv.dtsi>
+
+/ {
+	model = "ElemRV Hydrogen";
+	compatible = "aesc,elemrv-h";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,sram = &ram0;
+	};
+
+	ram0: memory@80000000 {
+		device_type = "memory";
+		reg = <0x80000000 0x8000>;
+	};
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+};
+
+&timer0 {
+	status = "okay";
+};
