@@ -18,7 +18,8 @@
 - [x] GitHub Actions workflow — `00e1ab0`
 
 ## Phase C: Zephyr RTOS Integration
-- [x] C1: West workspace + board BSP + UART console boot
+- [x] C1: West workspace + board BSP + UART console boot — `c70b265`
+- [ ] C1b: Enable XIP — .text in Flash, restore 8 KB RAM to match real HW
 - [ ] C2: GPIO + Timer drivers (LiteX)
 - [ ] C3: I2C driver (LiteX)
 - [ ] C4: Custom PWM Zephyr driver
