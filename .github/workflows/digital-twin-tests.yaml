@@ -8,23 +8,7 @@
 name: Digital Twin Tests
 
 on:
-  push:
-    branches:
-      - 'main'
-      - 'dev-mont/digital-twin'
-    paths:
-      - 'renode/**'
-      - 'software/**'
-      - 'gen/**'
-      - 'docker/**'
-  pull_request:
-    branches:
-      - 'main'
-    paths:
-      - 'renode/**'
-      - 'software/**'
-      - 'gen/**'
-      - 'docker/**'
+  workflow_dispatch:
 
 jobs:
   test:
