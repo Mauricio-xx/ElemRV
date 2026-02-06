@@ -25,4 +25,9 @@
 - [x] C4: Custom WishbonePwm Zephyr driver — DT binding, DEVICE_API, volatile MMIO
 - [x] C5: Custom WishbonePio Zephyr driver — custom API, command FIFO encoding
 - [x] C6: Custom WishbonePinmux driver — per-pin mux option registers
-- [ ] C7: Integration tests + CI
+- [x] C7: Integration tests + CI — build script, Taskfile tasks, CI workflow update
+
+## Phase C Summary
+
+8 tests (2 bare-metal + 6 Zephyr), 3 custom drivers (PWM, PIO, Pinmux),
+all ElemRV-H peripherals covered. Full CI pipeline: build → test → artifacts.

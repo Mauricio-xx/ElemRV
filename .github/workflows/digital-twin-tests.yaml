@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: CERN-OHL-W-2.0
 
-# Builds the headless simulation container, compiles firmware and verilated
-# libraries, then runs the full digital twin test suite.
+# Builds the headless simulation container, compiles firmware, Zephyr apps,
+# and verilated libraries, then runs the full digital twin test suite.
 
 name: Digital Twin Tests
 
@@ -43,7 +43,12 @@ jobs:
             -w /workspace/elemrv \
             elemrv-sim:test sleep infinity
 
-      - name: Build firmware
+      - name: Configure git safe directories
+        run: |
+          docker exec elemrv-test \
+            git config --global --add safe.directory "*"
+
+      - name: Build bare-metal firmware
         run: |
           docker exec elemrv-test bash -c '
             cd /workspace/elemrv/software/elemrv_h/pwm_test &&
@@ -56,6 +61,20 @@ jobs:
             make -f Makefile.pwm clean &&
             make -f Makefile.pwm BUILD_MODE=release'
 
+      - name: Initialize Zephyr workspace
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/software &&
+            west init -l elemrv-zephyr &&
+            west update'
+
+      - name: Build all Zephyr apps
+        run: |
+          docker exec elemrv-test bash -c '
+            export ZEPHYR_BASE=/workspace/elemrv/software/zephyr
+            cd /workspace/elemrv/software/elemrv-zephyr &&
+            bash build_all_apps.sh'
+
       - name: Run digital twin tests
         run: |
           docker exec elemrv-test bash -c '
@@ -65,8 +84,9 @@ jobs:
         if: always()
         run: |
           mkdir -p test-logs
-          docker cp elemrv-test:/tmp/dt_test_1.log test-logs/ || true
-          docker cp elemrv-test:/tmp/dt_test_2.log test-logs/ || true
+          for i in $(seq 1 8); do
+            docker cp elemrv-test:/tmp/dt_test_${i}.log test-logs/ 2>/dev/null || true
+          done
 
       - name: Upload test logs
         if: always()
