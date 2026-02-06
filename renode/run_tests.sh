@@ -217,6 +217,69 @@ else
     echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
 fi
 
+# --- Cross-Peripheral Integration Tests ---
+
+# Test 16: Multi-Peripheral Register Sequence (all 7 co-sim)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "Multi-Peripheral Register Sequence" "run_cosim_multi_reg_test.resc" "Multi-Peripheral Register Sequence Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Multi-Peripheral Register Sequence ==="
+    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
+fi
+
+# Test 17: Pinmux+PWM Register Sequence (all 7 co-sim)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "Pinmux+PWM Register Sequence" "run_cosim_pinmux_pwm_seq_test.resc" "Pinmux+PWM Register Sequence Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Pinmux+PWM Register Sequence ==="
+    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
+fi
+
+# Test 18: Zephyr Timer-UART Integration (interrupt-driven flow)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-timer-uart-test/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr Timer-UART Integration" "run_zephyr_timer_uart.resc" "Zephyr Timer-UART Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr Timer-UART Integration ==="
+    echo "  ELF not found. Build with: west build -b elemrv_h app/timer_uart_test -d build-timer-uart-test"
+fi
+
+# Test 19: Hybrid Pinmux+PWM (co-sim PWM/Pinmux + LiteX UART/Timer)
+HYBRID_LIBS_OK=false
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpwm.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpwm.so" ]; } && \
+   { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpinmux.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpinmux.so" ]; } && \
+   { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpio.so" ]; }; then
+    HYBRID_LIBS_OK=true
+fi
+
+if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-hybrid-pinmux-pwm/zephyr/zephyr.elf" ]; then
+    run_test "Hybrid Pinmux+PWM" "run_hybrid_pinmux_pwm.resc" "Hybrid Pinmux-PWM Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Hybrid Pinmux+PWM ==="
+    echo "  ELF or co-sim libraries not found."
+fi
+
+# Test 20: Hybrid PIO+UART (co-sim PIO + LiteX UART/Timer)
+if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-hybrid-pio-uart/zephyr/zephyr.elf" ]; then
+    run_test "Hybrid PIO+UART" "run_hybrid_pio_uart.resc" "Hybrid PIO-UART Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Hybrid PIO+UART ==="
+    echo "  ELF or co-sim libraries not found."
+fi
+
+# Test 21: Hybrid Multi-Cosim (all 3 co-sim + LiteX UART/Timer)
+if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-hybrid-multi-cosim/zephyr/zephyr.elf" ]; then
+    run_test "Hybrid Multi-Cosim" "run_hybrid_multi_cosim.resc" "Hybrid Multi-Cosim Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Hybrid Multi-Cosim ==="
+    echo "  ELF or co-sim libraries not found."
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
