@@ -250,10 +250,21 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (21 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (22 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-verilator-test:
+    desc: Builds and runs pure Verilator testbenches (no Renode).
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode/verilated/testbenches && make run'
+
+  dt-validate-cosim:
+    desc: Cross-validates Verilator testbenches against Renode co-sim results.
+    deps: [dt-cosim-build]
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash validate_cosim.sh'
 
   default:
     desc: Executes the full IHP SG13G2 RTL-to-GDSII flow and validates the layout afterwards.

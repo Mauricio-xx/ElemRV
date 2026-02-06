@@ -58,18 +58,31 @@ jobs:
             cd /workspace/elemrv/software/elemrv-zephyr &&
             bash build_all_apps.sh'
 
+      - name: Run pure Verilator testbenches
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/renode/verilated/testbenches && make run'
+
       - name: Run digital twin tests
         run: |
           docker exec elemrv-test bash -c '
             cd /workspace/elemrv/renode && bash run_tests.sh'
 
+      - name: Cross-validate co-simulation
+        if: always()
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/renode && bash validate_cosim.sh' || true
+
       - name: Collect test logs
         if: always()
         run: |
           mkdir -p test-logs
-          for i in $(seq 1 21); do
+          for i in $(seq 1 22); do
             docker cp elemrv-test:/tmp/dt_test_${i}.log test-logs/ 2>/dev/null || true
           done
+          docker cp elemrv-test:/tmp/dt_verilator_tb.log test-logs/ 2>/dev/null || true
+          docker cp elemrv-test:/tmp/dt_crossval test-logs/crossval/ 2>/dev/null || true
 
       - name: Upload test logs
         if: always()

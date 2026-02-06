@@ -280,6 +280,39 @@ else
     echo "  ELF or co-sim libraries not found."
 fi
 
+# --- Pure Verilator Testbenches ---
+
+# Test 22: Pure Verilator Testbenches (no Renode)
+if [ -f "$SCRIPT_DIR/verilated/testbenches/Makefile" ]; then
+    TOTAL=$((TOTAL + 1))
+    echo ""
+    echo "=== TEST $TOTAL: Pure Verilator Testbenches ==="
+    local_logfile="/tmp/dt_test_${TOTAL}.log"
+
+    if make -C "$SCRIPT_DIR/verilated/testbenches" run > "$local_logfile" 2>&1; then
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        if grep -q "All testbenches PASSED" "$local_logfile"; then
+            echo -e "  RESULT: ${GREEN}PASS${NC}"
+            PASS=$((PASS + 1))
+        else
+            echo -e "  RESULT: ${RED}FAIL${NC}"
+            FAIL=$((FAIL + 1))
+        fi
+    else
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        echo -e "  RESULT: ${RED}FAIL${NC}"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo ""
+    echo "=== TEST (skipped): Pure Verilator Testbenches ==="
+    echo "  Makefile not found at verilated/testbenches/Makefile"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
