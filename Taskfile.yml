@@ -212,6 +212,22 @@ tasks:
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
+  dt-zephyr-init:
+    desc: Initializes the Zephyr west workspace and fetches dependencies.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/software && west init -l elemrv-zephyr 2>/dev/null || true && west update'
+
+  dt-zephyr-build:
+    desc: Builds all Zephyr apps for ElemRV-H.
+    cmds:
+      - docker exec elemrv-gui bash -c 'export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.17.0 && export ZEPHYR_BASE=/workspace/elemrv/software/zephyr && cd /workspace/elemrv/software/elemrv-zephyr && bash build_all_apps.sh'
+
+  dt-zephyr-test:
+    desc: Builds all Zephyr apps and runs the full test suite.
+    deps: [dt-build-firmware, dt-build-verilated, dt-zephyr-build]
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
   default:
     desc: Executes the full IHP SG13G2 RTL-to-GDSII flow and validates the layout afterwards.
     cmds:
