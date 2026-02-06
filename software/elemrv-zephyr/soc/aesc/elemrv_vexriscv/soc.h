@@ -15,13 +15,19 @@
 
 static inline unsigned char litex_read8(unsigned long addr)
 {
+#if CONFIG_LITEX_CSR_DATA_WIDTH >= 32
+	return sys_read32(addr) & 0xff;
+#else
 	return sys_read8(addr);
+#endif
 }
 
 static inline unsigned short litex_read16(unsigned long addr)
 {
 #if CONFIG_LITEX_CSR_DATA_WIDTH == 8
 	return (sys_read8(addr) << 8) | sys_read8(addr + 0x4);
+#elif CONFIG_LITEX_CSR_DATA_WIDTH >= 32
+	return sys_read32(addr) & 0xffff;
 #else
 	return sys_read16(addr);
 #endif
@@ -57,7 +63,11 @@ static inline uint64_t litex_read64(unsigned long addr)
 
 static inline void litex_write8(unsigned char value, unsigned long addr)
 {
+#if CONFIG_LITEX_CSR_DATA_WIDTH >= 32
+	sys_write32((uint32_t)value, addr);
+#else
 	sys_write8(value, addr);
+#endif
 }
 
 static inline void litex_write16(unsigned short value, unsigned long addr)
@@ -65,6 +75,8 @@ static inline void litex_write16(unsigned short value, unsigned long addr)
 #if CONFIG_LITEX_CSR_DATA_WIDTH == 8
 	sys_write8(value >> 8, addr);
 	sys_write8(value, addr + 0x4);
+#elif CONFIG_LITEX_CSR_DATA_WIDTH >= 32
+	sys_write32((uint32_t)value, addr);
 #else
 	sys_write16(value, addr);
 #endif
