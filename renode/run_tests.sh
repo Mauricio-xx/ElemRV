@@ -145,6 +145,15 @@ else
     echo "  PIO test ELF not found. Build with: west build -b elemrv_h app/pio_test -d build-pio-test"
 fi
 
+# Test 8: Zephyr Pinmux Driver (custom WishbonePinmux)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-pinmux-test/zephyr/zephyr.elf" ]; then
+    run_test "Zephyr Pinmux Driver" "run_zephyr_pinmux.resc" "Zephyr Pinmux Driver Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Zephyr Pinmux Driver ==="
+    echo "  Pinmux test ELF not found. Build with: west build -b elemrv_h app/pinmux_test -d build-pinmux-test"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

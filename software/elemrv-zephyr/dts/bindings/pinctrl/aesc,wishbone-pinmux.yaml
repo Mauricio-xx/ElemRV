@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: AESC WishbonePinmux pin multiplexer controller
+
+compatible: "aesc,wishbone-pinmux"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+  num-pins:
+    type: int
+    required: true
+    description: Number of physical pins (1-32)
+  num-options:
+    type: int
+    required: true
+    description: Number of mux options per pin (2-8)

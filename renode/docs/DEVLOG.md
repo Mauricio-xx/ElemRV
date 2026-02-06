@@ -24,5 +24,5 @@
 - [x] C3: I2C driver (LiteX) — bus scan app, soc.h CSR width fix
 - [x] C4: Custom WishbonePwm Zephyr driver — DT binding, DEVICE_API, volatile MMIO
 - [x] C5: Custom WishbonePio Zephyr driver — custom API, command FIFO encoding
-- [ ] C6: Custom Pinmux/Pinctrl driver
+- [x] C6: Custom WishbonePinmux driver — per-pin mux option registers
 - [ ] C7: Integration tests + CI

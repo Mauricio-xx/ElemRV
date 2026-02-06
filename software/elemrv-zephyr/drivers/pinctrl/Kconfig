@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config PINMUX_WISHBONE
+	bool "AESC WishbonePinmux pin multiplexer driver"
+	default y
+	depends on DT_HAS_AESC_WISHBONE_PINMUX_ENABLED
+	help
+	  Enable driver for the AESC WishbonePinmux pin multiplexer.
+	  Routes internal peripheral signals (GPIO, UART, PWM, I2C, PIO)
+	  to physical pins. Custom API via elemrv/drivers/pinmux.h.

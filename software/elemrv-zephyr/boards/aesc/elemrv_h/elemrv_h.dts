@@ -67,3 +67,7 @@
 &pio0 {
 	status = "okay";
 };
+
+&pinmux {
+	status = "okay";
+};

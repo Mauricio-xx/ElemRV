@@ -130,5 +130,13 @@
 			num-pins = <3>;
 			status = "disabled";
 		};
+
+		pinmux: pinmux@f0010000 {
+			compatible = "aesc,wishbone-pinmux";
+			reg = <0xf0010000 0x30>;
+			num-pins = <12>;
+			num-options = <2>;
+			status = "disabled";
+		};
 	};
 };
