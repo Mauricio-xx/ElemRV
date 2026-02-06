@@ -105,6 +105,7 @@ Total: 3 interrupts
 | Stage | Name | Deliverable | Description |
 |-------|------|-------------|-------------|
 | 021 | C1: West + BSP | West workspace, board def, UART boot | Zephyr boots hello_world on Renode |
+| 021b | C1b: XIP | Enable XIP, restore 8 KB RAM | .text in Flash, .data in RAM — matches real HW |
 | 022 | C2: GPIO + Timer | LiteX GPIO/Timer drivers enabled | Blinky + k_sleep validated |
 | 023 | C3: I2C | LiteX I2C driver enabled | I2C scan app on Renode |
 | 024 | C4: PWM Driver | Custom WishbonePwm Zephyr driver | PWM via Zephyr API, co-sim validated |
