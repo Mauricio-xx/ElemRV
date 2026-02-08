@@ -313,6 +313,39 @@ else
     echo "  Makefile not found at verilated/testbenches/Makefile"
 fi
 
+# --- GDB Server Validation ---
+
+# Test 23: GDB Server Validation
+if [ -f "$SCRIPT_DIR/test_gdb_server.sh" ]; then
+    TOTAL=$((TOTAL + 1))
+    echo ""
+    echo "=== TEST $TOTAL: GDB Server Validation ==="
+    local_logfile="/tmp/dt_test_${TOTAL}.log"
+
+    if bash "$SCRIPT_DIR/test_gdb_server.sh" > "$local_logfile" 2>&1; then
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        if grep -q "GDB_SERVER_TEST PASSED" "$local_logfile"; then
+            echo -e "  RESULT: ${GREEN}PASS${NC}"
+            PASS=$((PASS + 1))
+        else
+            echo -e "  RESULT: ${RED}FAIL${NC}"
+            FAIL=$((FAIL + 1))
+        fi
+    else
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        echo -e "  RESULT: ${RED}FAIL${NC}"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo ""
+    echo "=== TEST (skipped): GDB Server Validation ==="
+    echo "  test_gdb_server.sh not found"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
