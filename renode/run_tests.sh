@@ -366,6 +366,24 @@ else
     echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
 fi
 
+# Test 26: Timer Perturbation
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-timer-uart-test/zephyr/zephyr.elf" ]; then
+    run_test "Fault: Timer Perturbation" "run_fault_timer_perturb.resc" "Timer Perturbation Fault Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Fault: Timer Perturbation ==="
+    echo "  ELF not found. Build with: west build -b elemrv_h app/timer_uart_test -d build-timer-uart-test"
+fi
+
+# Test 27: UART Injection
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build/zephyr/zephyr.elf" ]; then
+    run_test "Fault: UART Injection" "run_fault_uart_injection.resc" "UART Fault Injection Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Fault: UART Injection ==="
+    echo "  Zephyr hello_world ELF not found. Build with: west build -b elemrv_h app/hello_world"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
