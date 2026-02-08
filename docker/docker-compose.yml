@@ -17,6 +17,8 @@ services:
       - ../software:/workspace/elemrv/software
       - ../gen:/workspace/elemrv/gen
     working_dir: /workspace/elemrv
+    ports:
+      - "3333:3333"
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - RENODE_ROOT=/opt/renode_1.16.0_portable

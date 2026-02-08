@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (22 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (23 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -265,6 +265,26 @@ tasks:
     deps: [dt-cosim-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash validate_cosim.sh'
+
+  dt-debug-bare-metal:
+    desc: Starts Renode with GDB server for bare-metal debugging (port 3333).
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_bare_metal.resc"'
+
+  dt-debug-zephyr:
+    desc: Starts Renode with GDB server for Zephyr debugging (port 3333).
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_zephyr.resc"'
+
+  dt-debug-cosim:
+    desc: Starts Renode with GDB server + full RTL co-simulation (port 3333).
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_cosim.resc"'
+
+  dt-debug-connect:
+    desc: Connects GDB to running Renode debug session.
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv && riscv-none-elf-gdb -x renode/gdb/elemrv.gdb {{.ELF | default "software/elemrv_h/pwm_test/pwm_test.elf"}}'
 
   default:
     desc: Executes the full IHP SG13G2 RTL-to-GDSII flow and validates the layout afterwards.
