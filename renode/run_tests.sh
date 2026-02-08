@@ -384,6 +384,9 @@ else
     echo "  Zephyr hello_world ELF not found. Build with: west build -b elemrv_h app/hello_world"
 fi
 
+# Test 28: Missing Peripheral
+run_test "Fault: Missing Peripheral" "run_fault_missing_peripheral.resc" "Missing Peripheral Fault Test PASSED"
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
