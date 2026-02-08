@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (28 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (30 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -288,6 +288,11 @@ tasks:
 
   dt-fault-test:
     desc: Runs fault injection tests (subset of full test suite).
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-sensor-test:
+    desc: Runs I2C sensor capture test.
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 

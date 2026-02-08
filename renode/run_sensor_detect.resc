@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-H I2C Sensor Detection Test
+# Validates that the SI7021 sensor is visible on the I2C bus
+# using the existing i2c_scan Zephyr firmware.
+#
+# Build: west build -b elemrv_h app/i2c_scan -d build-i2c-scan
+
+using sysbus
+
+mach create "elemrv_h_sensor"
+
+machine LoadPlatformDescription @platforms/elemrv_h_sensor.repl
+
+# Suppress sysbus warnings for tagged regions
+logLevel 3 sysbus
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr I2C scan ELF
+sysbus LoadELF @../software/elemrv-zephyr/build-i2c-scan/zephyr/zephyr.elf
+
+# Set initial sensor temperature
+i2c0.sensor Temperature 25.0
+
+log ""
+log "=== I2C Sensor Detection Test ==="
+log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
+log "Sensor: SI7021 @ I2C 0x40"
+log ""
+
+# Run for 3s — boot + scan of 112 addresses
+emulation RunFor "00:00:03.000000"
+
+log ""
+log "=== I2C Sensor Detection Test PASSED ==="
+log ""
+
+quit

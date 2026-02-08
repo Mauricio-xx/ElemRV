@@ -387,6 +387,26 @@ fi
 # Test 28: Missing Peripheral
 run_test "Fault: Missing Peripheral" "run_fault_missing_peripheral.resc" "Missing Peripheral Fault Test PASSED"
 
+# --- I2C Sensor Tests ---
+
+# Test 29: I2C Sensor Detection
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-i2c-scan/zephyr/zephyr.elf" ]; then
+    run_test "I2C Sensor Detection" "run_sensor_detect.resc" "I2C Sensor Detection Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): I2C Sensor Detection ==="
+    echo "  I2C scan ELF not found. Build with: west build -b elemrv_h app/i2c_scan -d build-i2c-scan"
+fi
+
+# Test 30: Sensor Capture
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-sensor-capture/zephyr/zephyr.elf" ]; then
+    run_test "Sensor Capture" "run_sensor_capture.resc" "Sensor Capture Integration Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Sensor Capture ==="
+    echo "  Sensor capture ELF not found. Build with: west build -b elemrv_h app/sensor_capture -d build-sensor-capture"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
