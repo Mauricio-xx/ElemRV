@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (23 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (28 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -285,6 +285,11 @@ tasks:
     desc: Connects GDB to running Renode debug session.
     cmds:
       - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv && riscv-none-elf-gdb -x renode/gdb/elemrv.gdb {{.ELF | default "software/elemrv_h/pwm_test/pwm_test.elf"}}'
+
+  dt-fault-test:
+    desc: Runs fault injection tests (subset of full test suite).
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   default:
     desc: Executes the full IHP SG13G2 RTL-to-GDSII flow and validates the layout afterwards.
