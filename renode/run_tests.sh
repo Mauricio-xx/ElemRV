@@ -346,6 +346,26 @@ else
     echo "  test_gdb_server.sh not found"
 fi
 
+# --- Fault Injection Tests ---
+
+# Test 24: PWM Register Corruption
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "Fault: PWM Register Corruption" "run_fault_pwm_corruption.resc" "PWM Fault Injection Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Fault: PWM Register Corruption ==="
+    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
+fi
+
+# Test 25: GPIO Register Corruption
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio.so" ]; then
+    run_test "Fault: GPIO Register Corruption" "run_fault_gpio_corruption.resc" "GPIO Fault Injection Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Fault: GPIO Register Corruption ==="
+    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
