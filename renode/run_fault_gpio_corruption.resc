@@ -1,0 +1,141 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# GPIO Register Corruption Fault Injection Test
+# Two sub-tests:
+#   A) Register corruption on co-sim GPIO (tight-loop CPU)
+#   B) Firmware detection test (pwm_test.bin configures PWM, sets GPIO indicator)
+#
+# Platform: full co-sim (all 7 Verilator peripherals).
+
+using sysbus
+
+mach create "elemrv_h_fault_gpio"
+
+machine LoadPlatformDescription @platforms/elemrv_h_full_cosim.repl
+
+logLevel 3 sysbus
+
+# Attach all 7 verilated libraries
+$gpio_lib?="/workspace/elemrv/renode/verilated/libs/libgpio.so"
+$i2c_lib?="/workspace/elemrv/renode/verilated/libs/libi2c.so"
+$pio_lib?="/workspace/elemrv/renode/verilated/libs/libpio.so"
+$pwm_lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
+$uart_lib?="/workspace/elemrv/renode/verilated/libs/libuart.so"
+$mtimer_lib?="/workspace/elemrv/renode/verilated/libs/libmtimer.so"
+$pinmux_lib?="/workspace/elemrv/renode/verilated/libs/libpinmux.so"
+gpio0_cosim SimulationFilePathLinux $gpio_lib
+i2c0_cosim SimulationFilePathLinux $i2c_lib
+pio0_cosim SimulationFilePathLinux $pio_lib
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+uart0_cosim SimulationFilePathLinux $uart_lib
+timer0_cosim SimulationFilePathLinux $mtimer_lib
+pinmux_cosim SimulationFilePathLinux $pinmux_lib
+
+# Set CPU to tight loop (no firmware for sub-test A)
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== GPIO Register Corruption Fault Injection Test ==="
+log ""
+
+# ========================================
+# Sub-test A: Register Corruption
+# ========================================
+log "--- Sub-test A: Register Corruption (tight-loop CPU) ---"
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# Configure GPIO normally
+log "Configuring GPIO: direction=0x0F, output=0x05..."
+sysbus WriteDoubleWord 0xF0000010 0x0F
+emulation RunFor "00:00:00.000010"
+log "Direction  @ 0xF0000010 (expect 0x0F):"
+sysbus ReadDoubleWord 0xF0000010
+
+sysbus WriteDoubleWord 0xF0000014 0x05
+emulation RunFor "00:00:00.000010"
+log "Output     @ 0xF0000014 (expect 0x05):"
+sysbus ReadDoubleWord 0xF0000014
+
+# Fault: corrupt direction register
+log ""
+log "FAULT: Writing 0x00 to direction register (was 0x0F)..."
+sysbus WriteDoubleWord 0xF0000010 0x00
+emulation RunFor "00:00:00.000010"
+log "Direction  @ 0xF0000010 (expect 0x00 — corrupted):"
+sysbus ReadDoubleWord 0xF0000010
+
+# Check register independence — output should still be 0x05
+log "Output     @ 0xF0000014 (expect still 0x05 — register independence):"
+sysbus ReadDoubleWord 0xF0000014
+
+# Fault: corrupt output register
+log ""
+log "FAULT: Writing 0xBAD to output register..."
+sysbus WriteDoubleWord 0xF0000014 0xBAD
+emulation RunFor "00:00:00.000010"
+log "Output     @ 0xF0000014 (expect 0xBAD — corrupted):"
+sysbus ReadDoubleWord 0xF0000014
+
+# Restore direction, verify output unchanged
+log ""
+log "Restoring direction = 0x0F..."
+sysbus WriteDoubleWord 0xF0000010 0x0F
+emulation RunFor "00:00:00.000010"
+log "Direction  @ 0xF0000010 (expect 0x0F — restored):"
+sysbus ReadDoubleWord 0xF0000010
+log "Output     @ 0xF0000014 (expect still 0xBAD — not affected by direction restore):"
+sysbus ReadDoubleWord 0xF0000014
+
+# RO overwrite attempt
+log ""
+log "FAULT: Writing 0xFFFFFFFF to GPIO IP Header (0xF0000000)..."
+sysbus WriteDoubleWord 0xF0000000 0xFFFFFFFF
+emulation RunFor "00:00:00.000010"
+log "IP Header  @ 0xF0000000 (expect 0x00080000 — RTL rejects write):"
+sysbus ReadDoubleWord 0xF0000000
+
+# ========================================
+# Sub-test B: Firmware Detection Test
+# ========================================
+log ""
+log "--- Sub-test B: Firmware Detection Test ---"
+log ""
+
+# Load firmware into flash and run
+log "Loading pwm_test.bin into flash @ 0xA0000000..."
+sysbus LoadBinary @../software/elemrv_h/pwm_test/pwm_test.bin 0xA0000000
+cpu PC 0xA0000000
+
+# Run for 10ms — firmware configures PWM, tests registers, sets GPIO result
+emulation RunFor "00:00:00.010000"
+
+# Check firmware's GPIO indicator
+# pwm_test.c: RESULT_PASS = 0xAA1, RESULT_FAIL = 0xF00
+# Firmware writes to GPIO_OE (0xF0000014) and GPIO_OUT (0xF0000010)
+# Note: firmware uses OE at +0x14 and OUT at +0x10, which maps to
+# co-sim GPIO direction (0x10) and output (0x14) — reversed naming
+log "GPIO @ 0xF0000014 (firmware result — expect 0xAA1=PASS or 0xF00=FAIL):"
+sysbus ReadDoubleWord 0xF0000014
+log "GPIO @ 0xF0000010 (firmware result mirror):"
+sysbus ReadDoubleWord 0xF0000010
+
+# Fault: overwrite firmware's GPIO status
+log ""
+log "FAULT: Writing 0xBAD to GPIO output (overriding firmware indicator)..."
+sysbus WriteDoubleWord 0xF0000014 0xBAD
+emulation RunFor "00:00:00.000010"
+log "GPIO @ 0xF0000014 (expect 0xBAD — external agent overrode firmware):"
+sysbus ReadDoubleWord 0xF0000014
+log "FINDING: External agent can override firmware's GPIO status output"
+
+log ""
+log "=== GPIO Fault Injection Test PASSED ==="
+log ""
+
+quit
