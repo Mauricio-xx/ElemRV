@@ -5,3 +5,4 @@
 rsource "drivers/pwm/Kconfig"
 rsource "drivers/pio/Kconfig"
 rsource "drivers/pinctrl/Kconfig"
+rsource "drivers/spi/Kconfig"

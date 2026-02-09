@@ -1,0 +1,14 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Enable SPI sensor on ElemRV-N SPI0 bus.
+ */
+
+&spi0 {
+	status = "okay";
+	sensor@0 {
+		compatible = "aesc,generic-spi-sensor";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+	};
+};

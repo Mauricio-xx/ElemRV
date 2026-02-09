@@ -114,5 +114,14 @@
 			#size-cells = <0>;
 			status = "disabled";
 		};
+
+		spi0: spi@f0005000 {
+			compatible = "aesc,nafarr-spi";
+			reg = <0xf0005000 0x100>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clock-frequency = <20000000>;
+			status = "disabled";
+		};
 	};
 };

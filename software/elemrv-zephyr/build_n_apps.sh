@@ -45,6 +45,7 @@ build_app app/blinky         build-n-blinky
 build_app app/rtos_debug_demo  build-n-rtos-debug-demo
 build_app app/rtos_diagnostics  build-n-rtos-diagnostics
 build_app app/sensor_i2c_capture  build-n-sensor-i2c-capture
+build_app app/sensor_spi_capture  build-n-sensor-spi-capture
 
 echo ""
 echo "============================================"
