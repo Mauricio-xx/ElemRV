@@ -311,6 +311,11 @@ tasks:
     cmds:
       - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos_n.resc"'
 
+  dt-portable-test:
+    desc: Runs portable data logger tests on both H and N (Tests 50-51).
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
   dt-n-cosim-generate:
     desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).
     cmds:

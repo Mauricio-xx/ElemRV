@@ -603,6 +603,26 @@ else
     echo "  ELF or libspi.so not found. Build with: make -f Makefile.spi BUILD_MODE=release && west build -b elemrv_n app/sensor_spi_capture -d build-n-sensor-spi-capture"
 fi
 
+# --- Portable Data Logger Tests ---
+
+# Test 50: H Portable Data Logger (multi-thread I2C sensor + LED)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-portable-data-logger/zephyr/zephyr.elf" ]; then
+    run_test "H Portable Data Logger" "run_portable_h_test.resc" "Portable H Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): H Portable Data Logger ==="
+    echo "  ELF not found. Build with: west build -b elemrv_h app/portable_data_logger -d build-portable-data-logger"
+fi
+
+# Test 51: N Portable Data Logger (same firmware, different board)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-portable-data-logger/zephyr/zephyr.elf" ]; then
+    run_test "N Portable Data Logger" "run_portable_n_test.resc" "Portable N Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N Portable Data Logger ==="
+    echo "  ELF not found. Build with: west build -b elemrv_n app/portable_data_logger -d build-n-portable-data-logger"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
