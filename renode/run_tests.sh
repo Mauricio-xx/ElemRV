@@ -571,6 +571,26 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo"
 fi
 
+# --- I2C Sensor Tests (Generic) ---
+
+# Test 47: H I2C Sensor Capture (generic sensor @ 0x48)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-sensor-i2c-capture/zephyr/zephyr.elf" ]; then
+    run_test "H I2C Sensor Capture" "run_sensor_i2c_h_test.resc" "Sensor I2C H Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): H I2C Sensor Capture ==="
+    echo "  ELF not found. Build with: west build -b elemrv_h app/sensor_i2c_capture -d build-sensor-i2c-capture"
+fi
+
+# Test 48: N I2C Sensor Capture (same firmware, different board)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-sensor-i2c-capture/zephyr/zephyr.elf" ]; then
+    run_test "N I2C Sensor Capture" "run_sensor_i2c_n_test.resc" "Sensor I2C N Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N I2C Sensor Capture ==="
+    echo "  ELF not found. Build with: west build -b elemrv_n app/sensor_i2c_capture -d build-n-sensor-i2c-capture"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

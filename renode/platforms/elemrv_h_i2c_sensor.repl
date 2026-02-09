@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// ElemRV-H Platform for Zephyr RTOS with Generic I2C Sensor
+// Based on elemrv_h_zephyr.repl + SI70xx sensor at I2C 0x48
+// CPU: VexRiscv RV32IC @ 50 MHz
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32ic"
+
+// RAM: 8 KB @ 0x80000000 (real HW size)
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00002000
+
+// FLASH: 64 KB @ 0xA0000000
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000
+
+// UART0: LiteX UART @ 0xF0004000
+uart0: UART.LiteX_UART @ sysbus 0xF0004000
+    -> cpu@0
+
+// Timer0: LiteX Timer @ 0xF0005000 (CSR32 — matches 32-bit CSR data width)
+timer0: Timers.LiteX_Timer_CSR32 @ sysbus 0xF0005000
+    frequency: 50000000
+    -> cpu@1
+
+// GPIO0: 12 pins @ 0xF0000000
+gpio0: GPIOPort.LiteX_GPIO @ sysbus 0xF0000000
+    type: Type.Out
+
+// I2C0: LiteX I2C @ 0xF0001000
+i2c0: I2C.LiteX_I2C @ sysbus 0xF0001000
+
+// Generic I2C temperature/humidity sensor @ address 0x48
+sensor: Sensors.SI70xx @ i2c0 0x48
+    model: Model.SI7021
+
+// Unsupported peripherals (tagged for access logging)
+sysbus:
+    init:
+        Tag <0xF0003000, +0x1000> "PWM0"
+        Tag <0xF0002000, +0x1000> "PIO0"
+        Tag <0xF0010000, +0x1000> "Pinmux"
