@@ -212,5 +212,23 @@ document memmap
 Print the ElemRV-H memory map (RAM, Flash, peripherals).
 end
 
+# --- RTOS Thread Commands (Zephyr) ---
+# Requires CONFIG_DEBUG_THREAD_INFO=y in the firmware.
+# Python script reads _kernel_openocd_offsets to walk thread list.
+source gdb/zephyr_threads.py
+
+define zephyr-info
+  printf "=== Zephyr RTOS Debug Commands ===\n"
+  printf "  zephyr-threads  — List all threads (name, state, priority)\n"
+  printf "  zephyr-stacks   — Show stack usage for all threads\n"
+  printf "\n"
+  printf "Requires: CONFIG_DEBUG_THREAD_INFO=y, CONFIG_THREAD_MONITOR=y\n"
+  printf "For stack measurement: CONFIG_INIT_STACKS=y\n"
+end
+document zephyr-info
+Show available Zephyr RTOS debug commands.
+end
+
 printf "ElemRV-H GDB helpers loaded. Commands: pwm-regs, gpio-regs, pio-regs,\n"
 printf "  i2c-regs, uart-regs, timer-regs, pinmux-regs, periph-scan, memmap\n"
+printf "  zephyr-threads, zephyr-stacks, zephyr-info\n"
