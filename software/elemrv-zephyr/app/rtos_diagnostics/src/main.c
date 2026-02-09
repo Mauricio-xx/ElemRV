@@ -72,7 +72,7 @@ int main(void)
 	k_sleep(K_MSEC(3000));
 
 	printk("\n--- On-Demand Thread Analyzer ---\n");
-	thread_analyzer_print();
+	thread_analyzer_print(0);
 	printk("--- End Analyzer ---\n");
 
 	printk("\nRTOS Diagnostics PASSED\n");

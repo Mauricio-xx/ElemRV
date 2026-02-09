@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (43 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (46 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -302,9 +302,14 @@ tasks:
       - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos.resc"'
 
   dt-rtos-test:
-    desc: Runs RTOS debug tests (Tests 41-43).
+    desc: Runs RTOS debug tests (Tests 41-46).
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-n-rtos-debug:
+    desc: Starts Renode with GDB server for N Zephyr RTOS thread-aware debugging.
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos_n.resc"'
 
   dt-n-cosim-generate:
     desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).

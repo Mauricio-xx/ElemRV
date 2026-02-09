@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # ElemRV-H RTOS Diagnostics Test
-# Runs rtos_diagnostics firmware with thread analyzer (auto mode on H),
-# logging, and shell. Validates analyzer output + LOG_INF messages.
+# Runs rtos_diagnostics firmware with thread analyzer (auto mode on H)
+# and logging. Validates analyzer output + LOG_INF messages.
 #
 # Build: west build -b elemrv_h app/rtos_diagnostics -d build-rtos-diagnostics
 #
@@ -28,7 +28,7 @@ sysbus LoadELF @../software/elemrv-zephyr/build-rtos-diagnostics/zephyr/zephyr.e
 log ""
 log "=== RTOS Diagnostics Test ==="
 log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
-log "App: rtos_diagnostics (thread analyzer + logging + shell)"
+log "App: rtos_diagnostics (auto thread analyzer + logging)"
 log ""
 
 # Run for 8s — enough for on-demand report at 3s + auto analyzer at 5s interval

@@ -526,7 +526,7 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_h app/rtos_debug_demo -d build-rtos-debug-demo"
 fi
 
-# Test 42: RTOS Diagnostics (thread analyzer + logging + shell)
+# Test 42: RTOS Diagnostics (auto thread analyzer + logging)
 if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-rtos-diagnostics/zephyr/zephyr.elf" ]; then
     run_test "RTOS Diagnostics" "run_rtos_diagnostics_test.resc" "RTOS Diagnostics Test PASSED"
 else
@@ -542,6 +542,33 @@ else
     echo ""
     echo "=== TEST (skipped): RTOS GDB Threads ==="
     echo "  ELF not found. Build with: west build -b elemrv_h app/rtos_debug_demo -d build-rtos-debug-demo"
+fi
+
+# Test 44: N RTOS Debug Demo
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-rtos-debug-demo/zephyr/zephyr.elf" ]; then
+    run_test "N RTOS Debug Demo" "run_n_rtos_debug_demo_test.resc" "N RTOS Debug Demo Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N RTOS Debug Demo ==="
+    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo"
+fi
+
+# Test 45: N RTOS Diagnostics
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-rtos-diagnostics/zephyr/zephyr.elf" ]; then
+    run_test "N RTOS Diagnostics" "run_n_rtos_diagnostics_test.resc" "N RTOS Diagnostics Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N RTOS Diagnostics ==="
+    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_diagnostics -d build-n-rtos-diagnostics"
+fi
+
+# Test 46: N RTOS GDB Threads
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-rtos-debug-demo/zephyr/zephyr.elf" ]; then
+    run_test "N RTOS GDB Threads" "run_n_rtos_gdb_threads_test.resc" "N RTOS GDB Threads Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N RTOS GDB Threads ==="
+    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo"
 fi
 
 echo ""
