@@ -50,7 +50,7 @@ verilate: $(GENERATED_DIR)/VWishboneSpiController.h
 $(GENERATED_DIR)/VWishboneSpiController.h: $(VERILOG_TOP)
 	@echo "Running Verilator for SPI..."
 	@mkdir -p $(GENERATED_DIR)
-	$(VERILATOR) --cc --top-module WishboneSpiController -Mdir $(GENERATED_DIR) $(VERILOG_TOP)
+	$(VERILATOR) --cc --top-module WishboneSpiController -Wno-WIDTH -Mdir $(GENERATED_DIR) $(VERILOG_TOP)
 
 $(LIB_PATH): verilate $(WRAPPER_SRC)
 	@echo "Building SPI shared library ($(BUILD_MODE) mode)..."

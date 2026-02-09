@@ -30,9 +30,9 @@ int main(int argc, char** argv) {
     verify_nonzero("UART_LITE", "IP_VERSION", 0x004, wb_read(top, 0x004, uart_lite_tieoff));
     verify_nonzero("UART_LITE", "IP_FEATURES", 0x008, wb_read(top, 0x008, uart_lite_tieoff));
 
-    // Write clock divider and read back
-    wb_write(top, 0x010, 0x14, uart_lite_tieoff);
-    verify("UART_LITE", "CLK_DIV", 0x010, wb_read(top, 0x010, uart_lite_tieoff), 0x00000014);
+    // Write clock divider (at 0x020 for UART) and read back
+    wb_write(top, 0x020, 0x14, uart_lite_tieoff);
+    verify("UART_LITE", "CLK_DIV", 0x020, wb_read(top, 0x020, uart_lite_tieoff), 0x00000014);
 
     top->final();
     delete top;
