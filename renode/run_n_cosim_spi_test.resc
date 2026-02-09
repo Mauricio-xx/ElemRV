@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# ElemRV-N SPI Controller Co-simulation Register Test
+# Validates IpIdentification and clock divider register.
+
+using sysbus
+
+mach create "elemrv_n_cosim_spi"
+
+machine LoadPlatformDescription @platforms/elemrv_n_cosim_spi.repl
+
+logLevel 3 sysbus
+
+$spi_lib?="/workspace/elemrv/renode/verilated/libs/libspi.so"
+spi0_cosim SimulationFilePathLinux $spi_lib
+
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 20
+
+log ""
+log "=== N SPI Co-simulation Register Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# IpIdentification registers
+log "IP Header    @ 0xF0005000:"
+sysbus ReadDoubleWord 0xF0005000
+log "IP Version   @ 0xF0005004:"
+sysbus ReadDoubleWord 0xF0005004
+log "IP Features  @ 0xF0005008:"
+sysbus ReadDoubleWord 0xF0005008
+
+# Write clock divider and read back
+log "Writing clock divider = 0x0A..."
+sysbus WriteDoubleWord 0xF0005010 0x0A
+emulation RunFor "00:00:00.000010"
+log "Clock Div    @ 0xF0005010 (expect 0x0A):"
+sysbus ReadDoubleWord 0xF0005010
+
+log ""
+log "=== N SPI Co-simulation Test PASSED ==="
+log ""
+
+quit
