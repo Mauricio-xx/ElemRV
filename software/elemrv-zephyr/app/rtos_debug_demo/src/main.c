@@ -96,7 +96,7 @@ int main(void)
 	k_sleep(K_MSEC(2000));
 
 	printk("\n--- Thread Analyzer Report ---\n");
-	thread_analyzer_print();
+	thread_analyzer_print(0);
 	printk("--- End Report ---\n");
 
 	printk("\nRTOS Debug Demo PASSED\n");

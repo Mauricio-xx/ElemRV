@@ -5,6 +5,8 @@ from GDB thread inspection to on-target diagnostics and tracing.
 
 ## Quick Start
 
+### ElemRV-H (RV32IC @ 50 MHz, 8KB RAM)
+
 ```bash
 # Build the RTOS debug demo
 cd software/elemrv-zephyr
@@ -18,6 +20,24 @@ renode --disable-xwt --console -e "include @debug_zephyr_rtos.resc"
 riscv-none-elf-gdb -x gdb/elemrv.gdb \
     software/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf
 ```
+
+### ElemRV-N (RV32IMC @ 20 MHz, 4KB RAM)
+
+```bash
+# Build the RTOS debug demo for N
+cd software/elemrv-zephyr
+west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo
+
+# Terminal 1: Start Renode with GDB server
+cd renode
+renode --disable-xwt --console -e "include @debug_zephyr_rtos_n.resc"
+
+# Terminal 2: Connect GDB with thread-aware commands
+riscv-none-elf-gdb -x gdb/elemrv.gdb \
+    software/elemrv-zephyr/build-n-rtos-debug-demo/zephyr/zephyr.elf
+```
+
+### GDB Commands
 
 ```
 (gdb) continue
@@ -120,11 +140,11 @@ CONFIG_THREAD_ANALYZER_USE_PRINTK=y
 thread_analyzer_print();  // Call from any thread
 ```
 
-**Auto mode** (H only — needs ~512B stack for analyzer thread):
+**Auto mode** (H only — needs ~768B stack for analyzer thread):
 ```ini
 CONFIG_THREAD_ANALYZER_AUTO=y
 CONFIG_THREAD_ANALYZER_AUTO_INTERVAL=5     # Seconds between reports
-CONFIG_THREAD_ANALYZER_AUTO_STACK_SIZE=512
+CONFIG_THREAD_ANALYZER_AUTO_STACK_SIZE=768
 ```
 
 ### Logging
@@ -164,7 +184,7 @@ uart:~$ kernel uptime      # Kernel uptime in ms
 | App | Features | Board |
 |-----|----------|-------|
 | `rtos_debug_demo` | 3 named threads + on-demand analyzer | H + N |
-| `rtos_diagnostics` | Thread analyzer + logging + shell | H (full), N (reduced) |
+| `rtos_diagnostics` | Auto thread analyzer + logging | H (auto), N (on-demand) |
 
 ## Level 3: Tracing
 
@@ -237,8 +257,8 @@ The `zephyr_threads.py` script will remain functional as a fallback.
 **Example budgets:**
 
 - `rtos_debug_demo`: baseline + 3 threads = ~2.9 KB (fits both)
-- `rtos_diagnostics` on H: baseline + 2 threads + auto analyzer + shell = ~4.5 KB
-- `rtos_diagnostics` on N: baseline + 2 threads = ~2.6 KB
+- `rtos_diagnostics` on H: baseline + 2 threads + auto analyzer = ~4.7 KB
+- `rtos_diagnostics` on N: baseline + 2 threads = ~3.7 KB
 
 ## Kconfig Quick Reference
 
@@ -260,8 +280,9 @@ The `zephyr_threads.py` script will remain functional as a fallback.
 ## Taskfile Commands
 
 ```bash
-task dt-rtos-debug        # Start Renode + GDB server for RTOS debugging
-task dt-rtos-test         # Run RTOS debug tests (Tests 41-43)
+task dt-rtos-debug        # Start Renode + GDB server for H RTOS debugging
+task dt-n-rtos-debug      # Start Renode + GDB server for N RTOS debugging
+task dt-rtos-test         # Run RTOS debug tests (Tests 41-46)
 task dt-debug-connect ELF=software/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf
 ```
 
@@ -269,6 +290,9 @@ task dt-debug-connect ELF=software/elemrv-zephyr/build-rtos-debug-demo/zephyr/ze
 
 | Test | Name | Validates |
 |------|------|-----------|
-| 41 | RTOS Debug Demo | Multi-thread creation, thread analyzer output |
-| 42 | RTOS Diagnostics | Auto analyzer, logging, shell (H) |
-| 43 | RTOS GDB Threads | Debug symbols present, thread metadata in output |
+| 41 | RTOS Debug Demo | Multi-thread creation, thread analyzer output (H) |
+| 42 | RTOS Diagnostics | Auto analyzer, logging (H) |
+| 43 | RTOS GDB Threads | Debug symbols present, thread metadata in output (H) |
+| 44 | N RTOS Debug Demo | Multi-thread creation, thread analyzer output (N) |
+| 45 | N RTOS Diagnostics | On-demand analyzer, no shell (N) |
+| 46 | N RTOS GDB Threads | Debug symbols present, thread metadata in output (N) |
