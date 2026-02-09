@@ -407,6 +407,114 @@ else
     echo "  Sensor capture ELF not found. Build with: west build -b elemrv_h app/sensor_capture -d build-sensor-capture"
 fi
 
+# --- ElemRV-N Tests ---
+
+# Test 31: N Base Platform
+run_test "N Base Platform" "run_n_base_test.resc" "ElemRV-N Base Platform Test PASSED"
+
+# Test 32: N GPIO Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio_n.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio_n.so" ]; then
+    run_test "N GPIO Co-simulation" "run_n_cosim_gpio_test.resc" "N GPIO Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N GPIO Co-simulation ==="
+    echo "  libgpio_n.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 33: N SPI Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libspi.so" ]; then
+    run_test "N SPI Co-simulation" "run_n_cosim_spi_test.resc" "N SPI Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N SPI Co-simulation ==="
+    echo "  libspi.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 34: N I2C Lite Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
+    run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N I2C Lite Co-simulation ==="
+    echo "  libi2c_lite.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 35: N UART Lite Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libuart_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libuart_lite.so" ]; then
+    run_test "N UART Lite Co-simulation" "run_n_cosim_uart_lite_test.resc" "N UART Lite Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N UART Lite Co-simulation ==="
+    echo "  libuart_lite.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 36: N Pinmux Co-simulation
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpinmux_n.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libpinmux_n.so" ]; then
+    run_test "N Pinmux Co-simulation" "run_n_cosim_pinmux_test.resc" "N Pinmux Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N Pinmux Co-simulation ==="
+    echo "  libpinmux_n.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 37: N Full Co-simulation Integration (all 10 peripherals)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio_n.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libgpio_n.so" ]; then
+    run_test "N Full Co-simulation Integration" "run_n_cosim_full_test.resc" "N Full Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N Full Co-simulation Integration ==="
+    echo "  N co-sim libraries not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 38: N Pure Verilator Testbenches
+if [ -f "$SCRIPT_DIR/verilated/testbenches/Makefile.nitrogen" ]; then
+    TOTAL=$((TOTAL + 1))
+    echo ""
+    echo "=== TEST $TOTAL: N Pure Verilator Testbenches ==="
+    local_logfile="/tmp/dt_test_${TOTAL}.log"
+
+    if make -C "$SCRIPT_DIR/verilated/testbenches" -f Makefile.nitrogen run > "$local_logfile" 2>&1; then
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        if grep -q "All N testbenches PASSED" "$local_logfile"; then
+            echo -e "  RESULT: ${GREEN}PASS${NC}"
+            PASS=$((PASS + 1))
+        else
+            echo -e "  RESULT: ${RED}FAIL${NC}"
+            FAIL=$((FAIL + 1))
+        fi
+    else
+        echo "  --- output tail ---"
+        tail -10 "$local_logfile" | sed 's/^/  | /'
+        echo "  ---"
+        echo -e "  RESULT: ${RED}FAIL${NC}"
+        FAIL=$((FAIL + 1))
+    fi
+else
+    echo ""
+    echo "=== TEST (skipped): N Pure Verilator Testbenches ==="
+    echo "  Makefile.nitrogen not found at verilated/testbenches/Makefile.nitrogen"
+fi
+
+# Test 39: N Zephyr Hello World
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-hello/zephyr/zephyr.elf" ]; then
+    run_test "N Zephyr Hello World" "run_n_zephyr_hello.resc" "N Zephyr Hello World Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N Zephyr Hello World ==="
+    echo "  N hello ELF not found. Build with: west build -b elemrv_n app/hello_world -d build-n-hello"
+fi
+
+# Test 40: N Zephyr Blinky
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-blinky/zephyr/zephyr.elf" ]; then
+    run_test "N Zephyr Blinky (GPIO+Timer)" "run_n_zephyr_blinky.resc" "N Zephyr Blinky Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N Zephyr Blinky ==="
+    echo "  N blinky ELF not found. Build with: west build -b elemrv_n app/blinky -d build-n-blinky"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
