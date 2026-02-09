@@ -53,6 +53,7 @@ build_app app/hybrid_multi_cosim_test build-hybrid-multi-cosim
 build_app app/sensor_capture          build-sensor-capture
 build_app app/rtos_debug_demo         build-rtos-debug-demo
 build_app app/rtos_diagnostics        build-rtos-diagnostics
+build_app app/sensor_i2c_capture      build-sensor-i2c-capture
 
 echo ""
 echo "============================================"
