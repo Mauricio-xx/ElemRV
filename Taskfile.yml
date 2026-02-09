@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (40 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (43 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -293,6 +293,16 @@ tasks:
 
   dt-sensor-test:
     desc: Runs I2C sensor capture test.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-rtos-debug:
+    desc: Starts Renode with GDB server for Zephyr RTOS thread-aware debugging.
+    cmds:
+      - docker exec -it elemrv-gui bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos.resc"'
+
+  dt-rtos-test:
+    desc: Runs RTOS debug tests (Tests 41-43).
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 

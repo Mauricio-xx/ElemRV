@@ -51,6 +51,8 @@ build_app app/hybrid_pinmux_pwm_test  build-hybrid-pinmux-pwm
 build_app app/hybrid_pio_uart_test    build-hybrid-pio-uart
 build_app app/hybrid_multi_cosim_test build-hybrid-multi-cosim
 build_app app/sensor_capture          build-sensor-capture
+build_app app/rtos_debug_demo         build-rtos-debug-demo
+build_app app/rtos_diagnostics        build-rtos-diagnostics
 
 echo ""
 echo "============================================"
