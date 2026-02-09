@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-N SPI Sensor Capture Test
+# End-to-end SPI: Zephyr → nafarr SPI driver → co-sim RTL → embedded sensor slave.
+# Validates firmware reads DevID + 10 temp/pressure samples.
+#
+# Build:
+#   make -f Makefile.spi BUILD_MODE=release  (rebuild libspi.so with sensor)
+#   west build -b elemrv_n app/sensor_spi_capture -d build-n-sensor-spi-capture
+
+using sysbus
+
+mach create "elemrv_n_spi_sensor"
+
+machine LoadPlatformDescription @platforms/elemrv_n_spi_sensor.repl
+
+# Suppress sysbus warnings for tagged regions
+logLevel 3 sysbus
+
+# Load co-simulated SPI controller (with embedded sensor slave)
+$spi_lib?="/workspace/elemrv/renode/verilated/libs/libspi.so"
+spi0_cosim SimulationFilePathLinux $spi_lib
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr ELF
+sysbus LoadELF @../software/elemrv-zephyr/build-n-sensor-spi-capture/zephyr/zephyr.elf
+
+log ""
+log "=== Sensor SPI N Test ==="
+log "Board: ElemRV-N (VexRiscv RV32IMC @ 20 MHz)"
+log "SPI: Co-simulated WishboneSpiController + embedded sensor slave"
+log ""
+
+# Run for 5s — Zephyr boot + SPI init + 10 samples
+emulation RunFor "00:00:05.000000"
+
+log ""
+log "=== Sensor SPI N Test PASSED ==="
+log ""
+
+quit

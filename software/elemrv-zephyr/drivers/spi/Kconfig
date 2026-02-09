@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config SPI_NAFARR
+	bool "Nafarr Wishbone SPI controller driver"
+	default y
+	depends on DT_HAS_AESC_NAFARR_SPI_ENABLED
+	select SPI_HAS_CS_CONTROL
+	help
+	  Enable driver for the nafarr WishboneSpiController.
+	  Uses command-FIFO interface with IpIdentification headers.

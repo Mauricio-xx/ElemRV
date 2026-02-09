@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  AESC nafarr WishboneSpiController — command-FIFO SPI master.
+  Uses IpIdentification header and command/response FIFO at offset 0x050.
+
+compatible: "aesc,nafarr-spi"
+
+include: [spi-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clock-frequency:
+    type: int
+    required: true
+    description: |
+      System clock frequency in Hz. SPI clock = sys_clk / (2 * divider).

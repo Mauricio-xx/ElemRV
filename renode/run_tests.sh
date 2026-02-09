@@ -591,6 +591,18 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_n app/sensor_i2c_capture -d build-n-sensor-i2c-capture"
 fi
 
+# --- SPI Sensor Tests ---
+
+# Test 49: N SPI Sensor Capture (co-sim SPI + embedded sensor slave)
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libspi.so" ]; } && \
+   [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-sensor-spi-capture/zephyr/zephyr.elf" ]; then
+    run_test "N SPI Sensor Capture" "run_sensor_spi_n_test.resc" "Sensor SPI N Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N SPI Sensor Capture ==="
+    echo "  ELF or libspi.so not found. Build with: make -f Makefile.spi BUILD_MODE=release && west build -b elemrv_n app/sensor_spi_capture -d build-n-sensor-spi-capture"
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then

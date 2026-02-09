@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Generic SPI sensor device (register-addressed).
+  Used for digital twin validation with embedded sensor in co-sim wrapper.
+
+compatible: "aesc,generic-spi-sensor"
+
+include: spi-device.yaml
