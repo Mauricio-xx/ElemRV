@@ -1,0 +1,74 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// ElemRV-N Full RTL Co-simulation Platform
+// ALL 10 peripherals use Verilator co-simulation — cycle-accurate register fidelity.
+// 5 N-specific .so + 5 reused H .so (PWM, PIO, I2C0, UART0, MachineTimer at N addresses)
+// NOTE: UART console output (printk) will NOT work — serial lines are Verilator I/O.
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imc"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00001000
+
+hyperram: Memory.MappedMemory @ sysbus 0x90000000
+    size: 0x04000000
+
+flash: Memory.MappedMemory @ sysbus 0xA0000000
+    size: 0x00010000
+
+// GPIO0: RTL Co-simulation @ 0xF0000000 (N-specific, 20 pins)
+gpio0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0000000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// I2C0: RTL Co-simulation @ 0xF0001000 (reused from H)
+i2c0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0001000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// I2C1: RTL Co-simulation @ 0xF0002000 (N-specific, lightweight)
+i2c1_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0002000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// PIO0: RTL Co-simulation @ 0xF0003000 (reused from H)
+pio0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// PWM0: RTL Co-simulation @ 0xF0004000 (reused from H)
+pwm0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0004000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// SPI0: RTL Co-simulation @ 0xF0005000 (N-specific)
+spi0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0005000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// UART0: RTL Co-simulation @ 0xF0006000 (reused from H)
+uart0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0006000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// UART1: RTL Co-simulation @ 0xF0007000 (N-specific, lightweight)
+uart1_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0007000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// Pinmux: RTL Co-simulation @ 0xF0010000 (N-specific, 20 pins)
+pinmux_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0010000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+// Timer0: RTL Co-simulation @ 0xF0020000 (reused from H)
+timer0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0020000, +0x1000>
+    frequency: 20000000
+    limitBuffer: 10000
+
+sysbus:
+    init:
+        Tag <0xF0023000, +0x1000> "HyperBus Config"
