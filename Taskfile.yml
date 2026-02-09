@@ -250,7 +250,7 @@ tasks:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (30 tests).
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (40 tests).
     deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
@@ -293,6 +293,36 @@ tasks:
 
   dt-sensor-test:
     desc: Runs I2C sensor capture test.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-n-cosim-generate:
+    desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).
+    cmds:
+      - docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
+      - docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishbonePinmuxNVerilog"
+      - docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
+      - docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneI2cLiteVerilog"
+      - docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneUartLiteVerilog"
+
+  dt-n-cosim-build:
+    desc: Builds all 5 N-specific co-simulation shared libraries.
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode/verilated/wrappers && bash build_n_cosim.sh release'
+
+  dt-n-zephyr-build:
+    desc: Builds N Zephyr apps (hello_world, blinky).
+    cmds:
+      - docker exec elemrv-gui bash -c 'export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.17.0 && export ZEPHYR_BASE=/workspace/elemrv/software/zephyr && cd /workspace/elemrv/software/elemrv-zephyr && bash build_n_apps.sh'
+
+  dt-n-test:
+    desc: Full N test suite (generates, builds, tests).
+    deps: [dt-n-cosim-build, dt-n-zephyr-build]
+    cmds:
+      - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-n-test-quick:
+    desc: Runs N tests without rebuild (assumes artifacts exist).
     cmds:
       - docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 

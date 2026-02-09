@@ -38,11 +38,17 @@ jobs:
             cd /workspace/elemrv/software/elemrv_h/pwm_test &&
             make clean && make all && make regtest'
 
-      - name: Build all verilated co-simulation libraries
+      - name: Build all H verilated co-simulation libraries
         run: |
           docker exec elemrv-test bash -c '
             cd /workspace/elemrv/renode/verilated/wrappers &&
             bash build_all_cosim.sh release'
+
+      - name: Build all N verilated co-simulation libraries
+        run: |
+          docker exec elemrv-test bash -c '
+            cd /workspace/elemrv/renode/verilated/wrappers &&
+            bash build_n_cosim.sh release'
 
       - name: Initialize Zephyr workspace
         run: |
@@ -51,12 +57,19 @@ jobs:
             west init -l elemrv-zephyr &&
             west update'
 
-      - name: Build all Zephyr apps
+      - name: Build all H Zephyr apps
         run: |
           docker exec elemrv-test bash -c '
             export ZEPHYR_BASE=/workspace/elemrv/software/zephyr
             cd /workspace/elemrv/software/elemrv-zephyr &&
             bash build_all_apps.sh'
+
+      - name: Build N Zephyr apps
+        run: |
+          docker exec elemrv-test bash -c '
+            export ZEPHYR_BASE=/workspace/elemrv/software/zephyr
+            cd /workspace/elemrv/software/elemrv-zephyr &&
+            bash build_n_apps.sh'
 
       - name: Run pure Verilator testbenches
         run: |
@@ -78,7 +91,7 @@ jobs:
         if: always()
         run: |
           mkdir -p test-logs
-          for i in $(seq 1 30); do
+          for i in $(seq 1 40); do
             docker cp elemrv-test:/tmp/dt_test_${i}.log test-logs/ 2>/dev/null || true
           done
           docker cp elemrv-test:/tmp/dt_verilator_tb.log test-logs/ 2>/dev/null || true
