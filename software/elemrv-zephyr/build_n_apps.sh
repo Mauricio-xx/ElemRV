@@ -42,6 +42,7 @@ echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
 build_app app/hello_world    build-n-hello
 build_app app/blinky         build-n-blinky
+build_app app/rtos_debug_demo  build-n-rtos-debug-demo
 
 echo ""
 echo "============================================"
