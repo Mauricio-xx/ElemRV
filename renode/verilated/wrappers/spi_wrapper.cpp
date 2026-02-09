@@ -36,8 +36,7 @@ static void copyBridgeAndEval() {
   g_top->io_bus_DAT_MOSI = (uint32_t)(g_bridge_wr_dat);
 
   // Tie SPI TriState dq read inputs to 0
-  g_top->io_spi_dq_0_read = 0;
-  g_top->io_spi_dq_1_read = 0;
+  g_top->io_spi_dq_read = 0;
 
   g_top->eval();
 
@@ -98,8 +97,7 @@ public:
     addBus(bus);
 
     // Tie SPI pins before reset
-    top->io_spi_dq_0_read = 0;
-    top->io_spi_dq_1_read = 0;
+    top->io_spi_dq_read = 0;
 
     top->resetn = 0;
     top->clk = 0;
@@ -128,8 +126,7 @@ public:
 
     for (uint64_t i = 0; i < steps; i++) {
       // Maintain SPI pin tie-offs during ticking
-      top->io_spi_dq_0_read = 0;
-      top->io_spi_dq_1_read = 0;
+      top->io_spi_dq_read = 0;
 
       *bus->wb_clk = 1;
       top->eval();

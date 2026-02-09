@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
     verify_nonzero("I2C_LITE", "IP_VERSION", 0x004, wb_read(top, 0x004, i2c_lite_tieoff));
     verify_nonzero("I2C_LITE", "IP_FEATURES", 0x008, wb_read(top, 0x008, i2c_lite_tieoff));
 
-    // Write clock divider and read back
-    wb_write(top, 0x010, 0x64, i2c_lite_tieoff);
-    verify("I2C_LITE", "CLK_DIV", 0x010, wb_read(top, 0x010, i2c_lite_tieoff), 0x00000064);
+    // Write clock divider (at 0x01C for I2C) and read back
+    wb_write(top, 0x01C, 0x64, i2c_lite_tieoff);
+    verify("I2C_LITE", "CLK_DIV", 0x01C, wb_read(top, 0x01C, i2c_lite_tieoff), 0x00000064);
 
     top->final();
     delete top;
