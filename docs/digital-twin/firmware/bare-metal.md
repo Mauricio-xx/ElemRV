@@ -32,18 +32,12 @@ Hardware
 
 ```
 software/elemrv_h/
-├── pwm_test/
-│   ├── main.c
-│   ├── pwm.h
-│   └── Makefile
-├── gpio_test/
-│   ├── main.c
-│   └── Makefile
-├── uart_test/
-│   ├── main.c
-│   └── Makefile
-└── timer_test/
-    ├── main.c
+└── pwm_test/
+    ├── start.s
+    ├── pwm_test.c
+    ├── pwm_regtest.c
+    ├── pwm.h
+    ├── kernel.ld
     └── Makefile
 ```
 
@@ -72,29 +66,37 @@ task dt-build-firmware
 ### Register Definitions
 
 ```c
-// pwm.h
+// pwm.h (simplified from actual software/elemrv_h/pwm_test/pwm.h)
 #ifndef PWM_H
 #define PWM_H
 
-#define PWM_BASE        0xF0003000
+#include <stdint.h>
 
-#define PWM_ENABLE      (PWM_BASE + 0x00)
-#define PWM_PRESCALER   (PWM_BASE + 0x04)
-#define PWM_PERIOD      (PWM_BASE + 0x08)
-#define PWM_DUTY_CH0    (PWM_BASE + 0x0C)
-#define PWM_DUTY_CH1    (PWM_BASE + 0x10)
-#define PWM_CTRL_CH0    (PWM_BASE + 0x14)
-#define PWM_CTRL_CH1    (PWM_BASE + 0x18)
+#define PWM_BASE                0xF0003000
 
-#define PWM_IP_HEADER   0x00000001
+// Register offsets (from WishbonePwm.v RTL)
+#define PWM_IP_HEADER_OFFSET    0x000
+#define PWM_IP_VERSION_OFFSET   0x004
+#define PWM_IP_FEATURES_OFFSET  0x008
+#define PWM_IP_STATUS_OFFSET    0x00C
+#define PWM_CLK_DIV_OFFSET      0x010
+#define PWM_CH0_CTRL_OFFSET     0x014
+#define PWM_CH0_PERIOD_OFFSET   0x018
+#define PWM_CH0_PULSE_OFFSET    0x01C
+#define PWM_CH1_CTRL_OFFSET     0x020
+#define PWM_CH1_PERIOD_OFFSET   0x024
+#define PWM_CH1_PULSE_OFFSET    0x028
 
-static inline void pwm_write(uint32_t reg, uint32_t value) {
-    *(volatile uint32_t *)reg = value;
-}
+// Expected read-only register values
+#define PWM_EXPECTED_HEADER     0x00080002
+#define PWM_EXPECTED_VERSION    0x01000000
+#define PWM_EXPECTED_FEATURES   0x14141402
 
-static inline uint32_t pwm_read(uint32_t reg) {
-    return *(volatile uint32_t *)reg;
-}
+// Channel control bits
+#define PWM_CTRL_ENABLE         (1 << 0)
+#define PWM_CTRL_INVERT         (1 << 1)
+
+#define REG32(addr) (*(volatile uint32_t *)(addr))
 
 #endif
 ```
@@ -102,70 +104,80 @@ static inline uint32_t pwm_read(uint32_t reg) {
 ### Main Application
 
 ```c
-// main.c
+// pwm_test.c (simplified from actual firmware)
 #include "pwm.h"
-#include <stdint.h>
 
-// Simple delay loop
-void delay_ms(uint32_t ms) {
-    volatile uint32_t count;
-    // Calibrated for 50MHz
-    for (count = 0; count < ms * 5000; count++);
-}
+extern void hang(void);
 
-int main(void) {
-    // Verify PWM present
-    uint32_t header = pwm_read(PWM_ENABLE);
-    if (header != PWM_IP_HEADER) {
-        // PWM not found
-        return -1;
+// GPIO for pass/fail indication
+#define GPIO_BASE    0xF0000000
+#define GPIO_OUT     (GPIO_BASE + 0x10)
+#define GPIO_OE      (GPIO_BASE + 0x14)
+
+#define RESULT_PASS  0xAA1
+#define RESULT_FAIL  0xF00
+
+void _kernel(void)
+{
+    // Verify PWM present via IP Header
+    if (REG32(PWM_BASE + PWM_IP_HEADER_OFFSET) != PWM_EXPECTED_HEADER) {
+        REG32(GPIO_OE) = RESULT_FAIL;
+        REG32(GPIO_OUT) = RESULT_FAIL;
+        hang();
     }
-    
-    // Configure PWM for 1kHz, 50% duty
-    pwm_write(PWM_PRESCALER, 49);     // 50MHz / 50 = 1MHz
-    pwm_write(PWM_PERIOD, 999);       // 1MHz / 1000 = 1kHz
-    pwm_write(PWM_DUTY_CH0, 499);     // 50% duty cycle
-    pwm_write(PWM_CTRL_CH0, 1);       // Enable channel 0
-    pwm_write(PWM_ENABLE, 1);         // Enable PWM
-    
-    // Main loop
-    while (1) {
-        // Toggle duty cycle between 25% and 75%
-        pwm_write(PWM_DUTY_CH0, 249);
-        delay_ms(500);
-        
-        pwm_write(PWM_DUTY_CH0, 749);
-        delay_ms(500);
-    }
-    
-    return 0;
+
+    // Configure PWM: 1kHz, 50% duty
+    REG32(PWM_BASE + PWM_CLK_DIV_OFFSET) = 49;      // 50MHz/50 = 1MHz
+    REG32(PWM_BASE + PWM_CH0_PERIOD_OFFSET) = 999;   // 1MHz/1000 = 1kHz
+    REG32(PWM_BASE + PWM_CH0_PULSE_OFFSET) = 499;    // 50% duty
+    REG32(PWM_BASE + PWM_CH0_CTRL_OFFSET) = PWM_CTRL_ENABLE;
+
+    // Signal pass
+    REG32(GPIO_OE) = RESULT_PASS;
+    REG32(GPIO_OUT) = RESULT_PASS;
+
+    hang();
 }
 ```
+
+> **Note**: The entry point is `_kernel` (not `main`). The startup assembly in `start.s` calls `_kernel` after initializing the stack. The full code uses a `struct pwm_driver` pattern for cleaner abstraction.
 
 ### Makefile
 
 ```makefile
-# Makefile
-CC = riscv-none-elf-gcc
-OBJCOPY = riscv-none-elf-objcopy
-CFLAGS = -march=rv32ic -mabi=ilp32 -O2 -Wall
-LDFLAGS = -T linker_script.ld -nostdlib -nostartfiles
+# Makefile (from actual software/elemrv_h/pwm_test/Makefile)
+PREFIX := riscv-none-elf-
+CC := $(PREFIX)gcc
+OBJCOPY := $(PREFIX)objcopy
 
-TARGET = pwm_test
+CFLAGS := -march=rv32ic_zicsr -mabi=ilp32 -O2 -Wall -ffreestanding -nostdlib
+LDFLAGS := -T kernel.ld -nostdlib
 
-all: $(TARGET).bin
+SRCS := start.s pwm_test.c
+OBJS := $(SRCS:.c=.o)
+OBJS := $(OBJS:.s=.o)
 
-$(TARGET).elf: main.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+TARGET := pwm_test
+
+all: $(TARGET).elf $(TARGET).bin
+
+$(TARGET).elf: $(OBJS) kernel.ld
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+%.o: %.s
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
 
 clean:
-	rm -f $(TARGET).elf $(TARGET).bin
-
-.PHONY: all clean
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin
 ```
+
+Key differences from a typical bare-metal Makefile: `-march=rv32ic_zicsr` (not just `rv32ic`), `-T kernel.ld` (not a generic `linker_script.ld`), and sources include `start.s` assembly startup.
 
 ## Memory Map
 
@@ -197,13 +209,13 @@ clean:
 ## GPIO Example
 
 ```c
-// gpio_test.c
+// gpio_example.c
 #include <stdint.h>
 
 #define GPIO_BASE       0xF0000000
-#define GPIO_READ       (GPIO_BASE + 0x04)
-#define GPIO_WRITE      (GPIO_BASE + 0x08)
-#define GPIO_DIR        (GPIO_BASE + 0x0C)
+#define GPIO_VALUE      (GPIO_BASE + 0x0C)  // Pin input values (RO)
+#define GPIO_WRITE      (GPIO_BASE + 0x10)  // Output data register (R/W)
+#define GPIO_DIR        (GPIO_BASE + 0x14)  // Direction register (RO in H)
 
 static inline void gpio_set_dir(uint32_t pin, uint8_t output) {
     uint32_t val = *(volatile uint32_t *)GPIO_DIR;
@@ -226,33 +238,35 @@ static inline void gpio_write(uint32_t pin, uint8_t value) {
 }
 
 static inline uint8_t gpio_read(uint32_t pin) {
-    uint32_t val = *(volatile uint32_t *)GPIO_READ;
+    uint32_t val = *(volatile uint32_t *)GPIO_VALUE;
     return (val >> pin) & 1;
 }
 
 int main(void) {
     // Configure pin 0 as output (LED)
     gpio_set_dir(0, 1);
-    
+
     // Configure pin 1 as input (button)
     gpio_set_dir(1, 0);
-    
+
     while (1) {
         // LED follows button state
         gpio_write(0, gpio_read(1));
-        
+
         // Simple delay
         for (volatile int i = 0; i < 100000; i++);
     }
-    
+
     return 0;
 }
 ```
 
 ## UART Example
 
+> **Note**: This UART example is conceptual. No `uart_test.c` exists in the repository. Consult `gen/WishboneUart.v` for the actual register layout.
+
 ```c
-// uart_test.c
+// uart_example.c (conceptual)
 #include <stdint.h>
 
 #define UART_BASE       0xF0004000
@@ -304,11 +318,11 @@ int main(void) {
 ## Linker Script
 
 ```ld
-/* linker_script.ld */
+/* kernel.ld */
 
 MEMORY {
-    RAM (rwx) : ORIGIN = 0x80000000, LENGTH = 8K
-    FLASH (rx) : ORIGIN = 0xA0000000, LENGTH = 64K
+    OCRAM (xrw): ORIGIN = 0x80000000, LENGTH = 8k
+    FLASH (xr ): ORIGIN = 0xA0000000, LENGTH = 64k
 }
 
 SECTIONS {
@@ -316,16 +330,16 @@ SECTIONS {
         *(.text*)
         *(.rodata*)
     } > FLASH
-    
+
     .data : {
         *(.data*)
-    } > RAM AT > FLASH
-    
+    } > OCRAM AT > FLASH
+
     .bss : {
         *(.bss*)
-    } > RAM
-    
-    __stack_top = 0x80002000;
+    } > OCRAM
+
+    __stack_top = ORIGIN(OCRAM) + LENGTH(OCRAM);
 }
 ```
 
@@ -334,7 +348,7 @@ SECTIONS {
 ### Test Script
 
 ```renode
-// test_bare_metal.resc
+# test_bare_metal.resc
 using sysbus
 
 mach create "bare_metal_test"
@@ -388,11 +402,11 @@ memory_barrier();
 
 Verify peripheral presence:
 ```c
-#define PWM_HEADER_EXPECTED 0x00000001
+#define PWM_EXPECTED_HEADER 0x00080002
 
-uint32_t header = pwm_read(PWM_ENABLE);
-if (header != PWM_HEADER_EXPECTED) {
-    // Handle error
+uint32_t header = REG32(PWM_BASE + PWM_IP_HEADER_OFFSET);
+if (header != PWM_EXPECTED_HEADER) {
+    // Handle error - peripheral not present or wrong version
     return -1;
 }
 ```
@@ -428,10 +442,8 @@ Bare-metal tests are part of the digital twin test suite:
 
 | Test | Firmware | Validates |
 |------|----------|-----------|
-| PWM | pwm_test.c | PWM register access |
-| GPIO | gpio_test.c | GPIO read/write |
-| UART | uart_test.c | UART communication |
-| Timer | timer_test.c | Timer interrupts |
+| 1 | Base Platform | CPU + RAM functionality |
+| 2 | pwm_test.c | PWM register co-sim |
 
 ### Running Tests
 
@@ -460,7 +472,7 @@ docker exec elemrv-gui renode --disable-xwt \
     } while (0)
 
 void configure_pwm(void) {
-    assert(pwm_read(PWM_ENABLE) == PWM_HEADER);
+    assert(REG32(PWM_BASE + PWM_IP_HEADER_OFFSET) == PWM_EXPECTED_HEADER);
     // ...
 }
 ```

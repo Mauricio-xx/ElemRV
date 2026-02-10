@@ -135,8 +135,10 @@ File: elemrv_h_hybrid.repl
 
 Configuration:
 - PWM: Co-sim (critical timing)
+- Pinmux: Co-sim (hardware routing)
+- PIO: Co-sim (programmable I/O)
+- GPIO: LiteX (sufficient for LED toggle)
 - UART: LiteX (standard I/O)
-- GPIO: Co-sim (hardware interaction)
 - Timer: LiteX (sufficient for RTOS)
 ```
 
@@ -147,11 +149,13 @@ Configuration:
 ### Step 1: Define Peripheral in .repl
 
 ```renode
-gpio0: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0000000, +0x1000>
+gpio0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0000000, +0x1000>
     frequency: 50000000
-    
-pwm0: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
+    limitBuffer: 10000
+
+pwm0_cosim: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
     frequency: 50000000
+    limitBuffer: 10000
 ```
 
 ### Step 2: Load Co-simulation Library
@@ -250,12 +254,12 @@ if (g_top->clk_count % 100000 == 0) {
 
 **Debug** (slow, verbose):
 ```bash
-make BUILD_MODE=debug
+make -f Makefile.pwm BUILD_MODE=debug
 ```
 
 **Release** (fast, minimal):
 ```bash
-make BUILD_MODE=release
+make -f Makefile.pwm BUILD_MODE=release
 ```
 
 ### Reduce Peripherals
@@ -272,6 +276,8 @@ pwm0: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0003000, +0x1000>
 $pwm_lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
 pwm0_cosim SimulationFilePathLinux $pwm_lib
 ```
+
+Note: The `//` comment syntax is not valid in `.resc` scripts. Use `#` for comments.
 
 ### Limit Simulation Duration
 
@@ -404,5 +410,5 @@ fi
 
 ---
 
-**Previous**: [Platforms](platforms/elemrv-n.md)  
+**Previous**: [Platforms](../platforms/elemrv-n.md)  
 **Next**: [Sensor Simulation](sensors.md)

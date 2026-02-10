@@ -36,9 +36,17 @@ Board Support
 Applications
 ├── hello_world
 ├── blinky
+├── i2c_scan
+├── pwm_test
+├── pio_test
+├── pinmux_test
+├── timer_uart_test
 ├── rtos_debug_demo
+├── rtos_diagnostics
 ├── sensor_capture
-└── portable_data_logger
+├── sensor_i2c_capture
+├── portable_data_logger
+└── ... (15 total for H, 7 for N)
 ```
 
 ## Board Support Package
@@ -47,13 +55,13 @@ Applications
 
 **Board**: `elemrv_h`
 
-**SoC**: `elemrv_h_vexriscv`
+**SoC**: `elemrv_vexriscv`
 - ISA: RV32IC
 - Clock: 50 MHz
 - RAM: 8 KB
 - Flash: 64 KB
 
-**Device Tree**: `riscv32-elemrv-h-vexriscv.dtsi`
+**Device Tree**: `riscv32-elemrv-vexriscv.dtsi`
 
 ### ElemRV-N (Nitrogen)
 
@@ -77,7 +85,6 @@ Applications
 task dt-zephyr-init
 
 # Or manually:
-cd software
 cd software
 west init -l elemrv-zephyr 2>/dev/null || true
 west update
@@ -372,7 +379,7 @@ renode --disable-xwt --console -e "include @debug_zephyr.resc"
 ### Automated Tests
 
 ```bash
-# Run Zephyr tests (Tests 21-30 for H, 39-40 for N)
+# Run Zephyr tests (see reference/test-suite.md for test numbering)
 task dt-integration-test
 ```
 

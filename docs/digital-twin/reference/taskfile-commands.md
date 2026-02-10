@@ -80,7 +80,6 @@ task dt-cosim-generate
 
 **Description**: Generates all H peripheral Verilog from SpinalHDL.  
 **Generates**:
-- `gen/WishbonePwm.v`
 - `gen/WishboneGpio.v`
 - `gen/WishboneI2cController.v`
 - `gen/WishboneUart.v`
@@ -122,7 +121,7 @@ task dt-test
 **Description**: Full test with rebuild.  
 **Dependencies**:
 - dt-build-firmware
-- dt-cosim-build  
+- dt-build-verilated
 **Runs**: Tests 1-30
 
 ```bash
@@ -152,9 +151,18 @@ task dt-zephyr-build
 **Apps**:
 - hello_world
 - blinky
+- i2c_scan
+- pwm_test
+- pio_test
+- pinmux_test
+- timer_uart_test
+- hybrid_pinmux_pwm_test
+- hybrid_pio_uart_test
+- hybrid_multi_cosim_test
+- sensor_capture
 - rtos_debug_demo
 - rtos_diagnostics
-- sensor_capture
+- sensor_i2c_capture
 - portable_data_logger
 
 ```bash
@@ -209,11 +217,11 @@ task dt-n-cosim-generate
 
 **Description**: Generates all N-specific peripheral Verilog.  
 **Generates**:
-- `gen/WishboneGpioN.v` (20 pins)
-- `gen/WishbonePinmuxN.v` (20 pins)
-- `gen/WishboneSpiController.v`
-- `gen/WishboneI2cLite.v`
-- `gen/WishboneUartLite.v`
+- `gen_n/WishboneGpio.v` (20 pins)
+- `gen_n/WishbonePinmux.v` (20 pins)
+- `gen_n/WishboneSpiController.v`
+- `gen_n/WishboneI2cController.v`
+- `gen_n/WishboneUart.v`
 
 ### Build Co-simulation Libraries (N)
 
@@ -241,7 +249,10 @@ task dt-n-zephyr-build
 - hello_world
 - blinky
 - rtos_debug_demo
+- rtos_diagnostics
+- sensor_i2c_capture
 - sensor_spi_capture
+- portable_data_logger
 
 ### Run Tests (N)
 
@@ -308,14 +319,14 @@ task dt-debug-connect ELF=path/to/firmware.elf
 task dt-sensor-test
 ```
 
-**Description**: Runs I2C sensor capture tests (Tests 29-30).  
+**Description**: Runs the full test suite (includes sensor tests 29-30, 47-51).
 **Validates**: SI7021 temperature/humidity sensor simulation
 
 ```bash
 task dt-portable-test
 ```
 
-**Description**: Runs portable data logger tests (Tests 50-51).  
+**Description**: Runs the full test suite (includes portable data logger tests 50-51).
 **Validates**: Same app runs on both H and N
 
 ### Fault Injection

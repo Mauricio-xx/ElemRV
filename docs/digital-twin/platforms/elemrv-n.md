@@ -30,22 +30,22 @@ ElemRV-N is the FPGA-focused platform variant targeting the Lattice ECP5 (ECPIX5
 
 ## Memory Map
 
-| Address Range | Size | Peripheral | Implementation |
-|--------------|------|-----------|----------------|
-| 0x80000000 | 4 KB | SRAM | Physical memory |
-| 0x90000000 | 64 MB | HyperRAM | Mapped memory |
-| 0xA0000000 | 64 KB | Flash | XIP execution |
-| 0xF0000000 | 4 KB | GPIO0 | Co-simulation RTL |
-| 0xF0001000 | 4 KB | I2C0 (full) | Co-simulation RTL |
-| 0xF0002000 | 4 KB | I2C1 (lite) | Co-simulation RTL |
-| 0xF0003000 | 4 KB | PIO0 | Co-simulation RTL |
-| 0xF0004000 | 4 KB | PWM0 | Co-simulation RTL |
-| 0xF0005000 | 4 KB | SPI0 | Co-simulation RTL |
-| 0xF0006000 | 4 KB | UART0 (full) | Co-simulation RTL |
-| 0xF0007000 | 4 KB | UART1 (lite) | Co-simulation RTL |
-| 0xF0010000 | 4 KB | Pinmux | Co-simulation RTL |
-| 0xF0020000 | 4 KB | Timer0 | Co-simulation RTL |
-| 0xF0023000 | 4 KB | HyperBus Config | Tag only |
+| Address Range | Size | Peripheral |
+|--------------|------|-----------|
+| 0x80000000 | 4 KB | SRAM |
+| 0x90000000 | 64 MB | HyperRAM |
+| 0xA0000000 | 64 KB | Flash |
+| 0xF0000000 | 4 KB | GPIO0 |
+| 0xF0001000 | 4 KB | I2C0 (full) |
+| 0xF0002000 | 4 KB | I2C1 (lite) |
+| 0xF0003000 | 4 KB | PIO0 |
+| 0xF0004000 | 4 KB | PWM0 |
+| 0xF0005000 | 4 KB | SPI0 |
+| 0xF0006000 | 4 KB | UART0 (full) |
+| 0xF0007000 | 4 KB | UART1 (lite) |
+| 0xF0010000 | 4 KB | Pinmux |
+| 0xF0020000 | 4 KB | Timer0 |
+| 0xF0023000 | 4 KB | HyperBus Config |
 
 ## Peripherals
 
@@ -147,12 +147,12 @@ docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneS
 # ... etc
 ```
 
-Generators:
-- `WishboneGpioNVerilog` - 20-pin GPIO
-- `WishbonePinmuxNVerilog` - 20-pin pinmux
-- `WishboneSpiControllerVerilog` - SPI controller
-- `WishboneI2cLiteVerilog` - Lightweight I2C
-- `WishboneUartLiteVerilog` - Lightweight UART
+Generators produce files in `gen_n/`:
+- `gen_n/WishboneGpio.v` - 20-pin GPIO
+- `gen_n/WishbonePinmux.v` - 20-pin pinmux
+- `gen_n/WishboneSpiController.v` - SPI controller
+- `gen_n/WishboneI2cController.v` - Lightweight I2C
+- `gen_n/WishboneUart.v` - Lightweight UART
 
 ### Build Co-simulation Libraries
 

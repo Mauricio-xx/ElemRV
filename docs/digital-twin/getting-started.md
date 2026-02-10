@@ -72,18 +72,24 @@ task dt-test-quick
 
 Expected output:
 ```
-========================================
-ElemRV Digital Twin Test Suite
-========================================
+============================================
+  ElemRV Digital Twin Test Suite
+============================================
+  Working dir: /workspace/elemrv/renode
+  Date: 2026-02-10 12:00:00 UTC
 
-Test 1/51: Base Platform ............ PASSED
-Test 2/51: PWM Co-simulation ........ PASSED
-...
-Test 51/51: Portable Logger (N) ..... PASSED
+=== TEST 1: Base Platform ===
+  --- output tail ---
+  ...
+  ---
+  RESULT: PASS
 
-========================================
-SUMMARY: 51/51 tests PASSED
-========================================
+=== TEST 2: PWM Co-simulation ===
+  ...
+
+============================================
+  SUMMARY: 51/51 passed
+============================================
 ```
 
 ### Full Build and Test
@@ -216,7 +222,8 @@ ElemRV/
 │   ├── verilated/
 │   │   ├── wrappers/           # C++ co-sim wrappers
 │   │   └── libs/               # Compiled .so libraries
-│   └── tests/                  # Test scripts
+│   ├── run_tests.sh            # Test runner
+│   └── *.resc                  # Test scripts
 ├── software/
 │   ├── elemrv_h/               # Bare-metal apps
 │   └── elemrv-zephyr/          # Zephyr apps

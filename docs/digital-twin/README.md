@@ -111,12 +111,16 @@ Learn embedded systems development with full visibility into both software execu
 
 The platform includes 51 automated tests covering:
 
-- **Tests 1-10**: Base platform and single peripheral co-simulation
-- **Tests 11-20**: Integration and pure Verilator validation
-- **Tests 21-30**: Zephyr RTOS applications
-- **Tests 31-40**: ElemRV-N platform and co-simulation
-- **Tests 41-46**: RTOS debugging features
-- **Tests 47-51**: Sensor simulation and data logging
+- **Tests 1-2**: Base platform + PWM co-simulation
+- **Tests 3-8**: Zephyr apps (H)
+- **Tests 9-15**: Co-sim per-peripheral + full integration (H)
+- **Tests 16-21**: Cross-peripheral + hybrid tests
+- **Tests 22-23**: Verilator + GDB validation
+- **Tests 24-28**: Fault injection
+- **Tests 29-30**: Sensor detection + capture (H)
+- **Tests 31-40**: ElemRV-N platform
+- **Tests 41-46**: RTOS debugging (H + N)
+- **Tests 47-51**: Sensor simulation (I2C + SPI + portable)
 
 Run all tests:
 ```bash
@@ -125,7 +129,7 @@ task dt-integration-test
 
 ## Prerequisites
 
-- Docker with `elemrv-renode:gui` image
+- Docker with `elemrv-gui` image
 - 8GB+ RAM recommended for co-simulation
 - Linux environment (tested on Ubuntu 22.04)
 
@@ -139,7 +143,8 @@ ElemRV/
 ├── renode/
 │   ├── platforms/          # Platform definition files (.repl)
 │   ├── verilated/          # Co-simulation wrappers and libraries
-│   └── tests/              # Test scripts (.resc)
+│   ├── run_tests.sh        # Test runner
+│   └── *.resc              # Test scripts
 ├── software/
 │   ├── elemrv_h/           # Bare-metal firmware
 │   └── elemrv-zephyr/      # Zephyr applications

@@ -264,7 +264,7 @@ docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
 using sysbus
 
 mach create "fault_pwm"
-machine LoadPlatformDescription @elemrv_h_full_cosim.repl
+machine LoadPlatformDescription @platforms/elemrv_h_full_cosim.repl
 
 # Load co-sim libraries
 $pwm_lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
@@ -281,15 +281,15 @@ emulation RunFor "00:00:01.000000"
 
 # Inject fault: corrupt PWM period register to 0
 echo "Injecting fault: setting PWM period to 0"
-sysbus WriteDoubleWord 0xF0003008 0x0
+sysbus WriteDoubleWord 0xF0003018 0x0
 
 # Let fault propagate
 echo "Observing fault effect..."
 emulation RunFor "00:00:02.000000"
 
 # Verify fault was applied
-$period_after=sysbus ReadDoubleWord 0xF0003008
-echo "Period register after fault: $period_after"
+echo "Reading period register after fault:"
+sysbus ReadDoubleWord 0xF0003018
 
 quit
 ```
@@ -322,8 +322,8 @@ sysbus WriteDoubleWord <target_addr> <corrupt_value>
 emulation RunFor "00:00:02.000000"
 
 # Verify
-$check=sysbus ReadDoubleWord <target_addr>
-echo "Value after fault: $check"
+echo "Value after fault:"
+sysbus ReadDoubleWord <target_addr>
 
 quit
 ```

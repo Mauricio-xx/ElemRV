@@ -27,7 +27,9 @@ System Simulation Layer
   |  | VexRiscv CPU    |  | LiteX Models   | |
   |  | - RV32IC/IMC    |  | - UART         | |
   |  | - 50/20 MHz     |  | - Timer        | |
-  |  | - Memory mgmt   |  | - Interrupts   | |
+  |  | - Memory mgmt   |  | - GPIO         | |
+  |  |                 |  | - I2C          | |
+  |  |                 |  | - Interrupts   | |
   |  +-----------------+  +----------------+ |
   |                                           |
   |  +-------------------------------------+  |
@@ -238,7 +240,7 @@ RTL-accurate peripherals:
 ```
 Components (ElemRV-H):
 - Base platform
-- GPIO (20 pins, RTL)
+- GPIO (12 pins, RTL)
 - I2C Controller (RTL)
 - PIO (3 pins, RTL)
 - PWM (2 channels, RTL)
@@ -260,7 +262,7 @@ Components (ElemRV-N):
 Uses C# models for peripherals:
 
 ```
-Speed: ~100 MIPS (million instructions/second)
+Speed: ~100 MIPS (approximate)
 Use:   Firmware development, algorithm testing
 Limit: Models may differ from RTL behavior
 ```
@@ -270,7 +272,7 @@ Limit: Models may differ from RTL behavior
 Uses Verilator for peripherals:
 
 ```
-Speed: ~1-10 KIPS (thousand instructions/second)
+Speed: ~1-10 KIPS (approximate)
 Use:   Driver validation, RTL verification
 Limit: Slower due to cycle-accurate simulation
 ```
@@ -280,7 +282,7 @@ Limit: Slower due to cycle-accurate simulation
 Mix of both approaches:
 
 ```
-Speed: ~50 MIPS average
+Speed: varies (approximate)
 Use:   System integration testing
 Config: Critical peripherals in co-sim,
         standard peripherals in LiteX models
