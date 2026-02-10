@@ -8,20 +8,20 @@ Complete memory maps for ElemRV-H and ElemRV-N platforms.
 
 | Address Range | Size | Type | Description |
 |--------------|------|------|-------------|
-| 0x80000000 | 8 KB | RAM | Internal SRAM |
+| 0x80000000 | 8 KB | RAM | Internal SRAM (OCRAM) |
 | 0xA0000000 | 64 KB | Flash | External Flash (XIP) |
 
 ### Peripheral Memory
 
-| Address Range | Size | Peripheral | Type |
-|--------------|------|-----------|------|
-| 0xF0000000 | 4 KB | GPIO0 | Co-simulation RTL |
-| 0xF0001000 | 4 KB | I2C0 | Co-simulation RTL |
-| 0xF0002000 | 4 KB | PIO0 | Co-simulation RTL |
-| 0xF0003000 | 4 KB | PWM0 | Co-simulation RTL |
-| 0xF0004000 | 4 KB | UART0 | Co-simulation RTL |
-| 0xF0005000 | 4 KB | Timer0 | Co-simulation RTL |
-| 0xF0010000 | 4 KB | Pinmux | Co-simulation RTL |
+| Address Range | Size | Peripheral |
+|--------------|------|-----------|
+| 0xF0000000 | 4 KB | GPIO0 (12 pins) |
+| 0xF0001000 | 4 KB | I2C0 |
+| 0xF0002000 | 4 KB | PIO0 (3 pins) |
+| 0xF0003000 | 4 KB | PWM0 (2 channels) |
+| 0xF0004000 | 4 KB | UART0 |
+| 0xF0005000 | 4 KB | Timer0 (Machine Timer) |
+| 0xF0010000 | 4 KB | Pinmux (12 pins) |
 
 ## ElemRV-N Memory Map
 
@@ -35,19 +35,19 @@ Complete memory maps for ElemRV-H and ElemRV-N platforms.
 
 ### Peripheral Memory
 
-| Address Range | Size | Peripheral | Type |
-|--------------|------|-----------|------|
-| 0xF0000000 | 4 KB | GPIO0 (20 pins) | Co-simulation RTL |
-| 0xF0001000 | 4 KB | I2C0 (full) | Co-simulation RTL |
-| 0xF0002000 | 4 KB | I2C1 (lightweight) | Co-simulation RTL |
-| 0xF0003000 | 4 KB | PIO0 | Co-simulation RTL |
-| 0xF0004000 | 4 KB | PWM0 | Co-simulation RTL |
-| 0xF0005000 | 4 KB | SPI0 | Co-simulation RTL |
-| 0xF0006000 | 4 KB | UART0 (full) | Co-simulation RTL |
-| 0xF0007000 | 4 KB | UART1 (lightweight) | Co-simulation RTL |
-| 0xF0010000 | 4 KB | Pinmux (20 pins) | Co-simulation RTL |
-| 0xF0020000 | 4 KB | Timer0 | Co-simulation RTL |
-| 0xF0023000 | 4 KB | HyperBus Config | Tag only |
+| Address Range | Size | Peripheral |
+|--------------|------|-----------|
+| 0xF0000000 | 4 KB | GPIO0 (20 pins) |
+| 0xF0001000 | 4 KB | I2C0 (full) |
+| 0xF0002000 | 4 KB | I2C1 (lightweight) |
+| 0xF0003000 | 4 KB | PIO0 |
+| 0xF0004000 | 4 KB | PWM0 |
+| 0xF0005000 | 4 KB | SPI0 |
+| 0xF0006000 | 4 KB | UART0 (full) |
+| 0xF0007000 | 4 KB | UART1 (lightweight) |
+| 0xF0010000 | 4 KB | Pinmux (20 pins) |
+| 0xF0020000 | 4 KB | Timer0 |
+| 0xF0023000 | 4 KB | HyperBus Config (Tag only) |
 
 ## Peripheral Register Details
 
@@ -55,44 +55,56 @@ Complete memory maps for ElemRV-H and ElemRV-N platforms.
 
 **Base**: 0xF0000000 (H: 12 pins, N: 20 pins)
 
+Source: `gen/WishboneGpio.v`
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID (0x00000001) |
-| 0x04 | READ | RO | Pin input values |
-| 0x08 | WRITE | RW | Pin output values |
-| 0x0C | DIRECTION | RW | Direction: 1=output, 0=input |
+| 0x000 | IP Header | RO | Peripheral ID (H: 0x00080000) |
+| 0x004 | IP Version | RO | Version (0x01000000) |
+| 0x008 | Features | RO | Pin count info (H: 0x0001000C = 1 bank, 12 pins) |
+| 0x00C | Value | RO | Synchronized pin input readings |
+| 0x010 | Write | R/W | Output data register |
+| 0x014 | Direction | RO | Direction (hardcoded to output in H) |
+| 0x018 | IRQ High Pending | R/W | High-level interrupt pending (write to clear) |
+| 0x01C | IRQ High Mask | R/W | High-level interrupt mask |
+| 0x020 | IRQ Low Pending | R/W | Low-level interrupt pending (write to clear) |
+| 0x024 | IRQ Low Mask | R/W | Low-level interrupt mask |
+| 0x028 | IRQ Rise Pending | R/W | Rising-edge interrupt pending (write to clear) |
+| 0x02C | IRQ Rise Mask | R/W | Rising-edge interrupt mask |
+| 0x030 | IRQ Fall Pending | R/W | Falling-edge interrupt pending (write to clear) |
+| 0x034 | IRQ Fall Mask | R/W | Falling-edge interrupt mask |
 
 **Example**:
 ```c
-// Set pin 0 as output
-*(volatile uint32_t*)(0xF0000000 + 0x0C) |= 0x1;
+#define GPIO_BASE 0xF0000000
 
-// Set pin 0 high
-*(volatile uint32_t*)(0xF0000000 + 0x08) |= 0x1;
+// Set output value on pin 0
+*(volatile uint32_t*)(GPIO_BASE + 0x10) |= 0x1;
 
-// Read all pins
-uint32_t values = *(volatile uint32_t*)(0xF0000000 + 0x04);
+// Read all pin values
+uint32_t values = *(volatile uint32_t*)(GPIO_BASE + 0x0C);
 ```
 
 ### I2C0 (Full Controller)
 
 **Base**: 0xF0001000
 
+Source: `gen/WishboneI2cController.v` (simplified — consult Verilog for exact layout)
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID |
-| 0x04 | PRESCALER | RW | Clock prescaler |
-| 0x08 | CTRL | RW | Control: start, stop, ack |
-| 0x0C | TX | WO | Transmit data |
-| 0x10 | RX | RO | Receive data |
-| 0x14 | STATUS | RO | Status flags |
-| 0x18 | CMD | RW | Command register |
+| 0x000 | IP Header | RO | Peripheral ID |
+| 0x004 | IP Version | RO | Version |
+| 0x008 | Features | RO | Feature flags |
+| ... | ... | ... | Additional registers — see Verilog source |
+
+> **Note**: The I2C controller has a complex register map. Consult `gen/WishboneI2cController.v` for the exact register layout and offsets.
 
 ### I2C1 Lite (N only)
 
 **Base**: 0xF0002000
 
-Same register map as I2C0 but:
+Same controller RTL as I2C0 but configured as lightweight variant:
 - No interrupt support
 - Polling only
 - Reduced gate count
@@ -101,54 +113,70 @@ Same register map as I2C0 but:
 
 **Base**: 0xF0002000 (H) / 0xF0003000 (N)
 
+Source: `gen/WishbonePio.v`
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID |
-| 0x04 | CONFIG | RW | Configuration |
-| 0x08 | INSTR | RW | Instruction memory |
-| 0x0C | TX_FIFO | WO | TX FIFO |
-| 0x10 | RX_FIFO | RO | RX FIFO |
-| 0x14 | STATUS | RO | Status |
+| 0x000 | IP Header | RO | Peripheral ID (0x00080001) |
+| 0x004 | IP Version | RO | Version (0x01000000) |
+| 0x008 | Features | RO | ClkDiv=20bit, ReadDelay=24bit, 3 pins |
+| 0x00C | Status | RO | TX FIFO depth, RX FIFO depth |
+| 0x010 | Config | RO | Enabled flag |
+| 0x014 | TX/RX Data | R/W | Write: push command to TX FIFO. Read: pop from RX FIFO |
+| 0x018 | FIFO Status | RO | TX vacancy, RX occupancy |
+| 0x01C | Clock Divider | R/W | 20-bit clock divider |
+| 0x020 | Read Delay | R/W | 8-bit read delay |
+
+**Command Encoding** (TX write at offset 0x014):
+```
+bits[1:0] = command: HIGH=0, LOW=1, WAIT=2, READ=3
+bits[3:2] = pin index
+bits[27:4] = data (e.g., wait cycles)
+```
 
 ### PWM (PWM0)
 
 **Base**: 0xF0003000 (H) / 0xF0004000 (N)
 
-| Offset | Register | Access | Description |
-|--------|----------|--------|-------------|
-| 0x00 | ENABLE | RW | Global enable (bits 0-1: CH0/CH1) |
-| 0x04 | PRESCALER | RW | Clock prescaler (20-bit) |
-| 0x08 | PERIOD | RW | PWM period (20-bit) |
-| 0x0C | DUTY_CH0 | RW | Channel 0 duty (20-bit) |
-| 0x10 | DUTY_CH1 | RW | Channel 1 duty (20-bit) |
-| 0x14 | CTRL_CH0 | RW | Channel 0 control |
-| 0x18 | CTRL_CH1 | RW | Channel 1 control |
+Source: `gen/WishbonePwm.v`, `software/elemrv_h/pwm_test/pwm.h`
 
-**Example** (1kHz, 50% duty):
+| Offset | Register | Access | Width | Description |
+|--------|----------|--------|-------|-------------|
+| 0x000 | IP Header | RO | 32 | Peripheral ID (0x00080002) |
+| 0x004 | IP Version | RO | 32 | Version (0x01000000) |
+| 0x008 | IP Features | RO | 32 | Feature register (0x14141402) |
+| 0x00C | IP Status | RO | 32 | Status register |
+| 0x010 | Clock Divider | R/W | 20 | Clock divider value |
+| 0x014 | CH0 Control | R/W | 2 | [0]=enable, [1]=invert |
+| 0x018 | CH0 Period | R/W | 20 | Channel 0 period counter |
+| 0x01C | CH0 Pulse | R/W | 20 | Channel 0 pulse/duty width |
+| 0x020 | CH1 Control | R/W | 2 | [0]=enable, [1]=invert |
+| 0x024 | CH1 Period | R/W | 20 | Channel 1 period counter |
+| 0x028 | CH1 Pulse | R/W | 20 | Channel 1 pulse/duty width |
+
+**Example** (1kHz, 50% duty on CH0 at 50MHz clock):
 ```c
 #define PWM_BASE 0xF0003000
-*(volatile uint32_t*)(PWM_BASE + 0x04) = 49;   // Prescaler
-*(volatile uint32_t*)(PWM_BASE + 0x08) = 999;  // Period
-*(volatile uint32_t*)(PWM_BASE + 0x0C) = 499;  // Duty CH0
-*(volatile uint32_t*)(PWM_BASE + 0x14) = 1;    // Enable CH0
-*(volatile uint32_t*)(PWM_BASE + 0x00) = 1;    // Global enable
+
+*(volatile uint32_t*)(PWM_BASE + 0x010) = 49;    // Clock divider: 50MHz/50 = 1MHz
+*(volatile uint32_t*)(PWM_BASE + 0x018) = 999;   // CH0 period: 1MHz/1000 = 1kHz
+*(volatile uint32_t*)(PWM_BASE + 0x01C) = 499;   // CH0 pulse: 50% duty
+*(volatile uint32_t*)(PWM_BASE + 0x014) = 0x1;   // CH0 enable
 ```
 
 ### SPI0 (N only)
 
 **Base**: 0xF0005000
 
+Source: `gen_n/WishboneSpiController.v` (simplified — consult Verilog for exact layout)
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID |
-| 0x04 | PRESCALER | RW | Clock prescaler |
-| 0x08 | CTRL | RW | Control |
-| 0x0C | STATUS | RO | Status |
-| 0x10 | TX | WO | TX data |
-| 0x14 | RX | RO | RX data |
-| 0x50 | CMD_FIFO | RW | Command FIFO (custom) |
+| 0x000 | IP Header | RO | Peripheral ID |
+| ... | ... | ... | Additional registers — see Verilog source |
+| 0x050 | CMD FIFO | R/W | Command FIFO interface |
 
-**Command FIFO Format**:
+**Command FIFO Format** (32-bit writes to offset 0x050):
 ```
 [29:28] = Mode (00=DATA, 01=CS, 10=DUMMY)
 DATA: [24]=read_flag, [7:0]=data
@@ -159,14 +187,16 @@ CS:   [24]=enable, [3:0]=cs_index
 
 **Base**: 0xF0004000 (H) / 0xF0006000 (N)
 
+Source: `gen/WishboneUart.v` (simplified — consult Verilog for exact layout)
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID |
-| 0x04 | CLK_DIV | RW | Clock divider for baud rate |
-| 0x08 | FRAME | RW | Frame config (data bits, parity, stop) |
-| 0x0C | STATUS | RO | TX ready, RX valid flags |
-| 0x10 | TX | WO | Transmit data |
-| 0x14 | RX | RO | Receive data |
+| 0x000 | IP Header | RO | Peripheral ID |
+| 0x004 | IP Version | RO | Version |
+| 0x008 | Features | RO | Feature flags |
+| ... | ... | ... | Additional registers — see Verilog source |
+
+> **Note**: The UART controller has a complex register map with clock divider, frame config, status, TX/RX data, and FIFO registers. Consult `gen/WishboneUart.v` for the exact layout.
 
 **Baud Rate Calculation**:
 ```
@@ -180,7 +210,7 @@ CLK_DIV = (50000000 / 115200) - 1 = 433
 
 **Base**: 0xF0007000
 
-Same register map but:
+Same controller RTL as UART0 but:
 - No CTS/RTS flow control
 - Basic TX/RX only
 - Reduced gate count
@@ -202,45 +232,45 @@ Same register map but:
 
 **Base**: 0xF0010000
 
+Source: `gen/WishbonePinmux.v`
+
+> **Note**: Pinmux has no IP Header register. Registers start directly at offset 0x000.
+
 | Offset | Register | Access | Description |
 |--------|----------|--------|-------------|
-| 0x00 | IP Header | RO | Peripheral ID |
-| 0x04 | PIN0 | RW | Pin 0 mux select |
-| 0x08 | PIN1 | RW | Pin 1 mux select |
+| 0x000 | Pin 0 Option | R/W | 1-bit mux select for pin 0 |
+| 0x004 | Pin 1 Option | R/W | 1-bit mux select for pin 1 |
+| 0x008 | Pin 2 Option | R/W | 1-bit mux select for pin 2 |
 | ... | ... | ... | ... |
-| 0x## | PIN11/19 | RW | Last pin mux (H:11, N:19) |
+| 0x02C | Pin 11 Option | R/W | 1-bit mux (H: last pin) |
+| ... | ... | ... | ... |
+| 0x04C | Pin 19 Option | R/W | 1-bit mux (N: last pin) |
 
-**Mux Values**:
-```
-0x0 = GPIO
-0x1 = UART0_TX/RX
-0x2 = I2C0_SDA/SCL
-0x3 = PWM0_CH0/CH1
-0x4 = SPI0 (N only)
-...
-```
+Each pin has a 1-bit mux: option=0 selects the first function, option=1 selects the alternate function. The pin-to-peripheral mapping is defined in the SoC configuration (see `hardware/scala/elemrv_h/ElemRV.scala`).
 
 ## Platform Variants
 
-### Minimal Platform
+### Base Platform (Minimal)
 
 ```
 0x80000000 - 0x80001FFF: RAM (8KB)
 0xA0000000 - 0xA000FFFF: Flash (64KB)
-0xF0040000 - 0xF0040FFF: UART0 (LiteX model)
-0xF0050000 - 0xF0050FFF: Timer0 (LiteX model)
+0xF0004000 - 0xF0004FFF: UART0 (LiteX model)
+0xF0005000 - 0xF0005FFF: Timer0 (LiteX model)
 ```
 
 ### Zephyr Platform
 
-Same as minimal plus:
+Same as base plus full peripheral set with LiteX models:
 ```
-0xF0020000 - 0xF0020FFF: MachineTimer (mtime)
+0xF0000000 - 0xF0000FFF: GPIO0 (LiteX model)
+0xF0001000 - 0xF0001FFF: I2C0 (LiteX model)
+0xF0005000 - 0xF0005FFF: Timer0 (LiteX_Timer_CSR32)
 ```
 
 ### Full Co-simulation
 
-All peripheral regions mapped to co-simulated RTL.
+All peripheral regions mapped to co-simulated RTL via Verilator.
 
 ## Access Patterns
 
@@ -261,6 +291,7 @@ IP Header registers are read-only:
 ```c
 // Read - OK
 uint32_t header = *(volatile uint32_t*)0xF0003000;
+// Returns 0x00080002 for PWM
 
 // Write - RTL will ignore
 *(volatile uint32_t*)0xF0003000 = 0x12345678;  // Ignored
@@ -271,10 +302,7 @@ uint32_t header = *(volatile uint32_t*)0xF0003000;
 Some registers (like UART TX) are write-only:
 ```c
 // Write - OK
-*(volatile uint32_t*)0xF0004010 = 'A';
-
-// Read - undefined behavior
-uint32_t val = *(volatile uint32_t*)0xF0004010;
+*(volatile uint32_t*)(0xF0004000 + TX_OFFSET) = 'A';
 ```
 
 ## GDB Memory Access
@@ -282,24 +310,24 @@ uint32_t val = *(volatile uint32_t*)0xF0004010;
 ### Reading Registers
 
 ```gdb
-# Read PWM enable
+# Read PWM IP Header (returns 0x00080002)
 (gdb) x/1xw 0xF0003000
 
-# Read GPIO values
-(gdb) x/1xw 0xF0000004
+# Read GPIO pin values
+(gdb) x/1xw 0xF000000C
 
-# Dump peripheral region
-(gdb) x/16xw 0xF0003000
+# Dump PWM register region
+(gdb) x/12xw 0xF0003000
 ```
 
 ### Writing Registers
 
 ```gdb
-# Write PWM period
-(gdb) set *(uint32_t*)0xF0003008 = 1000
+# Write PWM CH0 period
+(gdb) set *(uint32_t*)0xF0003018 = 1000
 
-# Or via monitor
-(gdb) mon sysbus WriteDoubleWord 0xF0003008 1000
+# Or via Renode monitor
+(gdb) mon sysbus WriteDoubleWord 0xF0003018 1000
 ```
 
 ## Memory Protection
@@ -338,5 +366,5 @@ All addresses in this document are physical addresses as seen by the CPU. No MMU
 
 ---
 
-**Previous**: [Taskfile Commands](taskfile-commands.md)  
+**Previous**: [Taskfile Commands](taskfile-commands.md)
 **Back to**: [README](../README.md)

@@ -41,19 +41,14 @@ ElemRV-H is the ASIC-focused platform variant with 8KB SRAM, running at 50MHz wi
 
 **Register Map**:
 ```
-0x00 - IP Header (0x00000001)
-0x04 - GPIO read value (RO)
-0x08 - GPIO write value (WO)
-0x0C - Write enable (direction: 1=output)
+See reference/memory-maps.md for the full GPIO register map.
+Key offsets: 0x00=IP Header, 0x0C=Value(RO), 0x10=Write(R/W), 0x14=Direction
 ```
 
 **Example Usage**:
 ```c
-// Configure pin 0 as output
-*(volatile uint32_t*)0xF000000C = 0x1;
-
-// Set pin 0 high
-*(volatile uint32_t*)0xF0000008 = 0x1;
+// Configure output value on pin 0
+*(volatile uint32_t*)0xF0000010 = 0x1;
 ```
 
 ### I2C0 Controller
@@ -104,22 +99,18 @@ Full-featured I2C master controller.
 
 **Register Map**:
 ```
-0x00 - Enable (bits 0-1: channel enables)
-0x04 - Clock prescaler
-0x08 - Period (20-bit)
-0x0C - Channel 0 duty
-0x10 - Channel 1 duty
-0x14 - Channel 0 control
-0x18 - Channel 1 control
+See reference/memory-maps.md for the full PWM register map.
+Key offsets: 0x00=IP Header(0x00080002), 0x10=ClkDiv, 0x14=CH0_Ctrl,
+0x18=CH0_Period, 0x1C=CH0_Pulse, 0x20-0x28=CH1
 ```
 
 **Example Configuration**:
 ```c
 // 50% duty cycle at 1kHz (50MHz clock)
-*(volatile uint32_t*)0xF0003004 = 0x31;  // Prescaler: 49
-*(volatile uint32_t*)0xF0003008 = 0x3E7; // Period: 999
-*(volatile uint32_t*)0xF000300C = 0x1F3; // Duty: 499
-*(volatile uint32_t*)0xF0003000 = 0x1;   // Enable
+*(volatile uint32_t*)0xF0003010 = 49;    // Clock divider
+*(volatile uint32_t*)0xF0003018 = 999;   // CH0 period
+*(volatile uint32_t*)0xF000301C = 499;   // CH0 pulse (50%)
+*(volatile uint32_t*)0xF0003014 = 0x1;   // CH0 enable
 ```
 
 ### UART0
@@ -218,21 +209,7 @@ task dt-test-quick
 
 ### Individual Tests
 
-Tests 1-30 cover ElemRV-H:
-
-| Test | Name | Description |
-|------|------|-------------|
-| 1 | Base Platform | CPU + RAM functionality |
-| 2 | PWM Co-simulation | PWM RTL integration |
-| 3 | GPIO Co-simulation | GPIO RTL integration |
-| 4 | UART Co-simulation | UART RTL integration |
-| 5 | I2C Co-simulation | I2C RTL integration |
-| 6 | Timer Co-simulation | Timer RTL integration |
-| 7 | PIO Co-simulation | PIO RTL integration |
-| 8 | Pinmux Co-simulation | Pinmux RTL integration |
-| 9 | Full Co-simulation | All 7 peripherals |
-| 10 | Pure Verilator Testbenches | RTL validation |
-| 11-30 | Zephyr applications | RTOS functionality |
+Tests 1-30 cover ElemRV-H. See [Test Suite Reference](../reference/test-suite.md) for details.
 
 ## Platform Files
 
@@ -269,7 +246,6 @@ renode --disable-xwt
 (monitor) include @platforms/elemrv_h_full_cosim.repl
 (monitor) sysbus LoadBinary @firmware.bin 0xA0000000
 (monitor) cpu PC 0xA0000000
-(monitor) start
 ```
 
 ## Known Limitations
@@ -285,10 +261,7 @@ renode --disable-xwt
 
 Located in `software/elemrv_h/`:
 
-- `pwm_test/` - PWM register testing
-- `gpio_test/` - GPIO input/output
-- `uart_test/` - UART communication
-- `timer_test/` - Timer interrupts
+- `pwm_test/` - PWM register testing (includes pwm_test.c and pwm_regtest.c)
 
 ### Zephyr Examples
 
@@ -296,8 +269,19 @@ Located in `software/elemrv-zephyr/app/`:
 
 - `hello_world/` - Basic console output
 - `blinky/` - GPIO LED toggle
-- `rtos_debug_demo/` - Multi-threading demo
+- `i2c_scan/` - I2C bus scan
+- `pwm_test/` - PWM driver test
+- `pio_test/` - PIO driver test
+- `pinmux_test/` - Pinmux driver test
+- `timer_uart_test/` - Timer-UART integration
+- `hybrid_pinmux_pwm_test/` - Hybrid co-sim test
+- `hybrid_pio_uart_test/` - Hybrid co-sim test
+- `hybrid_multi_cosim_test/` - Multi co-sim test
 - `sensor_capture/` - I2C sensor reading
+- `rtos_debug_demo/` - Multi-threading demo
+- `rtos_diagnostics/` - Thread analyzer
+- `sensor_i2c_capture/` - Generic I2C sensor
+- `portable_data_logger/` - Portable sensor logger
 
 ## Use Cases
 
@@ -312,4 +296,4 @@ ElemRV-H is ideal for:
 ---
 
 **Previous**: [Architecture](architecture.md)  
-**Next**: [ElemRV-N Platform](platforms/elemrv-n.md)
+**Next**: [ElemRV-N Platform](elemrv-n.md)

@@ -4,442 +4,317 @@ Complete documentation of all 51 tests in the ElemRV Digital Twin test suite.
 
 ## Test Organization
 
+Tests are numbered sequentially in `renode/run_tests.sh`. The ordering reflects the actual script:
+
 | Range | Category | Count |
 |-------|----------|-------|
-| 1-10 | Base platform and peripherals | 10 |
-| 11-20 | Integration and validation | 10 |
-| 21-30 | Zephyr RTOS (ElemRV-H) | 10 |
+| 1-2 | Base platform + PWM co-sim | 2 |
+| 3-8 | Zephyr apps (H) | 6 |
+| 9-15 | Co-sim per-peripheral + full integration (H) | 7 |
+| 16-21 | Cross-peripheral + hybrid tests | 6 |
+| 22-23 | Verilator + GDB validation | 2 |
+| 24-28 | Fault injection | 5 |
+| 29-30 | Sensor detection + capture (H) | 2 |
 | 31-40 | ElemRV-N platform | 10 |
-| 41-46 | RTOS debugging | 6 |
-| 47-51 | Sensor simulation | 5 |
+| 41-46 | RTOS debugging (H + N) | 6 |
+| 47-51 | Sensor simulation (I2C + SPI + portable) | 5 |
 
-## Phase 1: Platform Foundation (Tests 1-10)
+## Tests 1-2: Base Platform + PWM Co-sim
 
 ### Test 1: Base Platform
-**Platform**: `elemrv_h.repl`  
-**Purpose**: Verify CPU and RAM functionality  
-**Pass Marker**: `Base Platform Test PASSED`  
+**Script**: `test_base.resc`
+**Pass Marker**: `Base Platform Test PASSED`
 **Validates**:
 - VexRiscv CPU executes instructions
 - RAM read/write operations
-- Basic system bus operation
+- `emulation RunFor` timing
 
 ### Test 2: PWM Co-simulation
-**Platform**: `elemrv_h_cosim_pwm.repl`  
-**Purpose**: PWM RTL integration  
-**Pass Marker**: `PWM Co-simulation Test PASSED`  
+**Script**: `run_pwm_test.resc`
+**Pass Marker**: `PWM Co-simulation Test PASSED`
 **Validates**:
-- PWM library loads correctly
+- PWM Verilator library loads correctly
 - Register read/write through RTL
-- PWM output generation
+- IP Header verification (0x00080002)
 
-### Test 3: GPIO Co-simulation
-**Platform**: `elemrv_h_cosim_gpio.repl`  
-**Purpose**: GPIO RTL integration  
-**Pass Marker**: `GPIO Co-simulation Test PASSED`  
-**Validates**:
-- GPIO direction control
-- Pin read/write
-- 12-pin configuration
+## Tests 3-8: Zephyr Apps (H)
 
-### Test 4: UART Co-simulation
-**Platform**: `elemrv_h_cosim_uart.repl`  
-**Purpose**: UART RTL integration  
-**Pass Marker**: `UART Co-simulation Test PASSED`  
-**Validates**:
-- UART transmission
-- Baud rate configuration
-- TX/RX data path
+### Test 3: Zephyr Hello World
+**Script**: `run_zephyr_hello.resc`
+**Pass Marker**: `Zephyr Hello World Test PASSED`
+**Validates**: Zephyr kernel boot, UART console output, XIP from Flash
 
-### Test 5: I2C Co-simulation
-**Platform**: `elemrv_h_cosim_i2c.repl`  
-**Purpose**: I2C controller RTL integration  
-**Pass Marker**: `I2C Co-simulation Test PASSED`  
-**Validates**:
-- I2C master operation
-- Start/stop conditions
-- Data transfer
+### Test 4: Zephyr Blinky (GPIO+Timer)
+**Script**: `run_zephyr_blinky.resc`
+**Pass Marker**: `Zephyr Blinky Test PASSED`
+**Validates**: GPIO output, Timer k_sleep, LED toggle
 
-### Test 6: Timer Co-simulation
-**Platform**: `elemrv_h_cosim_mtimer.repl`  
-**Purpose**: Machine timer RTL integration  
-**Pass Marker**: `Timer Co-simulation Test PASSED`  
-**Validates**:
-- mtime counter increments
-- mtimecmp comparison
-- Interrupt generation
+### Test 5: Zephyr I2C Scan
+**Script**: `run_zephyr_i2c_scan.resc`
+**Pass Marker**: `Zephyr I2C Scan Test PASSED`
+**Validates**: LiteX I2C driver, address probing
 
-### Test 7: PIO Co-simulation
-**Platform**: `elemrv_h_cosim_pio.repl`  
-**Purpose**: Programmable I/O RTL integration  
-**Pass Marker**: `PIO Co-simulation Test PASSED`  
-**Validates**:
-- PIO state machine execution
-- 3-pin operation
-- Program loading
+### Test 6: Zephyr PWM Driver
+**Script**: `run_zephyr_pwm.resc`
+**Pass Marker**: `Zephyr PWM Driver Test PASSED`
+**Validates**: Custom WishbonePwm Zephyr driver
 
-### Test 8: Pinmux Co-simulation
-**Platform**: `elemrv_h_cosim_pinmux.repl`  
-**Purpose**: Pinmux RTL integration  
-**Pass Marker**: `Pinmux Co-simulation Test PASSED`  
-**Validates**:
-- Pin routing configuration
-- 12-pin support
-- Peripheral mapping
+### Test 7: Zephyr PIO Driver
+**Script**: `run_zephyr_pio.resc`
+**Pass Marker**: `Zephyr PIO Driver Test PASSED`
+**Validates**: Custom WishbonePio Zephyr driver
 
-### Test 9: Full Co-simulation (H)
-**Platform**: `elemrv_h_full_cosim.repl`  
-**Purpose**: All 7 peripherals simultaneously  
-**Pass Marker**: `Full Co-simulation Test PASSED`  
-**Validates**:
-- Multiple co-sim libraries loaded
-- No conflicts between peripherals
-- Concurrent bus access
+### Test 8: Zephyr Pinmux Driver
+**Script**: `run_zephyr_pinmux.resc`
+**Pass Marker**: `Zephyr Pinmux Driver Test PASSED`
+**Validates**: Custom WishbonePinmux Zephyr driver
 
-### Test 10: Pure Verilator Testbenches
-**Platform**: N/A (standalone)  
-**Purpose**: RTL validation without Renode  
-**Pass Marker**: `All Verilator testbenches PASSED`  
-**Validates**:
-- RTL correctness
-- Standalone test coverage
-- Baseline for co-sim validation
+## Tests 9-15: Co-sim Per-Peripheral (H)
 
-## Phase 2: Integration and Validation (Tests 11-20)
+### Test 9: PIO Co-simulation
+**Script**: `run_cosim_pio_test.resc`
+**Pass Marker**: `PIO Co-simulation Test PASSED`
+**Validates**: PIO RTL register verification, 3-pin operation
 
-### Test 11: GPIO Multi-Register Test
-**Purpose**: Multiple GPIO operations  
-**Pass Marker**: `GPIO Multi-Register Test PASSED`  
-**Validates**:
-- Sequential register access
-- Pin state persistence
+### Test 10: Pinmux Co-simulation
+**Script**: `run_cosim_pinmux_test.resc`
+**Pass Marker**: `Pinmux Co-simulation Test PASSED`
+**Validates**: Pinmux RTL, 12-pin routing
 
-### Test 12: UART Loopback Test
-**Purpose**: UART TX->RX loopback  
-**Pass Marker**: `UART Loopback Test PASSED`  
-**Validates**:
-- Full-duplex operation
-- Data integrity
+### Test 11: GPIO Co-simulation
+**Script**: `run_cosim_gpio_test.resc`
+**Pass Marker**: `GPIO Co-simulation Test PASSED`
+**Validates**: GPIO RTL, direction control, pin read/write
 
-### Test 13: I2C Bus Scan
-**Purpose**: I2C device detection  
-**Pass Marker**: `I2C Scan Test PASSED`  
-**Validates**:
-- Address probing
-- ACK/NACK handling
+### Test 12: MachineTimer Co-simulation
+**Script**: `run_cosim_mtimer_test.resc`
+**Pass Marker**: `MachineTimer Co-simulation Test PASSED`
+**Validates**: mtime counter, mtimecmp comparison
 
-### Test 14: PWM Frequency Sweep
-**Purpose**: PWM at various frequencies  
-**Pass Marker**: `PWM Frequency Test PASSED`  
-**Validates**:
-- Prescaler configuration
-- Period accuracy
+### Test 13: I2C Co-simulation
+**Script**: `run_cosim_i2c_test.resc`
+**Pass Marker**: `I2C Co-simulation Test PASSED`
+**Validates**: I2C master RTL, start/stop conditions
 
-### Test 15: Timer Interrupt Test
-**Purpose**: Timer-based interrupts  
-**Pass Marker**: `Timer Interrupt Test PASSED`  
-**Validates**:
-- IRQ generation
-- Handler execution
+### Test 14: UART Co-simulation
+**Script**: `run_cosim_uart_test.resc`
+**Pass Marker**: `UART Co-simulation Test PASSED`
+**Validates**: UART RTL, baud rate config, TX/RX
 
-### Test 16: PIO Waveform Generation
-**Purpose**: Custom PIO programs  
-**Pass Marker**: `PIO Waveform Test PASSED`  
-**Validates**:
-- Custom instruction sequences
-- Pin waveforms
+### Test 15: Full Co-simulation Integration
+**Script**: `run_cosim_full_test.resc`
+**Pass Marker**: `Full Co-simulation Integration Test PASSED`
+**Validates**: All 7 co-sim libraries loaded simultaneously, no conflicts
 
-### Test 17: Pinmux Peripheral Routing
-**Purpose**: Peripheral to pin mapping  
-**Pass Marker**: `Pinmux Routing Test PASSED`  
-**Validates**:
-- Multi-peripheral routing
-- Pin conflicts
+## Tests 16-21: Cross-Peripheral + Hybrid
 
-### Test 18: Co-sim Cross-Validation
-**Purpose**: Compare co-sim vs Verilator  
-**Pass Marker**: `Cross-Validation Test PASSED`  
-**Validates**:
-- Consistency between methods
-- Result matching
+### Test 16: Multi-Peripheral Register Sequence
+**Script**: `run_cosim_multi_reg_test.resc`
+**Pass Marker**: `Multi-Peripheral Register Sequence Test PASSED`
+**Validates**: Sequential register access across all 7 co-sim peripherals
 
-### Test 19: Library Reload Test
-**Purpose**: Dynamic library loading  
-**Pass Marker**: `Library Reload Test PASSED`  
-**Validates**:
-- Multiple load/unload cycles
-- No memory leaks
+### Test 17: Pinmux+PWM Register Sequence
+**Script**: `run_cosim_pinmux_pwm_seq_test.resc`
+**Pass Marker**: `Pinmux+PWM Register Sequence Test PASSED`
+**Validates**: Pinmux and PWM register interaction
 
-### Test 20: Concurrent Access Test
-**Purpose**: Simultaneous peripheral access  
-**Pass Marker**: `Concurrent Access Test PASSED`  
-**Validates**:
-- Bus arbitration
-- No data corruption
+### Test 18: Zephyr Timer-UART Integration
+**Script**: `run_zephyr_timer_uart.resc`
+**Pass Marker**: `Zephyr Timer-UART Integration Test PASSED`
+**Validates**: Interrupt-driven timer + UART output flow
 
-## Phase 3: Zephyr RTOS - H (Tests 21-30)
+### Test 19: Hybrid Pinmux+PWM
+**Script**: `run_hybrid_pinmux_pwm.resc`
+**Pass Marker**: `Hybrid Pinmux-PWM Integration Test PASSED`
+**Validates**: Co-sim PWM/Pinmux + LiteX UART/Timer
 
-### Test 21: Zephyr Hello World
-**Purpose**: Basic Zephyr boot  
-**Pass Marker**: `Zephyr Hello World Test PASSED`  
-**Validates**:
-- Zephyr kernel initialization
-- UART console output
-- XIP boot from Flash
+### Test 20: Hybrid PIO+UART
+**Script**: `run_hybrid_pio_uart.resc`
+**Pass Marker**: `Hybrid PIO-UART Integration Test PASSED`
+**Validates**: Co-sim PIO + LiteX UART/Timer
 
-### Test 22: Zephyr Blinky
-**Purpose**: GPIO via Zephyr API  
-**Pass Marker**: `Zephyr Blinky Test PASSED`  
-**Validates**:
-- GPIO driver
-- LED toggle
-- Kernel timers
+### Test 21: Hybrid Multi-Cosim
+**Script**: `run_hybrid_multi_cosim.resc`
+**Pass Marker**: `Hybrid Multi-Cosim Integration Test PASSED`
+**Validates**: Multiple co-sim peripherals + LiteX UART/Timer
 
-### Test 23: Zephyr Button IRQ
-**Purpose**: GPIO interrupts  
-**Pass Marker**: `Zephyr Button IRQ Test PASSED`  
-**Validates**:
-- Interrupt handling
-- Callback execution
+## Tests 22-23: Verilator + GDB
 
-### Test 24: Zephyr PWM Fade
-**Purpose**: PWM via Zephyr API  
-**Pass Marker**: `Zephyr PWM Fade Test PASSED`  
-**Validates**:
-- PWM driver
-- Duty cycle control
+### Test 22: Pure Verilator Testbenches
+**Script**: N/A (runs `make -C verilated/testbenches run`)
+**Pass Marker**: `All testbenches PASSED`
+**Validates**: RTL correctness without Renode, standalone test coverage
 
-### Test 25: Zephyr UART Console
-**Purpose**: UART driver  
-**Pass Marker**: `Zephyr UART Test PASSED`  
-**Validates**:
-- printk output
-- Console integration
+### Test 23: GDB Server Validation
+**Script**: `test_gdb_server.sh`
+**Pass Marker**: `GDB_SERVER_TEST PASSED`
+**Validates**: GDB server starts, accepts connections, responds to commands
 
-### Test 26: Zephyr Timer
-**Purpose**: Kernel timer API  
-**Pass Marker**: `Zephyr Timer Test PASSED`  
-**Validates**:
-- k_timer API
-- Callbacks
+## Tests 24-28: Fault Injection
 
-### Test 27: Zephyr I2C
-**Purpose**: I2C driver  
-**Pass Marker**: `Zephyr I2C Test PASSED`  
-**Validates**:
-- I2C API
-- Device communication
+### Test 24: Fault: PWM Register Corruption
+**Script**: `run_fault_pwm_corruption.resc`
+**Pass Marker**: `PWM Fault Injection Test PASSED`
+**Validates**: Firmware behavior when PWM period register is corrupted
 
-### Test 28: Zephyr Multi-threading
-**Purpose**: Thread creation  
-**Pass Marker**: `Zephyr Thread Test PASSED`  
-**Validates**:
-- k_thread_create
-- Context switching
+### Test 25: Fault: GPIO Register Corruption
+**Script**: `run_fault_gpio_corruption.resc`
+**Pass Marker**: `GPIO Fault Injection Test PASSED`
+**Validates**: Firmware behavior when GPIO direction is corrupted
 
-### Test 29: Sensor Detection (I2C)
-**Purpose**: I2C sensor scan  
-**Pass Marker**: `Sensor Detection Test PASSED`  
-**Validates**:
-- SI7021 presence
-- Address detection
+### Test 26: Fault: Timer Perturbation
+**Script**: `run_fault_timer_perturb.resc`
+**Pass Marker**: `Timer Perturbation Fault Test PASSED`
+**Validates**: Firmware behavior when timer interrupt is perturbed
 
-### Test 30: Sensor Capture (I2C)
-**Purpose**: Dynamic sensor reading  
-**Pass Marker**: `Sensor Capture Test PASSED`  
-**Validates**:
-- Temperature reads
-- Dynamic value changes
-- Data conversion
+### Test 27: Fault: UART Injection
+**Script**: `run_fault_uart_injection.resc`
+**Pass Marker**: `UART Fault Injection Test PASSED`
+**Validates**: Firmware behavior with injected UART byte
 
-## Phase 4: ElemRV-N Platform (Tests 31-40)
+### Test 28: Fault: Missing Peripheral
+**Script**: `run_fault_missing_peripheral.resc`
+**Pass Marker**: `Missing Peripheral Fault Test PASSED`
+**Validates**: Firmware behavior when peripheral is absent (Tag region)
+
+## Tests 29-30: Sensor (H)
+
+### Test 29: I2C Sensor Detection
+**Script**: `run_sensor_detect.resc`
+**Pass Marker**: `I2C Sensor Detection Test PASSED`
+**Validates**: SI7021 presence at I2C address, scan detection
+
+### Test 30: Sensor Capture
+**Script**: `run_sensor_capture.resc`
+**Pass Marker**: `Sensor Capture Integration Test PASSED`
+**Validates**: Dynamic temperature reads, value changes
+
+## Tests 31-40: ElemRV-N Platform
 
 ### Test 31: N Base Platform
-**Platform**: `elemrv_n.repl`  
-**Purpose**: N CPU + RAM  
-**Pass Marker**: `N Base Platform Test PASSED`  
-**Validates**:
-- RV32IMC execution
-- 4KB RAM operation
-- 20MHz clock
+**Script**: `run_n_base_test.resc`
+**Pass Marker**: `ElemRV-N Base Platform Test PASSED`
+**Validates**: RV32IMC execution, 4KB RAM
 
 ### Test 32: N GPIO Co-simulation
-**Purpose**: 20-pin GPIO RTL  
-**Pass Marker**: `N GPIO Co-simulation Test PASSED`  
-**Validates**:
-- Extended GPIO (20 pins)
-- Same interface as H
+**Script**: `run_n_cosim_gpio_test.resc`
+**Pass Marker**: `N GPIO Co-simulation Test PASSED`
+**Validates**: 20-pin GPIO RTL
 
 ### Test 33: N SPI Co-simulation
-**Purpose**: SPI controller RTL  
-**Pass Marker**: `N SPI Co-simulation Test PASSED`  
-**Validates**:
-- SPI master operation
-- Command FIFO interface
+**Script**: `run_n_cosim_spi_test.resc`
+**Pass Marker**: `N SPI Co-simulation Test PASSED`
+**Validates**: SPI controller RTL, command FIFO
 
 ### Test 34: N I2C Lite Co-simulation
-**Purpose**: Lite I2C RTL  
-**Pass Marker**: `N I2C Lite Co-simulation Test PASSED`  
-**Validates**:
-- Reduced feature set
-- Polling operation
+**Script**: `run_n_cosim_i2c_lite_test.resc`
+**Pass Marker**: `N I2C Lite Co-simulation Test PASSED`
+**Validates**: Lightweight I2C RTL, polling operation
 
 ### Test 35: N UART Lite Co-simulation
-**Purpose**: Lite UART RTL  
-**Pass Marker**: `N UART Lite Co-simulation Test PASSED`  
-**Validates**:
-- Basic TX/RX
-- No flow control
+**Script**: `run_n_cosim_uart_lite_test.resc`
+**Pass Marker**: `N UART Lite Co-simulation Test PASSED`
+**Validates**: Lightweight UART RTL, basic TX/RX
 
 ### Test 36: N Pinmux Co-simulation
-**Purpose**: 20-pin pinmux RTL  
-**Pass Marker**: `N Pinmux Co-simulation Test PASSED`  
-**Validates**:
-- Extended pinmux
-- Multi-peripheral routing
+**Script**: `run_n_cosim_pinmux_test.resc`
+**Pass Marker**: `N Pinmux Co-simulation Test PASSED`
+**Validates**: 20-pin pinmux RTL
 
-### Test 37: N Full Co-simulation
-**Purpose**: All 10 peripherals  
-**Pass Marker**: `N Full Co-simulation Test PASSED`  
-**Validates**:
-- 10 co-sim libraries
-- Shared H libraries work
-- N-specific libraries
+### Test 37: N Full Co-simulation Integration
+**Script**: `run_n_cosim_full_test.resc`
+**Pass Marker**: `N Full Co-simulation Test PASSED`
+**Validates**: All 10 co-sim peripherals simultaneously
 
-### Test 38: N Pure Verilator
-**Purpose**: RTL validation  
-**Pass Marker**: `All N testbenches PASSED`  
-**Validates**:
-- N-specific RTL
-- SPI, I2C lite, UART lite
+### Test 38: N Pure Verilator Testbenches
+**Script**: N/A (runs `make -C verilated/testbenches -f Makefile.nitrogen run`)
+**Pass Marker**: `All N testbenches PASSED`
+**Validates**: N-specific RTL correctness
 
-### Test 39: N Zephyr Hello
-**Purpose**: Basic N Zephyr boot  
-**Pass Marker**: `N Zephyr Hello World Test PASSED`  
-**Validates**:
-- N Zephyr BSP
-- RV32IMC support
+### Test 39: N Zephyr Hello World
+**Script**: `run_n_zephyr_hello.resc`
+**Pass Marker**: `N Zephyr Hello World Test PASSED`
+**Validates**: N Zephyr BSP, RV32IMC support
 
 ### Test 40: N Zephyr Blinky
-**Purpose**: N GPIO via Zephyr  
-**Pass Marker**: `N Zephyr Blinky Test PASSED`  
-**Validates**:
-- 20-pin GPIO driver
-- LED on N board
+**Script**: `run_n_zephyr_blinky.resc`
+**Pass Marker**: `N Zephyr Blinky Test PASSED`
+**Validates**: 20-pin GPIO driver on N
 
-## Phase 5: RTOS Debugging (Tests 41-46)
+## Tests 41-46: RTOS Debugging
 
 ### Test 41: RTOS Debug Demo (H)
-**Firmware**: `rtos_debug_demo`  
-**Pass Marker**: `RTOS Debug Demo Test PASSED`  
-**Validates**:
-- Multi-thread creation
-- Thread analyzer output
-- Thread naming
+**Script**: `run_rtos_debug_demo_test.resc`
+**Pass Marker**: `RTOS Debug Demo Test PASSED`
+**Validates**: Multi-thread creation, thread analyzer output
 
 ### Test 42: RTOS Diagnostics (H)
-**Firmware**: `rtos_diagnostics`  
-**Pass Marker**: `RTOS Diagnostics Test PASSED`  
-**Validates**:
-- Auto thread analyzer
-- Logging subsystem
-- Shell (if enabled)
+**Script**: `run_rtos_diagnostics_test.resc`
+**Pass Marker**: `RTOS Diagnostics Test PASSED`
+**Validates**: Auto thread analyzer, logging subsystem
 
 ### Test 43: RTOS GDB Threads (H)
-**Purpose**: GDB thread-aware debugging  
-**Pass Marker**: `RTOS GDB Thread Test PASSED`  
-**Validates**:
-- Debug symbols present
-- Thread metadata accessible
-- zephyr-threads command
+**Script**: `run_rtos_gdb_threads_test.resc`
+**Pass Marker**: `RTOS GDB Threads Test PASSED`
+**Validates**: Debug symbols, thread metadata accessible
 
 ### Test 44: N RTOS Debug Demo
-**Firmware**: `rtos_debug_demo` (N)  
-**Pass Marker**: `N RTOS Debug Demo Test PASSED`  
-**Validates**:
-- Multi-thread on 4KB RAM
-- Thread analyzer (on-demand)
+**Script**: `run_n_rtos_debug_demo_test.resc`
+**Pass Marker**: `N RTOS Debug Demo Test PASSED`
+**Validates**: Multi-thread on 4KB RAM
 
 ### Test 45: N RTOS Diagnostics
-**Firmware**: `rtos_diagnostics` (N)  
-**Pass Marker**: `N RTOS Diagnostics Test PASSED`  
-**Validates**:
-- On-demand analyzer
-- No shell (RAM constraints)
-- Logging works
+**Script**: `run_n_rtos_diagnostics_test.resc`
+**Pass Marker**: `N RTOS Diagnostics Test PASSED`
+**Validates**: On-demand analyzer, no shell (RAM constraints)
 
 ### Test 46: N RTOS GDB Threads
-**Purpose**: GDB debugging on N  
-**Pass Marker**: `N RTOS GDB Thread Test PASSED`  
-**Validates**:
-- N debug symbols
-- Thread inspection
+**Script**: `run_n_rtos_gdb_threads_test.resc`
+**Pass Marker**: `N RTOS GDB Threads Test PASSED`
+**Validates**: N debug symbols, thread inspection
 
-## Phase 6: Sensor Simulation (Tests 47-51)
+## Tests 47-51: Sensor Simulation
 
-### Test 47: I2C Sensor (H)
-**Platform**: `elemrv_h_i2c_sensor.repl`  
-**Pass Marker**: `I2C Sensor Test (H) PASSED`  
-**Validates**:
-- SI7021 model
-- Temperature reads
-- Humidity reads
+### Test 47: H I2C Sensor Capture
+**Script**: `run_sensor_i2c_h_test.resc`
+**Pass Marker**: `Sensor I2C H Test PASSED`
+**Validates**: Generic I2C sensor simulation (SI70xx @ 0x48)
 
-### Test 48: I2C Sensor (N)
-**Platform**: `elemrv_n_i2c_sensor.repl`  
-**Pass Marker**: `I2C Sensor Test (N) PASSED`  
-**Validates**:
-- Same sensor on N
-- I2C driver compatibility
+### Test 48: N I2C Sensor Capture
+**Script**: `run_sensor_i2c_n_test.resc`
+**Pass Marker**: `Sensor I2C N Test PASSED`
+**Validates**: Same firmware on N board
 
-### Test 49: SPI Sensor (N)
-**Platform**: `elemrv_n_spi_sensor.repl`  
-**Pass Marker**: `SPI Sensor Test PASSED`  
-**Validates**:
-- Embedded SPI sensor
-- Custom nafarr driver
-- Register reads
+### Test 49: N SPI Sensor Capture
+**Script**: `run_sensor_spi_n_test.resc`
+**Pass Marker**: `Sensor SPI N Test PASSED`
+**Validates**: Co-sim SPI + embedded sensor slave, custom nafarr driver
 
-### Test 50: Portable Data Logger (H)
-**Firmware**: `portable_data_logger`  
-**Pass Marker**: `Portable Logger Test (H) PASSED`  
-**Validates**:
-- Multi-thread app
-- Sensor + GPIO + UART
-- Portable (no #ifdef)
+### Test 50: H Portable Data Logger
+**Script**: `run_portable_h_test.resc`
+**Pass Marker**: `Portable H Test PASSED`
+**Validates**: Multi-thread I2C sensor + LED + UART on H
 
-### Test 51: Portable Data Logger (N)
-**Firmware**: `portable_data_logger` (N)  
-**Pass Marker**: `Portable Logger Test (N) PASSED`  
-**Validates**:
-- Same app on N
-- BSP abstraction
-- 4KB RAM operation
+### Test 51: N Portable Data Logger
+**Script**: `run_portable_n_test.resc`
+**Pass Marker**: `Portable N Test PASSED`
+**Validates**: Same app on N, 4KB RAM operation
 
 ## Running Tests
 
 ### Full Suite
 
 ```bash
-# All 51 tests
+# All 51 tests (build + test)
 task dt-integration-test
 
-# Expected time: 5-10 minutes
-```
-
-### Quick Run
-
-```bash
-# Run without rebuilding
+# All 51 tests (no rebuild)
 task dt-test-quick
 ```
 
 ### Platform-Specific
 
 ```bash
-# ElemRV-H only
-task dt-test
-
 # ElemRV-N only
 task dt-n-test
 ```
@@ -447,16 +322,21 @@ task dt-n-test
 ### Individual Tests
 
 ```bash
-# Run single test
+# Run a single test script
 docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
-  renode --disable-xwt --console -e "include @run_test_XX.resc"'
+  renode --disable-xwt --console -e "include @run_pwm_test.resc"'
 ```
 
 ## Test Reports
 
-Test results are logged to:
-- `renode/logs/test_results.txt`
-- `renode/logs/test_failures.txt` (if any)
+Test results are logged per-test to `/tmp/dt_test_N.log` (inside the Docker container), where N is the test number.
+
+The `run_tests.sh` script prints a summary at the end:
+```
+============================================
+  SUMMARY: 51/51 passed
+============================================
+```
 
 ### Exit Codes
 
@@ -464,52 +344,51 @@ Test results are logged to:
 |------|---------|
 | 0 | All tests passed |
 | 1 | One or more tests failed |
-| 2 | Setup error |
 
 ## Adding New Tests
 
 ### Test Script Template
 
 ```renode
-// run_test_XX.resc
+# run_my_test.resc
 using sysbus
 
-mach create "test_XX"
-machine LoadPlatformDescription @platforms/platform.repl
+mach create "my_test"
+machine LoadPlatformDescription @platforms/elemrv_h_full_cosim.repl
 
 # Load co-sim libraries if needed
-$lib?="/path/to/lib.so"
-peripheral_cosim SimulationFilePathLinux $lib
+$lib?="/workspace/elemrv/renode/verilated/libs/libpwm.so"
+pwm0_cosim SimulationFilePathLinux $lib
 
 # Load firmware
 sysbus LoadBinary @firmware.bin 0xA0000000
 cpu PC 0xA0000000
 
 # Run
-echo "Starting Test XX: Description"
+echo "Starting my test"
 emulation RunFor "00:00:05.000000"
 
 # Verify result
-$result=sysbus ReadDoubleWord 0x80001000
-if $result == 0x1 {
-    echo "Test XX: PASSED"
-} else {
-    echo "Test XX: FAILED"
-}
+sysbus ReadDoubleWord 0xF0003000
 
+echo "My Test PASSED"
 quit
 ```
+
+> **Note**: Do not assign `sysbus ReadDoubleWord` results to variables (e.g., `$result=sysbus ReadDoubleWord ...`) — this hangs with CoSimulatedPeripheral.
 
 ### Test Registration
 
 Add to `renode/run_tests.sh`:
 
 ```bash
-echo "Test XX: Description"
-run_test "run_test_XX.resc" "Test XX PASSED"
+# Test N: My Test
+run_test "My Test Name" "run_my_test.resc" "My Test PASSED"
 ```
+
+The `run_test` function takes 3 arguments: test name, script path, and pass marker string.
 
 ---
 
-**Previous**: [Bare-metal Firmware](../firmware/bare-metal.md)  
+**Previous**: [Bare-metal Firmware](../firmware/bare-metal.md)
 **Next**: [Taskfile Commands](taskfile-commands.md)

@@ -98,13 +98,17 @@ The `renode/gdb/elemrv.gdb` script is loaded automatically and provides peripher
 (gdb) pwm-regs
 
 === PWM0 Registers (0xF0003000) ===
-0x00 (Enable):    0x00000003  (CH0=1, CH1=1)
-0x04 (Prescaler): 0x00000063  (99)
-0x08 (Period):    0x000003E8  (1000)
-0x0C (CH0 Duty):  0x000001F4  (500)
-0x10 (CH1 Duty):  0x000000C8  (200)
-0x14 (CH0 Ctrl):  0x00000001  (Enabled)
-0x18 (CH1 Ctrl):  0x00000001  (Enabled)
+0x000 (IP Header):   0x00080002
+0x004 (IP Version):  0x01000000
+0x008 (IP Features): 0x14141402
+0x00C (IP Status):   0x00000000
+0x010 (Clk Div):     0x00000063  (99)
+0x014 (CH0 Ctrl):    0x00000001  (Enabled)
+0x018 (CH0 Period):  0x000003E8  (1000)
+0x01C (CH0 Pulse):   0x000001F4  (500)
+0x020 (CH1 Ctrl):    0x00000001  (Enabled)
+0x024 (CH1 Period):  0x000000C8  (200)
+0x028 (CH1 Pulse):   0x00000064  (100)
 ```
 
 ## Docker Access
@@ -162,9 +166,9 @@ The `mon` command sends any command to the Renode monitor:
 With co-sim mode, GDB memory reads (`x/1xw 0xF0003000`) go through the Wishbone bus to the actual Verilator model. The value you see is the real RTL output - not a software model approximation.
 
 ```gdb
-# Read PWM enable register through RTL
+# Read PWM IP Header through RTL
 (gdb) x/1xw 0xF0003000
-0xf0003000: 0x00000003  # Actual RTL value
+0xf0003000: 0x00080002  # IP Header (read-only)
 ```
 
 ### Renode Stepping vs GDB Stepping
@@ -229,8 +233,8 @@ Monitor memory locations:
 ### Conditional Breakpoints
 
 ```gdb
-# Break only when PWM period is set to specific value
-(gdb) break main.c:45 if *(uint32_t*)0xF0003008 == 1000
+# Break only when PWM CH0 period is set to specific value
+(gdb) break main.c:45 if *(uint32_t*)0xF0003018 == 1000
 ```
 
 ### Backtraces
@@ -301,7 +305,7 @@ Monitor memory locations:
 
 # Check if IP header matches expected
 (gdb) print/x *(uint32_t*)0xF0003000
-$1 = 0x00000001  # PWM header
+$1 = 0x00080002  # PWM IP Header
 ```
 
 ## Troubleshooting

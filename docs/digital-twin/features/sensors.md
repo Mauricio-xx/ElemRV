@@ -9,8 +9,10 @@ The ElemRV Digital Twin provides simulated sensor models for IoT application dev
 Both ElemRV-H and ElemRV-N platforms include a simulated SI7021 temperature and humidity sensor connected to the I2C0 bus.
 
 **Sensor Model**: Renode's built-in `Sensors.SI70xx`
-**I2C Address**: 0x48
+**I2C Address**: 0x48 (for `elemrv_h_i2c_sensor.repl` / `elemrv_n_i2c_sensor.repl`)
 **Protocol**: SI7021 (compatible)
+
+> **Note**: Tests 29-30 use `elemrv_h_sensor.repl` which may use a different I2C address (0x40). Check the specific platform file.
 
 ### Architecture
 
@@ -387,6 +389,8 @@ if (!validate_crc(data, crc)) {
 ```
 
 ## Extending Sensor Models
+
+> **Note**: The following examples are conceptual references for extending sensor models. They show the general pattern but may not compile as-is.
 
 ### Custom I2C Sensor
 
