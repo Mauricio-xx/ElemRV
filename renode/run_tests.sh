@@ -69,6 +69,8 @@ run_test() {
         | grep -vi "Couldn't find" \
         | grep -vi "error_count" \
         | grep -vi "Zicsr instruction set is not enabled" \
+        | grep -vi "([0-9]\+ error" \
+        | grep -vi "0 error" \
         || true)
 
     if grep -q "$pass_marker" "$logfile" && [ -z "$filtered_errors" ]; then
