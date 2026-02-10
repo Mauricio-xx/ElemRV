@@ -47,9 +47,12 @@ struct SpiSensorSlave {
   bool     cs_active;      // true when CS is asserted (low)
   uint8_t  prev_cs;        // previous CS state for edge detection
   uint8_t  prev_sclk;      // previous SCLK state for edge detection
+  uint8_t  prev_mosi;      // previous MOSI value (sample-delayed)
   int      bit_count;      // bits received in current byte
   uint8_t  rx_shift;       // shift register for MOSI → slave
   uint8_t  tx_shift;       // shift register for slave → MISO
+  uint8_t  pending_tx;     // next byte to load into tx_shift (deferred)
+  bool     pending_load;   // true when pending_tx is ready to swap in
   int      byte_count;     // bytes received since CS assert
   uint8_t  reg_addr;       // selected register address
   int      sample_index;   // cycling index into sensor tables
@@ -58,9 +61,12 @@ struct SpiSensorSlave {
     cs_active = false;
     prev_cs = 1;
     prev_sclk = 0;
+    prev_mosi = 0;
     bit_count = 0;
     rx_shift = 0;
     tx_shift = 0xFF;
+    pending_tx = 0xFF;
+    pending_load = false;
     byte_count = 0;
     reg_addr = 0;
     sample_index = 0;
@@ -76,7 +82,7 @@ struct SpiSensorSlave {
   }
 
   // Called each clock tick with current SPI pin state.
-  // Returns the MISO bit to drive (0 or 1). Uses bit 0 of dq_read[1:0].
+  // Returns the MISO bit to drive (0 or 1).
   uint8_t tick(uint8_t cs, uint8_t sclk, uint8_t mosi_bit) {
     uint8_t miso_bit = (tx_shift >> 7) & 1;
 
@@ -104,44 +110,61 @@ struct SpiSensorSlave {
       return 1; // MISO high when idle
     }
 
-    // SCLK rising edge: sample MOSI, shift out MISO
+    // SCLK rising edge: sample prev_mosi (not current mosi_bit), count
+    // bits. The RTL updates MOSI simultaneously with SCLK, so the
+    // current mosi_bit is already the NEXT bit. Use prev_mosi which
+    // holds the value from before the SCLK transition.
+    // On byte boundary, DEFER the register load into pending_tx — do
+    // NOT overwrite tx_shift yet. The controller's pipelined MISO
+    // capture reads io_spi_dq_read 1 bus clock after SCLK rises, so
+    // the last bit of the current byte must persist on MISO until the
+    // falling edge.
     if (prev_sclk == 0 && sclk == 1) {
-      // Shift in MOSI bit
-      rx_shift = (rx_shift << 1) | (mosi_bit & 1);
+      rx_shift = (rx_shift << 1) | (prev_mosi & 1);
       bit_count++;
 
       if (bit_count == 8) {
-        // Complete byte received
         if (byte_count == 0) {
-          // First byte = register address
           reg_addr = rx_shift;
-          tx_shift = getRegValue(reg_addr);
-          DEBUG_PRINT("[SENSOR] reg_addr=0x%02X, data=0x%02X", reg_addr, tx_shift);
+          pending_tx = getRegValue(reg_addr);
+          DEBUG_PRINT("[SENSOR] reg_addr=0x%02X, data=0x%02X", reg_addr, pending_tx);
         } else {
-          // Subsequent bytes: auto-increment register
           reg_addr++;
-          tx_shift = getRegValue(reg_addr);
-          DEBUG_PRINT("[SENSOR] auto-inc reg=0x%02X, data=0x%02X", reg_addr, tx_shift);
+          pending_tx = getRegValue(reg_addr);
+          DEBUG_PRINT("[SENSOR] auto-inc reg=0x%02X, data=0x%02X", reg_addr, pending_tx);
         }
+        pending_load = true;
         byte_count++;
         bit_count = 0;
         rx_shift = 0;
       }
+      // miso_bit stays at current tx_shift MSB (no shift yet)
+      miso_bit = (tx_shift >> 7) & 1;
     }
 
-    // SCLK falling edge: shift out next MISO bit
+    // SCLK falling edge: controller has captured the current bit.
+    // Now safe to load pending register data or shift for next bit.
     if (prev_sclk == 1 && sclk == 0) {
+      if (pending_load) {
+        // Swap in the deferred register value for the next byte
+        tx_shift = pending_tx;
+        pending_load = false;
+      } else if (bit_count > 0) {
+        // Mid-byte: shift to prepare next bit on MISO
+        tx_shift <<= 1;
+      }
       miso_bit = (tx_shift >> 7) & 1;
-      tx_shift <<= 1;
     }
 
     prev_sclk = sclk;
+    prev_mosi = mosi_bit;
     return miso_bit;
   }
 };
 
 static SpiSensorSlave g_sensor;
 static bool g_sensor_initialized = false;
+static uint8_t g_cached_miso = 1;  // Cached MISO bit for feedback to RTL
 
 static void copyBridgeAndEval() {
   g_top->io_bus_ADR      = (uint16_t)((g_bridge_addr >> 2) & 0x3FF);
@@ -151,9 +174,9 @@ static void copyBridgeAndEval() {
   if (g_sensor_initialized) {
     uint8_t cs = g_top->io_spi_cs & 1;
     uint8_t sclk = g_top->io_spi_sclk & 1;
-    uint8_t mosi = g_top->io_spi_dq_write & 1;  // dq[0] = MOSI
-    uint8_t miso = g_sensor.tick(cs, sclk, mosi);
-    g_top->io_spi_dq_read = (miso & 1) << 1;    // dq[1] = MISO
+    uint8_t mosi = g_top->io_spi_dq_write & 1;
+    g_cached_miso = g_sensor.tick(cs, sclk, mosi);
+    g_top->io_spi_dq_read = (g_cached_miso & 1) << 1;
   } else {
     g_top->io_spi_dq_read = 0;
   }
@@ -168,20 +191,42 @@ void evalModel() {
 
   copyBridgeAndEval();
 
+  // Read-latch for response FIFO (addr 0x014 = byte addr 0x050):
+  // Verilator's eval processes sequential logic (FIFO pop) using
+  // combinational values from the PREVIOUS eval. A single bus read
+  // cycle asserts pop_ready=1 combinationally but the pop fires only
+  // on the NEXT posedge. The bus deasserts CYC/STB before that posedge,
+  // so the entry is never popped. Inject an extra clock cycle while
+  // CYC/STB are still asserted to let the pop take effect.
+  if (!g_top->io_bus_WE && g_top->io_bus_ACK &&
+      g_top->io_bus_CYC && g_top->io_bus_STB &&
+      g_top->io_bus_ADR == 0x014) {
+    uint32_t rsp = (uint32_t)g_bridge_rd_dat;
+    if (rsp & 0x80000000) {
+      // Extra clock cycle to pop the FIFO entry.
+      // Save the valid response — the extra eval will overwrite
+      // g_bridge_rd_dat with the now-empty FIFO state.
+      uint64_t saved_rd_dat = g_bridge_rd_dat;
+      g_top->clk = 1;
+      copyBridgeAndEval();
+      g_top->clk = 0;
+      copyBridgeAndEval();
+      g_bridge_rd_dat = saved_rd_dat;
+    }
+  }
+
   if (g_top->io_bus_WE && g_top->io_bus_ACK &&
       g_top->io_bus_CYC && g_top->io_bus_STB) {
+    // Write-latch: extra clock cycle so the RTL can latch data while
+    // ACK+WE+CYC+STB are simultaneously high. Use copyBridgeAndEval
+    // (with sensor) so the sensor tracks any SCLK transitions that
+    // occur during the extra clock — the SPI controller may be
+    // actively clocking mid-transaction.
     g_top->clk = 1;
     copyBridgeAndEval();
     g_top->clk = 0;
     copyBridgeAndEval();
-    DEBUG_PRINT("[WRITE-LATCH] addr=0x%03X wdata=0x%08X",
-                g_top->io_bus_ADR, g_top->io_bus_DAT_MOSI);
   }
-
-  DEBUG_PRINT("[EVAL] addr=0x%03X we=%d wdata=0x%08X rdata=0x%08X ack=%d",
-              g_top->io_bus_ADR, g_top->io_bus_WE,
-              g_top->io_bus_DAT_MOSI, g_top->io_bus_DAT_MISO,
-              g_top->io_bus_ACK);
 }
 
 class SpiPeripheral : public RenodeAgent {
@@ -247,31 +292,29 @@ public:
     if (!top || steps == 0) return;
 
     for (uint64_t i = 0; i < steps; i++) {
-      // Drive SPI sensor on clock edges
-      if (g_sensor_initialized) {
-        uint8_t cs = top->io_spi_cs & 1;
-        uint8_t sclk = top->io_spi_sclk & 1;
-        uint8_t mosi = top->io_spi_dq_write & 1;
-        uint8_t miso = g_sensor.tick(cs, sclk, mosi);
-        top->io_spi_dq_read = (miso & 1) << 1;
-      } else {
-        top->io_spi_dq_read = 0;
-      }
-
       *bus->wb_clk = 1;
       top->eval();
 
-      // Update sensor after rising edge (SPI signals may have changed)
+      // After rising bus-clock edge: advance sensor
       if (g_sensor_initialized) {
         uint8_t cs = top->io_spi_cs & 1;
         uint8_t sclk = top->io_spi_sclk & 1;
         uint8_t mosi = top->io_spi_dq_write & 1;
-        uint8_t miso = g_sensor.tick(cs, sclk, mosi);
-        top->io_spi_dq_read = (miso & 1) << 1;
+        g_cached_miso = g_sensor.tick(cs, sclk, mosi);
+        top->io_spi_dq_read = (g_cached_miso & 1) << 1;
       }
 
       *bus->wb_clk = 0;
       top->eval();
+
+      // After falling bus-clock edge: advance sensor
+      if (g_sensor_initialized) {
+        uint8_t cs = top->io_spi_cs & 1;
+        uint8_t sclk = top->io_spi_sclk & 1;
+        uint8_t mosi = top->io_spi_dq_write & 1;
+        g_cached_miso = g_sensor.tick(cs, sclk, mosi);
+        top->io_spi_dq_read = (g_cached_miso & 1) << 1;
+      }
 
       if (countEnable) tickCounter++;
     }
