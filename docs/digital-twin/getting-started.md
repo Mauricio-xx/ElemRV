@@ -7,8 +7,9 @@ This guide walks through the initial setup and first steps with the ElemRV Digit
 ### Required Software
 
 - Docker (20.10+)
-- Task (task runner)
+- [Task](https://taskfile.dev/) (task runner): `sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin`
 - Git
+- `repo` (Android repo tool): `curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo && chmod a+rx /usr/local/bin/repo`
 - 8GB+ RAM (16GB recommended for full co-simulation)
 
 ### Supported Platforms
@@ -26,22 +27,34 @@ This guide walks through the initial setup and first steps with the ElemRV Digit
 git clone <repository-url>
 cd ElemRV
 
-# Initialize project and install dependencies
-task install
+# Initialize repo manifest and sync submodules
+repo init -u https://github.com/aesc-silicon/ElemRV.git -b main -m manifest.xml
+repo sync
+
+# Build the Docker simulation container
+docker build -t elemrv-sim:latest -f docker/Dockerfile.simulation docker/
 ```
 
-This command:
-- Creates a Python virtual environment
-- Installs podman-compose
-- Downloads repo tool
-- Initializes the manifest
-- Synchronizes all submodules
+This:
+- Downloads all submodules (nafarr, zibal, vexriscv, SpinalCrypto)
+- Builds the Docker image with Renode, Verilator, SBT, RISC-V GCC, and Zephyr SDK
 
-### Step 2: Build Docker Container
+### Step 2: Start the Container
 
 ```bash
-# Build the development container
-task build-container
+# Start the development container
+docker run -d --name elemrv-test \
+  -v $(pwd):/workspace/elemrv \
+  -w /workspace/elemrv \
+  elemrv-sim:latest sleep infinity
+
+# Configure git safe directories (required for mounted volumes)
+docker exec elemrv-test git config --global --add safe.directory "*"
+```
+
+Alternatively, using docker compose:
+```bash
+cd docker && docker compose up -d renode
 ```
 
 The container includes:
@@ -177,10 +190,13 @@ task dt-debug-connect
 
 ```bash
 # Start the container manually
-docker-compose up -d elemrv-gui
+docker run -d --name elemrv-test \
+  -v $(pwd):/workspace/elemrv \
+  -w /workspace/elemrv \
+  elemrv-sim:latest sleep infinity
 
-# Or using podman
-venv/bin/podman-compose up -d elemrv-gui
+# Or using docker compose
+cd docker && docker compose up -d renode
 ```
 
 ### Permission Errors
@@ -206,17 +222,18 @@ task dt-test-quick
 
 ```bash
 # Regenerate specific peripheral
-docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_h.test.WishbonePwmVerilog"
+docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePwmVerilog"
 ```
 
 ## Directory Layout After Setup
 
 ```
 ElemRV/
-├── gen/                        # Generated Verilog
+├── gen/                        # Generated H Verilog (pre-committed)
 │   ├── WishbonePwm.v
 │   ├── WishboneGpio.v
 │   └── ...
+├── gen_n/                      # Generated N Verilog (via sbt)
 ├── renode/
 │   ├── platforms/              # Platform definitions
 │   ├── verilated/

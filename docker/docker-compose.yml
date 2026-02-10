@@ -9,13 +9,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.simulation
-    image: elemrv-renode:latest
-    container_name: elemrv-renode
+    image: elemrv-sim:latest
+    container_name: elemrv-test
     volumes:
-      - ../renode:/workspace/elemrv/renode
-      - ../hardware:/workspace/elemrv/hardware
-      - ../software:/workspace/elemrv/software
-      - ../gen:/workspace/elemrv/gen
+      - ..:/workspace/elemrv
     working_dir: /workspace/elemrv
     ports:
       - "3333:3333"
@@ -32,16 +29,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.simulation
-    image: elemrv-renode:latest
+    image: elemrv-sim:latest
     container_name: elemrv-test
     volumes:
-      - ../renode:/workspace/elemrv/renode
-      - ../hardware:/workspace/elemrv/hardware
-      - ../software:/workspace/elemrv/software
-      - ../gen:/workspace/elemrv/gen
-    working_dir: /workspace/elemrv/renode
+      - ..:/workspace/elemrv
+    working_dir: /workspace/elemrv
     environment:
       - RENODE_ROOT=/opt/renode_1.16.0_portable
     profiles:
       - test
-    command: bash run_tests.sh
+    command: bash -c 'cd renode && bash run_tests.sh'

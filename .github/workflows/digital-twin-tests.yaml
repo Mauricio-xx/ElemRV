@@ -44,6 +44,15 @@ jobs:
             cd /workspace/elemrv/renode/verilated/wrappers &&
             bash build_all_cosim.sh release'
 
+      - name: Generate N peripheral Verilog
+        run: |
+          docker exec -w /workspace/elemrv elemrv-test bash -c '
+            sbt "runMain elemrv_n.test.WishboneGpioNVerilog" &&
+            sbt "runMain elemrv_n.test.WishbonePinmuxNVerilog" &&
+            sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog" &&
+            sbt "runMain elemrv_n.test.WishboneI2cLiteVerilog" &&
+            sbt "runMain elemrv_n.test.WishboneUartLiteVerilog"'
+
       - name: Build all N verilated co-simulation libraries
         run: |
           docker exec elemrv-test bash -c '
