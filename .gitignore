@@ -28,3 +28,9 @@ software/elemrv-zephyr/build*/
 renode/docs/DEVLOG.md
 renode/docs/plan.md
 renode/sessions/
+
+# Local-only agent/session artifacts
+CLAUDE.md
+SESSION_SUMMARY.md
+renode/docs/INVESTIGATION_PLAN_NEXT_SESSION.md
+renode/docs/STAGE_010_IMPLEMENTATION_PLAN.md
