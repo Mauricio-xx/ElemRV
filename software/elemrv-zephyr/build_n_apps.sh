@@ -47,6 +47,7 @@ build_app app/rtos_diagnostics  build-n-rtos-diagnostics
 build_app app/sensor_i2c_capture  build-n-sensor-i2c-capture
 build_app app/sensor_spi_capture  build-n-sensor-spi-capture
 build_app app/portable_data_logger  build-n-portable-data-logger
+build_app app/multi_node_gateway    build-n-multi-node-gateway
 
 echo ""
 echo "============================================"

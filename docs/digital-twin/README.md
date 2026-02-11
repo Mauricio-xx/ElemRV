@@ -13,7 +13,8 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 - **Sensor Simulation**: I2C and SPI sensor models for IoT application testing
 - **RTOS Debugging**: Thread-aware GDB debugging with stack analysis
 - **Fault Injection**: Verify firmware robustness through register corruption
-- **51 Automated Tests**: Full regression test suite via Taskfile
+- **Multi-Node IoT Simulation**: Two SoC variants communicating over UART
+- **52 Automated Tests**: Full regression test suite via Taskfile
 
 ## Platform Variants
 
@@ -32,7 +33,7 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 # Install dependencies (run once)
 task install
 
-# Run full integration test suite (51 tests)
+# Run full integration test suite (52 tests)
 task dt-integration-test
 
 # Or step by step:
@@ -56,6 +57,7 @@ task dt-integration-test     # Run all tests
 - [Sensor Simulation](features/sensors.md) - I2C and SPI sensor testing
 - [RTOS Debugging](features/rtos-debugging.md) - Thread-aware debugging
 - [GDB Debugging](features/gdb-debugging.md) - Interactive debugging guide
+- [Multi-Node IoT](features/multi-node-iot.md) - Multi-machine IoT simulation
 - [Fault Injection](features/fault-injection.md) - Robustness testing
 
 ### Firmware Development
@@ -63,7 +65,7 @@ task dt-integration-test     # Run all tests
 - [Bare-metal Firmware](firmware/bare-metal.md) - Bare-metal development
 
 ### Reference
-- [Test Suite](reference/test-suite.md) - All 51 tests documented
+- [Test Suite](reference/test-suite.md) - All 52 tests documented
 - [Taskfile Commands](reference/taskfile-commands.md) - Build and test commands
 - [Memory Maps](reference/memory-maps.md) - Peripheral addresses
 
@@ -109,7 +111,7 @@ Learn embedded systems development with full visibility into both software execu
 
 ## Test Coverage
 
-The platform includes 51 automated tests covering:
+The platform includes 52 automated tests covering:
 
 - **Tests 1-2**: Base platform + PWM co-simulation
 - **Tests 3-8**: Zephyr apps (H)
@@ -121,6 +123,7 @@ The platform includes 51 automated tests covering:
 - **Tests 31-40**: ElemRV-N platform
 - **Tests 41-46**: RTOS debugging (H + N)
 - **Tests 47-51**: Sensor simulation (I2C + SPI + portable)
+- **Test 52**: Multi-node IoT (H edge + N gateway)
 
 Run all tests:
 ```bash

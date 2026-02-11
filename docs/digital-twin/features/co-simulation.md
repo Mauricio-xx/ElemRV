@@ -410,5 +410,5 @@ fi
 
 ---
 
-**Previous**: [Platforms](../platforms/elemrv-n.md)  
-**Next**: [Sensor Simulation](sensors.md)
+**Previous**: [Platforms](../platforms/elemrv-n.md)
+**Next**: [Multi-Node IoT](multi-node-iot.md)

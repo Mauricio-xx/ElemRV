@@ -1,6 +1,6 @@
 # Test Suite Reference
 
-Complete documentation of all 51 tests in the ElemRV Digital Twin test suite.
+Complete documentation of all 52 tests in the ElemRV Digital Twin test suite.
 
 ## Test Organization
 
@@ -18,6 +18,7 @@ Tests are numbered sequentially in `renode/run_tests.sh`. The ordering reflects 
 | 31-40 | ElemRV-N platform | 10 |
 | 41-46 | RTOS debugging (H + N) | 6 |
 | 47-51 | Sensor simulation (I2C + SPI + portable) | 5 |
+| 52 | Multi-node IoT | 1 |
 
 ## Tests 1-2: Base Platform + PWM Co-sim
 
@@ -300,15 +301,27 @@ Tests are numbered sequentially in `renode/run_tests.sh`. The ordering reflects 
 **Pass Marker**: `Portable N Test PASSED`
 **Validates**: Same app on N, 4KB RAM operation
 
+## Test 52: Multi-Node IoT
+
+### Test 52: Multi-Node IoT (H edge + N gateway via UART hub)
+**Script**: `run_multi_node.resc`
+**Pass Marker**: `Multi-Node IoT Test PASSED`
+**Validates**:
+- Renode multi-machine simulation (two SoC variants)
+- UARTHub cross-machine communication
+- I2C sensor reading on edge (H)
+- Text protocol parsing (DATA/ACK) on both machines
+- Data aggregation and reporting on gateway (N)
+
 ## Running Tests
 
 ### Full Suite
 
 ```bash
-# All 51 tests (build + test)
+# All 52 tests (build + test)
 task dt-integration-test
 
-# All 51 tests (no rebuild)
+# All 52 tests (no rebuild)
 task dt-test-quick
 ```
 
@@ -334,7 +347,7 @@ Test results are logged per-test to `/tmp/dt_test_N.log` (inside the Docker cont
 The `run_tests.sh` script prints a summary at the end:
 ```
 ============================================
-  SUMMARY: 51/51 passed
+  SUMMARY: 52/52 passed
 ============================================
 ```
 

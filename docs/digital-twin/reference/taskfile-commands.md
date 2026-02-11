@@ -181,7 +181,7 @@ task dt-zephyr-test
 task dt-integration-test
 ```
 
-**Description**: Complete build and test of all 51 tests.  
+**Description**: Complete build and test of all 52 tests.  
 **Dependencies**:
 - dt-build-firmware
 - dt-cosim-build
@@ -329,6 +329,24 @@ task dt-portable-test
 **Description**: Runs the full test suite (includes portable data logger tests 50-51).
 **Validates**: Same app runs on both H and N
 
+### Multi-Node IoT
+
+```bash
+task dt-multi-node
+```
+
+**Description**: Runs the multi-node IoT simulation (H edge + N gateway via UART hub).
+**Validates**: Cross-machine UART communication, sensor data aggregation
+
+```bash
+task dt-multi-node-test
+```
+
+**Description**: Builds edge + gateway apps and runs multi-node IoT test (Test 52).
+**Dependencies**:
+- dt-zephyr-build
+- dt-n-zephyr-build
+
 ### Fault Injection
 
 ```bash
@@ -409,7 +427,7 @@ task
 |---------|-------|----------|
 | `task dt-test` | 1-30 (H) | 2-3 min |
 | `task dt-n-test` | 31-40 (N) | 2-3 min |
-| `task dt-integration-test` | 1-51 (All) | 5-10 min |
+| `task dt-integration-test` | 1-52 (All) | 5-10 min |
 | `task dt-test-quick` | Cached | 30 sec |
 
 ### Debug Commands

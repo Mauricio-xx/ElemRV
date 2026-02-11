@@ -100,7 +100,7 @@ jobs:
         if: always()
         run: |
           mkdir -p test-logs
-          for i in $(seq 1 51); do
+          for i in $(seq 1 52); do
             docker cp elemrv-test:/tmp/dt_test_${i}.log test-logs/ 2>/dev/null || true
           done
           docker cp elemrv-test:/tmp/dt_verilator_tb.log test-logs/ 2>/dev/null || true

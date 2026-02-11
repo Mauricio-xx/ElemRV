@@ -625,6 +625,18 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_n app/portable_data_logger -d build-n-portable-data-logger"
 fi
 
+# --- Multi-Node IoT Tests ---
+
+# Test 52: Multi-Node IoT (H edge + N gateway via UART hub)
+if [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-multi-node-edge/zephyr/zephyr.elf" ] && \
+   [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-multi-node-gateway/zephyr/zephyr.elf" ]; then
+    run_test "Multi-Node IoT" "run_multi_node.resc" "Multi-Node IoT Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): Multi-Node IoT ==="
+    echo "  ELFs not found. Build edge+gateway apps first."
+fi
+
 echo ""
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
