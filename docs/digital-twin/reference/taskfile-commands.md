@@ -485,7 +485,7 @@ task dt-integration-test
 
 ```bash
 # 1. Generate RTL
-docker exec -w /workspace/elemrv elemrv-gui sbt \
+docker exec -w /workspace/elemrv elemrv-test sbt \
   "runMain elemrv_h.test.MyPeripheralVerilog"
 
 # 2. Create wrapper
@@ -532,10 +532,10 @@ go install github.com/go-task/task/v3/cmd/task@latest
 
 ```bash
 # Container not running
-docker-compose up -d elemrv-gui
+docker-compose up -d elemrv-test
 
 # Or with podman
-venv/bin/podman-compose up -d elemrv-gui
+venv/bin/podman-compose up -d elemrv-test
 
 # Rebuild container
 task build-container

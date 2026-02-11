@@ -323,7 +323,7 @@ task dt-n-test
 
 ```bash
 # Run a single test script
-docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
   renode --disable-xwt --console -e "include @run_pwm_test.resc"'
 ```
 

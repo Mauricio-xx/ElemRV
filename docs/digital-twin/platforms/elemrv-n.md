@@ -142,8 +142,8 @@ Lightweight UART without flow control.
 task dt-n-cosim-generate
 
 # Or individually:
-docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
-docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
+docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
+docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
 # ... etc
 ```
 

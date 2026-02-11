@@ -242,15 +242,15 @@ task dt-test-quick
 
 ```bash
 # PWM register corruption
-docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
   renode --disable-xwt --console -e "include @run_fault_pwm_corruption.resc"'
 
 # Timer perturbation
-docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
   renode --disable-xwt --console -e "include @run_fault_timer_perturb.resc"'
 
 # Missing peripheral
-docker exec elemrv-gui bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
   renode --disable-xwt --console -e "include @run_fault_missing_peripheral.resc"'
 ```
 

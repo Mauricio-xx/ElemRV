@@ -117,17 +117,17 @@ The `renode/gdb/elemrv.gdb` script is loaded automatically and provides peripher
 
 ```bash
 # Terminal 1
-docker exec -it elemrv-gui bash -c \
+docker exec -it elemrv-test bash -c \
   'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @debug_bare_metal.resc"'
 
 # Terminal 2
-docker exec -it elemrv-gui bash -c \
+docker exec -it elemrv-test bash -c \
   'cd /workspace/elemrv && riscv-none-elf-gdb -x renode/gdb/elemrv.gdb software/elemrv_h/pwm_test/pwm_test.elf'
 ```
 
 ### From Host via Port 3333
 
-The `docker-compose.yml` maps port 3333. If using the `elemrv-gui` container started via Taskfile, add `-p 3333:3333` to the docker run command.
+The `docker-compose.yml` maps port 3333. If using the `elemrv-test` container started via Taskfile, add `-p 3333:3333` to the docker run command.
 
 ```bash
 # From host (requires riscv-none-elf-gdb installed locally)
