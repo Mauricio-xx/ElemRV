@@ -452,7 +452,7 @@ Bare-metal tests are part of the digital twin test suite:
 task dt-integration-test
 
 # Or manually
-docker exec elemrv-gui renode --disable-xwt \
+docker exec elemrv-test renode --disable-xwt \
   -e "include @run_pwm_test.resc"
 ```
 

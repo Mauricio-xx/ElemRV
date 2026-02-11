@@ -32,7 +32,7 @@ task                                 # Full ASIC RTL-to-GDSII flow (prepare → 
 
 Default SOC is ElemRV-N. Override with `SOC=ElemRV-H task <target>`.
 
-### Digital Twin (all run inside Docker container `elemrv-gui`)
+### Digital Twin (all run inside Docker container `elemrv-test`)
 
 ```bash
 # Setup

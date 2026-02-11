@@ -395,7 +395,7 @@ SCRIPT="test_peripheral.resc"
 TIMEOUT=30
 
 # Run test
-timeout $TIMEOUT docker exec elemrv-gui \
+timeout $TIMEOUT docker exec elemrv-test \
     renode $RENODE_ARGS -e "include @$SCRIPT"
 
 # Check result

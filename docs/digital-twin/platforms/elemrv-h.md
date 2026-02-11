@@ -163,8 +163,8 @@ Pin multiplexing controller for peripheral routing.
 task dt-cosim-generate
 
 # Or individually:
-docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_h.test.WishbonePwmVerilog"
-docker exec -w /workspace/elemrv elemrv-gui sbt "runMain elemrv_h.test.WishboneGpioVerilog"
+docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePwmVerilog"
+docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneGpioVerilog"
 # ... etc
 ```
 

@@ -129,7 +129,7 @@ task dt-integration-test
 
 ## Prerequisites
 
-- Docker with `elemrv-gui` image
+- Docker with `elemrv-test` image
 - 8GB+ RAM recommended for co-simulation
 - Linux environment (tested on Ubuntu 22.04)
 
