@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ElemRV is an open-source RISC-V MCU (VexRiscv RV32IC) written in SpinalHDL, targeting both FPGA (Lattice ECP5 ECPIX5) and ASIC (IHP Open SG13G2 PDK). It includes a **digital twin** layer: cycle-accurate Verilator co-simulation of individual peripherals within Renode system simulation, validated by a 51-test suite running real firmware (bare-metal and Zephyr RTOS).
+ElemRV is an open-source RISC-V MCU (VexRiscv RV32IC) written in SpinalHDL, targeting both FPGA (Lattice ECP5 ECPIX5) and ASIC (IHP Open SG13G2 PDK). It includes a **digital twin** layer: cycle-accurate Verilator co-simulation of individual peripherals within Renode system simulation, validated by a 52-test suite running real firmware (bare-metal and Zephyr RTOS).
 
 Two platform variants exist:
 - **Hydrogen (H)**: 5 peripherals (GPIO, I2C, PIO, PWM, UART) + Pinmux, 12 I/O pins
@@ -42,10 +42,10 @@ task dt-zephyr-init                  # Initialize west workspace + fetch Zephyr
 task dt-build-firmware               # Bare-metal PWM test firmware
 task dt-cosim-generate               # Generate all H peripheral Verilog via SpinalHDL
 task dt-cosim-build                  # Build all 7 H co-sim .so libs
-task dt-zephyr-build                 # Build all 15 H Zephyr apps
+task dt-zephyr-build                 # Build all 16 H Zephyr apps
 
 # Testing
-task dt-test-quick                   # Run full 51-test suite (assumes artifacts exist)
+task dt-test-quick                   # Run full 52-test suite (assumes artifacts exist)
 task dt-integration-test             # Build everything + run full test suite
 task dt-verilator-test               # Pure Verilator testbenches (no Renode)
 task dt-validate-cosim               # Cross-validate Verilator vs Renode results
@@ -75,7 +75,7 @@ bash build_n_cosim.sh release                          # All 5 N libs
 
 Inside Docker at `software/elemrv-zephyr/`:
 ```bash
-bash build_all_apps.sh                                 # All 15 H apps
+bash build_all_apps.sh                                 # All 16 H apps
 bash build_n_apps.sh                                   # N apps
 west build -b elemrv_h app/hello_world -d build-hello_world   # Single app
 ```
@@ -143,7 +143,7 @@ Out-of-tree Zephyr module (v4.1.0) with custom board, SoC, drivers, and DTS bind
 
 ### Test Runner (`renode/run_tests.sh`)
 
-51-test suite covering: base platform, co-sim per-peripheral, Zephyr apps, cross-peripheral integration, Verilator standalone, GDB server, fault injection, sensor detection/capture, N-variant tests, RTOS debugging, and sensor simulation (I2C + SPI + portable).
+52-test suite covering: base platform, co-sim per-peripheral, Zephyr apps, cross-peripheral integration, Verilator standalone, GDB server, fault injection, sensor detection/capture, N-variant tests, RTOS debugging, sensor simulation (I2C + SPI + portable), and multi-node IoT.
 
 ## Code Style
 
@@ -188,5 +188,5 @@ Out-of-tree Zephyr module (v4.1.0) with custom board, SoC, drivers, and DTS bind
 
 - **GitHub Actions `format.yaml`**: Checks `scalafmt` on push/PR to main
 - **GitHub Actions `license-check.yaml`**: Runs `reuse lint` on push/PR to main
-- **GitHub Actions `digital-twin-tests.yaml`**: Manual dispatch — builds everything in Docker, runs full 51-test suite
+- **GitHub Actions `digital-twin-tests.yaml`**: Manual dispatch — builds everything in Docker, runs full 52-test suite
 - **Travis CI**: ASIC flow (RTL → GDSII → DRC) on PRs and nightly cron

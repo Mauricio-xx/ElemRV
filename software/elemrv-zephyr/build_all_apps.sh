@@ -55,6 +55,7 @@ build_app app/rtos_debug_demo         build-rtos-debug-demo
 build_app app/rtos_diagnostics        build-rtos-diagnostics
 build_app app/sensor_i2c_capture      build-sensor-i2c-capture
 build_app app/portable_data_logger    build-portable-data-logger
+build_app app/multi_node_edge         build-multi-node-edge
 
 echo ""
 echo "============================================"

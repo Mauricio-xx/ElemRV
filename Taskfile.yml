@@ -251,8 +251,8 @@ tasks:
       - docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
   dt-integration-test:
-    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (51 tests).
-    deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build]
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full test suite (52 tests).
+    deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build, dt-n-zephyr-build]
     cmds:
       - docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
@@ -314,6 +314,17 @@ tasks:
 
   dt-portable-test:
     desc: Runs portable data logger tests on both H and N (Tests 50-51).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
+
+  dt-multi-node:
+    desc: Runs the multi-node IoT simulation (H edge + N gateway via UART hub).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && renode --disable-xwt --console -e "include @run_multi_node.resc"'
+
+  dt-multi-node-test:
+    desc: Builds edge+gateway apps and runs multi-node IoT test (Test 52).
+    deps: [dt-zephyr-build, dt-n-zephyr-build]
     cmds:
       - docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && bash run_tests.sh'
 
