@@ -31,6 +31,11 @@ renode/sessions/
 
 # Local-only agent/session artifacts
 CLAUDE.md
+SESSION_LOG.md
 SESSION_SUMMARY.md
 renode/docs/INVESTIGATION_PLAN_NEXT_SESSION.md
 renode/docs/STAGE_010_IMPLEMENTATION_PLAN.md
+.opencode/
+
+# Full SoC Verilog generated on demand (too large / regenerated per build)
+gen/ECPIX5Top.v
