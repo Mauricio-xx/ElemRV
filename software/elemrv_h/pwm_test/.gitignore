@@ -1,0 +1,4 @@
+# Build artifacts (keep .bin for reproducible testing)
+*.o
+*.elf
+*.hex
