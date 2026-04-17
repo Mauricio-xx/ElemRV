@@ -1,0 +1,130 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Dockerfile for ElemRV Digital Twin simulation environment
+# Includes: Renode 1.16.0, Verilator, RISC-V toolchain, Python3, VNC/XFCE
+
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install base dependencies
+RUN apt-get update && apt-get install -y \
+    # Core build tools
+    build-essential \
+    git \
+    wget \
+    curl \
+    ca-certificates \
+    bison \
+    flex \
+    # Python
+    python3 \
+    python3-pip \
+    python3-venv \
+    # GTK dependencies (for Renode GUI)
+    libgtk2.0-0 \
+    libgtk2.0-dev \
+    # Additional libraries
+    libncurses5-dev \
+    libexpat1-dev \
+    libglib2.0-dev \
+    libfdt-dev \
+    libpixman-1-dev \
+    zlib1g-dev \
+    # Verilator dependencies
+    libfl2 \
+    libfl-dev \
+    help2man \
+    autoconf \
+    # Java (for sbt/Scala)
+    openjdk-11-jdk \
+    # Utilities
+    screen \
+    uml-utilities \
+    vim \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install VNC server and XFCE desktop environment
+RUN apt-get update && apt-get install -y \
+    tigervnc-standalone-server \
+    tigervnc-viewer \
+    xfce4 \
+    xfce4-terminal \
+    xfce4-goodies \
+    dbus-x11 \
+    x11-xserver-utils \
+    xfonts-base \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Python3 as default python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Install Renode 1.16.0 (latest stable)
+RUN wget -q https://github.com/renode/renode/releases/download/v1.16.0/renode-1.16.0.linux-portable.tar.gz \
+    && tar -xzf renode-1.16.0.linux-portable.tar.gz -C /opt \
+    && rm renode-1.16.0.linux-portable.tar.gz \
+    && ln -sf /opt/renode_1.16.0_portable/renode /usr/local/bin/renode \
+    && ln -sf /opt/renode_1.16.0_portable/renode-test /usr/local/bin/renode-test
+
+# Install RISC-V GNU toolchain
+RUN wget -q https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v13.2.0-2/xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz \
+    && tar -xzf xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz -C /opt \
+    && rm xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz
+
+# Add RISC-V toolchain to PATH
+ENV PATH="/opt/xpack-riscv-none-elf-gcc-13.2.0-2/bin:${PATH}"
+
+# Install sbt (Scala build tool)
+RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list && \
+    curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | apt-key add - && \
+    apt-get update && \
+    apt-get install -y sbt && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Verilator 5.006 for RTL co-simulation
+RUN git clone https://github.com/verilator/verilator /tmp/verilator \
+    && cd /tmp/verilator \
+    && git checkout v5.006 \
+    && autoconf \
+    && ./configure --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && rm -rf /tmp/verilator
+
+# Install Python packages
+RUN pip3 install \
+    pyserial \
+    robotframework \
+    pexpect
+
+# Setup VNC
+RUN mkdir -p /root/.vnc && \
+    echo "password" | vncpasswd -f > /root/.vnc/passwd && \
+    chmod 600 /root/.vnc/passwd
+
+# Create startup script for VNC
+RUN echo '#!/bin/bash\n\
+export DISPLAY=:1\n\
+Xvnc :1 -geometry 1280x800 -depth 24 -PasswordFile /root/.vnc/passwd &\n\
+sleep 2\n\
+startxfce4 &\n\
+sleep 2\n\
+/bin/bash' > /root/start-vnc.sh && \
+    chmod +x /root/start-vnc.sh
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV RENODE_ROOT=/opt/renode_1.16.0_portable
+ENV DISPLAY=:1
+
+# Expose VNC port
+EXPOSE 5901
+
+# Default command starts VNC
+CMD ["/root/start-vnc.sh"]
