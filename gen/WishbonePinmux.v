@@ -1,6 +1,5 @@
 // Generator : SpinalHDL v1.13.0    git head : d9d72474863badf47d8585d187f3e04ae4749c59
 // Component : WishbonePinmux
-// Git hash  : c0b98545a5b045ffe5eb7b11fcfc0a145052efaa
 
 `timescale 1ns/1ps
 

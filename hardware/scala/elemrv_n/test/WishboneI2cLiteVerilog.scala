@@ -14,11 +14,12 @@ import nafarr.peripherals.com.i2c._
 object WishboneI2cLiteVerilog extends App {
   val i2cConfig = I2cControllerCtrl.Parameter.lightweight()
 
-  // I2C controller needs clock frequency for SCL clock divider calculation
+  // I2C controller needs clock frequency for SCL clock divider calculation.
+  // ElemRV-N peripheral clock is 30 MHz (upstream rework on clock tree).
   SpinalConfig(
     targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
-    defaultClockDomainFrequency = FixedFrequency(20 MHz)
+    defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(
     WishboneI2cController(
       parameter = i2cConfig,
