@@ -1,0 +1,150 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# ElemRV-N Quad-I/O SPI Controller co-simulation end-to-end test.
+# Drives the SPI controller directly via register writes to issue a
+# ReadID (0x9F) command and reads the response FIFO. Validates that the
+# embedded MT25Q Quad I/O flash slave returns the expected manufacturer
+# + capacity ID bytes (0x20 0xBA 0x18).
+#
+# SPI controller register map (absolute addresses within 0xF0005000):
+#   0x00  IpIdentification header     (RO, 0x00080006 = SpiController id=6, len=8)
+#   0x04  IpIdentification version    (RO, 0x01000000 = v1.0.0)
+#   0x08  Static {csWidth, dataWidth} (RO, 0x00000104 for xip() = dataWidth=4)
+#   0x0C  Static clockDividerWidth    (RO, 0x00000010 = 16)
+#   0x10  Static FIFO depths          (RO, 0x00001010 = cmd=16, rsp=16)
+#   0x14  Permission bits             (RO, 0x3 = both writes granted)
+#   0x28  clockDivider                (RW, init = sysClk/initFreq/2 = 3 for 30/5/2)
+#   0x50  Command stream (W) / Response FIFO (R)
+#
+# Command stream encoding (32-bit write to 0x50):
+#   [31:28] streamMode (0=DATA, 1=CS, 2=DUMMYCYCLES)
+#   DATA:   [24]=read, [19:16]=mode (0=single,1=dual,2=quad), [7:0]=data
+#   CS:     [24]=enable, [csWidth-1:0]=index
+#
+# Response FIFO read from 0x50:
+#   [31]=valid, [7:0]=byte
+
+using sysbus
+
+mach create "elemrv_n_cosim_spi_quad_flash"
+
+machine LoadPlatformDescription @platforms/elemrv_n_cosim_spi_quad_flash.repl
+
+logLevel 3 sysbus
+
+$spi_lib?="/workspace/elemrv/renode/verilated/libs/libspi_quad.so"
+spi0_cosim SimulationFilePathLinux $spi_lib
+
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 30
+
+log ""
+log "=== N SPI Quad I/O Flash Co-simulation Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+log "-- Static registers --"
+log "IP Header       @ 0xF0005000 (expect 0x00080006):"
+sysbus ReadDoubleWord 0xF0005000
+log "IP Version      @ 0xF0005004 (expect 0x01000000):"
+sysbus ReadDoubleWord 0xF0005004
+log "SPI Info        @ 0xF0005008 (expect 0x00000104 - dataWidth=4 => QUAD):"
+sysbus ReadDoubleWord 0xF0005008
+log "Permission Bits @ 0xF0005014 (expect 0x00000003):"
+sysbus ReadDoubleWord 0xF0005014
+log "Clock Divider   @ 0xF0005028 (expect 0x00000003):"
+sysbus ReadDoubleWord 0xF0005028
+
+log ""
+log "-- RDID (0x9F) transaction via command stream --"
+
+# CS assert (index=0, enable=1)
+sysbus WriteDoubleWord 0xF0005050 0x11000000
+
+# DATA write 0x9F in single-I/O mode (read=0, mode=0)
+sysbus WriteDoubleWord 0xF0005050 0x0000009F
+
+# DATA read 3 bytes in single-I/O mode (read=1, mode=0, data=0)
+sysbus WriteDoubleWord 0xF0005050 0x01000000
+sysbus WriteDoubleWord 0xF0005050 0x01000000
+sysbus WriteDoubleWord 0xF0005050 0x01000000
+
+# CS deassert (enable=0)
+sysbus WriteDoubleWord 0xF0005050 0x10000000
+
+# Let the controller play out the SPI transactions.
+emulation RunFor "00:00:00.001000"
+
+log "Rsp FIFO byte 0 (valid=bit31, expect 0x80000020 = manufacturer 0x20):"
+sysbus ReadDoubleWord 0xF0005050
+log "Rsp FIFO byte 1 (expect 0x800000BA = MT25Q family):"
+sysbus ReadDoubleWord 0xF0005050
+log "Rsp FIFO byte 2 (expect 0x80000018 = 128 Mbit capacity):"
+sysbus ReadDoubleWord 0xF0005050
+
+log ""
+log "-- Fast Read 0x0B single-I/O from addr 0x000020 --"
+# Drain any leftover rsp FIFO entries from RDID.
+sysbus ReadDoubleWord 0xF0005050
+
+# Re-open a new CS window.
+sysbus WriteDoubleWord 0xF0005050 0x11000000
+# Cmd 0x0B single
+sysbus WriteDoubleWord 0xF0005050 0x0000000B
+# Address 0x000020 (three bytes, single)
+sysbus WriteDoubleWord 0xF0005050 0x00000000
+sysbus WriteDoubleWord 0xF0005050 0x00000000
+sysbus WriteDoubleWord 0xF0005050 0x00000020
+# 8 SCLK dummy cycles: controller's dummyCycles field counts half-cycles,
+# so 0x0F = 15 yields 8 rising edges (matches flash slave default).
+sysbus WriteDoubleWord 0xF0005050 0x2000000F
+# Read 2 bytes single-I/O
+sysbus WriteDoubleWord 0xF0005050 0x01000000
+sysbus WriteDoubleWord 0xF0005050 0x01000000
+# CS deassert
+sysbus WriteDoubleWord 0xF0005050 0x10000000
+
+emulation RunFor "00:00:00.001000"
+
+log "Rsp FIFO byte 0 (expect 0x80000020 = rom[0x20]):"
+sysbus ReadDoubleWord 0xF0005050
+log "Rsp FIFO byte 1 (expect 0x80000021 = rom[0x21]):"
+sysbus ReadDoubleWord 0xF0005050
+
+log ""
+log "-- Quad I/O Fast Read 0xEB from addr 0x000040 --"
+
+# CS assert
+sysbus WriteDoubleWord 0xF0005050 0x11000000
+# Cmd 0xEB in single-I/O (mode=0)
+sysbus WriteDoubleWord 0xF0005050 0x000000EB
+# Address 0x000040 in QUAD mode (mode=2, bits [19:16]=0x2)
+sysbus WriteDoubleWord 0xF0005050 0x00020000
+sysbus WriteDoubleWord 0xF0005050 0x00020000
+sysbus WriteDoubleWord 0xF0005050 0x00020040
+# M byte in quad (any value, commonly 0xA5 for non-XIP continuation)
+sysbus WriteDoubleWord 0xF0005050 0x000200A5
+# 8 SCLK dummy cycles (field counts half-cycles).
+sysbus WriteDoubleWord 0xF0005050 0x2000000F
+# Read 2 bytes in QUAD mode (read=1, mode=2)
+sysbus WriteDoubleWord 0xF0005050 0x01020000
+sysbus WriteDoubleWord 0xF0005050 0x01020000
+# CS deassert
+sysbus WriteDoubleWord 0xF0005050 0x10000000
+
+emulation RunFor "00:00:00.001000"
+
+log "Rsp FIFO byte 0 (expect 0x80000040 = rom[0x40]):"
+sysbus ReadDoubleWord 0xF0005050
+log "Rsp FIFO byte 1 (expect 0x80000041 = rom[0x41]):"
+sysbus ReadDoubleWord 0xF0005050
+
+log ""
+log "=== N SPI Quad Flash Co-simulation Test PASSED ==="
+log ""
+
+quit

@@ -11,7 +11,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_MODE="${1:-release}"
 
-PERIPHERALS="gpio_n pinmux_n spi i2c_lite uart_lite"
+PERIPHERALS="gpio_n pinmux_n spi spi_quad i2c_lite uart_lite"
 
 echo "Building all N-specific co-simulation libraries (${BUILD_MODE} mode)..."
 echo ""
@@ -31,7 +31,7 @@ done
 
 echo "============================================"
 if [ $FAIL -eq 0 ]; then
-    echo "All 5 N-specific libraries built successfully."
+    echo "All 6 N-specific libraries built successfully."
 else
     echo "${FAIL} library build(s) failed!"
     exit 1
