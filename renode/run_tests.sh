@@ -451,6 +451,16 @@ else
     echo "  Firmware not built: make -C renode/firmware/samples/spi_quad_flash_test"
 fi
 
+# Test 33d: N SPI Quad I/O Flash Zephyr app (G.1b.2)
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi_quad.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libspi_quad.so" ]; } && \
+   [ -f "$SCRIPT_DIR/../software/elemrv-zephyr/build-n-spi-quad-flash/zephyr/zephyr.elf" ]; then
+    run_test "N SPI Quad Flash Zephyr" "run_n_spi_quad_flash_zephyr_test.resc" "SPI Quad Flash Zephyr PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N SPI Quad Flash Zephyr ==="
+    echo "  Zephyr ELF not built: west build -b elemrv_n app/spi_quad_flash -d build-n-spi-quad-flash"
+fi
+
 # Test 34: N I2C Lite Co-simulation
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
     run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"
