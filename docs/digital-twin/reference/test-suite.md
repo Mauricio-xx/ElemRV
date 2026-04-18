@@ -1,6 +1,11 @@
 # Test Suite Reference
 
-Complete documentation of all 52 tests in the ElemRV Digital Twin test suite.
+Complete documentation of the ElemRV Digital Twin test suite. Tests
+1-52 were the v1.0 baseline; Phase G (v1.1) added six N-specific tests
+(33b-33g) covering Quad I/O SPI, BMB co-simulation and the image-
+container boot flow. Total in 1.1: **58 tests**. Per-test detail for
+the Phase G additions lives in
+[platforms/elemrv-n.md](../platforms/elemrv-n.md#individual-tests).
 
 ## Test Organization
 
@@ -19,6 +24,7 @@ Tests are numbered sequentially in `renode/run_tests.sh`. The ordering reflects 
 | 41-46 | RTOS debugging (H + N) | 6 |
 | 47-51 | Sensor simulation (I2C + SPI + portable) | 5 |
 | 52 | Multi-node IoT | 1 |
+| 33b-33g | Phase G: Quad I/O SPI + BMB + image-container (N) | 6 |
 
 ## Tests 1-2: Base Platform + PWM Co-sim
 
@@ -318,10 +324,10 @@ Tests are numbered sequentially in `renode/run_tests.sh`. The ordering reflects 
 ### Full Suite
 
 ```bash
-# All 52 tests (build + test)
+# All 58 tests (build + test)
 task dt-integration-test
 
-# All 52 tests (no rebuild)
+# All 58 tests (no rebuild)
 task dt-test-quick
 ```
 
@@ -347,7 +353,7 @@ Test results are logged per-test to `/tmp/dt_test_N.log` (inside the Docker cont
 The `run_tests.sh` script prints a summary at the end:
 ```
 ============================================
-  SUMMARY: 52/52 passed
+  SUMMARY: 58/58 passed
 ============================================
 ```
 
