@@ -13,11 +13,12 @@ import nafarr.peripherals.com.spi.{SpiControllerCtrl, WishboneSpiController}
 object WishboneSpiControllerVerilog extends App {
   val spiConfig = SpiControllerCtrl.Parameter.default()
 
-  // SPI controller needs clock frequency for clock divider calculation
+  // SPI controller needs clock frequency for clock divider calculation.
+  // ElemRV-N peripheral clock is 30 MHz (upstream rework on clock tree).
   SpinalConfig(
     targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
-    defaultClockDomainFrequency = FixedFrequency(20 MHz)
+    defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(
     WishboneSpiController(
       parameter = spiConfig,

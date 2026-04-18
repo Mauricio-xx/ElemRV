@@ -14,11 +14,12 @@ import nafarr.peripherals.com.uart._
 object WishboneUartLiteVerilog extends App {
   val uartConfig = UartCtrl.Parameter.lightweight()
 
-  // UART needs clock frequency for baud rate divider calculation
+  // UART needs clock frequency for baud rate divider calculation.
+  // ElemRV-N peripheral clock is 30 MHz (upstream rework on clock tree).
   SpinalConfig(
     targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
-    defaultClockDomainFrequency = FixedFrequency(20 MHz)
+    defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(
     WishboneUart(
       parameter = uartConfig,
