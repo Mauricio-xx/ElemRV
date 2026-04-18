@@ -101,7 +101,7 @@ Expected output:
   ...
 
 ============================================
-  SUMMARY: 52/52 passed
+  SUMMARY: 58/58 passed
 ============================================
 ```
 
@@ -117,7 +117,7 @@ This command:
 2. Generates RTL from SpinalHDL
 3. Builds co-simulation libraries
 4. Builds Zephyr applications
-5. Runs all 52 tests
+5. Runs all 58 tests
 
 ## Understanding the Platform
 
@@ -125,7 +125,7 @@ This command:
 
 When you run a test:
 
-1. **Renode** starts the VexRiscv CPU at 50MHz (H) or 20MHz (N)
+1. **Renode** starts the VexRiscv CPU at 50MHz (H) or 30MHz (N, post tapeout-2026-03 rework)
 2. **Firmware** executes from Flash or RAM
 3. **Peripheral accesses** route through the IntegrationLibrary
 4. **Verilator** evaluates RTL cycles for each bus transaction
@@ -258,7 +258,7 @@ Quick command reference:
 | `task dt-n-cosim-build` | Build N co-sim libraries |
 | `task dt-zephyr-build` | Build H Zephyr apps |
 | `task dt-n-zephyr-build` | Build N Zephyr apps |
-| `task dt-integration-test` | Run all 52 tests |
+| `task dt-integration-test` | Run all 58 tests |
 | `task dt-test-quick` | Run tests without rebuild |
 | `task dt-debug-cosim` | Start GDB server |
 

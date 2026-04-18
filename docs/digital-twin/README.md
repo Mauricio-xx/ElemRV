@@ -14,17 +14,18 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 - **RTOS Debugging**: Thread-aware GDB debugging with stack analysis
 - **Fault Injection**: Verify firmware robustness through register corruption
 - **Multi-Node IoT Simulation**: Two SoC variants communicating over UART
-- **52 Automated Tests**: Full regression test suite via Taskfile
+- **Quad I/O SPI Flash + BMB XIP**: Behavioral MT25Q flash slave, `BmbSpiXipController` DT, and image-container boot path (Phase G)
+- **58 Automated Tests**: Full regression test suite via Taskfile
 
 ## Platform Variants
 
 | Feature | ElemRV-H | ElemRV-N |
 |---------|----------|----------|
 | ISA | RV32IC | RV32IMC |
-| Clock | 50 MHz | 20 MHz |
+| Clock | 50 MHz | 30 MHz peripheral / 60 MHz input |
 | SRAM | 8 KB | 4 KB |
 | HyperRAM | - | 64 MB |
-| Peripherals | 7 co-sim | 10 co-sim |
+| Peripherals | 7 co-sim | 10 co-sim + Quad I/O SPI XIP |
 | Target | ASIC prototyping | FPGA (ECPIX5) |
 
 ## Quick Start
@@ -33,7 +34,7 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 # Install dependencies (run once)
 task install
 
-# Run full integration test suite (52 tests)
+# Run full integration test suite (58 tests)
 task dt-integration-test
 
 # Or step by step:
@@ -65,7 +66,7 @@ task dt-integration-test     # Run all tests
 - [Bare-metal Firmware](firmware/bare-metal.md) - Bare-metal development
 
 ### Reference
-- [Test Suite](reference/test-suite.md) - All 52 tests documented
+- [Test Suite](reference/test-suite.md) - All 58 tests documented
 - [Taskfile Commands](reference/taskfile-commands.md) - Build and test commands
 - [Memory Maps](reference/memory-maps.md) - Peripheral addresses
 
@@ -169,5 +170,34 @@ ElemRV/
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: February 2026
+**Version**: 1.1  
+**Last Updated**: April 2026
+
+## Changelog
+
+### 1.1 (April 2026) — upstream sync + Phase G
+
+- Merged `aesc-silicon/ElemRV` upstream into the `dev-mont/digital-twin`
+  fork. Picks up SpinalHDL 1.13.0, nafarr `1ed0ca2`, zibal `93757cd`,
+  VexRiscv `6814d54a`, and the `aesc-silicon` forks of OpenROAD-flow-
+  scripts (`ede8b54b`) and IHP-Open-PDK (`64239e24`).
+- ElemRV-N peripheral clock moved 20 MHz -> 30 MHz (input 60 MHz),
+  with new `hyperbus` and `spiXip` clock domains in the platform.
+- Phase G Digital Twin additions (53 -> 58 tests):
+  - G.1a: reusable MT25Q-style Quad I/O flash slave C++ library.
+  - G.1b.1: `WishboneSpiControllerQuad` generator + Renode register
+    test for RDID + Fast Read single + Quad I/O Fast Read.
+  - G.1b.2: bare-metal and Zephyr firmware that drive the same DT.
+  - G.3: Wishbone <-> BMB bridge DT (`WishboneToBmbMaster` +
+    `SimpleBmbRam`) with round-trip verification.
+  - G.1c: full `BmbSpiXipController` DT. WB -> BMB bridge -> XIP
+    state machine -> SPI master -> behavioral flash.
+  - G.2: image-container boot-flow DT. `gen_dt_image_container.sh`
+    pads a firmware.bin; `BMBXIP_IMAGE_PATH` loads it into the flash
+    slave backing; test validates XIP reads return the image bytes.
+
+### 1.0 (February 2026)
+
+Initial digital-twin release: 52-test suite covering H and N peripheral
+co-simulation, Zephyr integration, RTOS debugging, sensor models, and
+multi-node IoT simulation.

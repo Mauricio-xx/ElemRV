@@ -7,7 +7,7 @@ ElemRV-N is the FPGA-focused platform variant targeting the Lattice ECP5 (ECPIX5
 | Feature | Specification |
 |---------|--------------|
 | ISA | RV32IMC (Integer + Compressed + Multiply) |
-| Clock | 20 MHz |
+| Clock | 30 MHz peripheral / 60 MHz input (post tapeout-2026-03 rework) |
 | SRAM | 4 KB |
 | Flash | 64 KB |
 | HyperRAM | 64 MB |
@@ -19,7 +19,7 @@ ElemRV-N is the FPGA-focused platform variant targeting the Lattice ECP5 (ECPIX5
 | Feature | ElemRV-H | ElemRV-N |
 |---------|----------|----------|
 | ISA | RV32IC | RV32IMC |
-| Clock | 50 MHz | 20 MHz |
+| Clock | 50 MHz | 30 MHz peripheral (60 MHz input; new `hyperbus`, `spiXip` clock domains) |
 | SRAM | 8 KB | 4 KB |
 | HyperRAM | - | 64 MB |
 | GPIO pins | 12 | 20 |
@@ -195,7 +195,7 @@ task dt-n-test-quick
 
 ### Individual Tests
 
-Tests 31-40 cover ElemRV-N:
+Tests 31-40 cover the original ElemRV-N peripherals:
 
 | Test | Name | Description |
 |------|------|-------------|
@@ -210,6 +210,18 @@ Tests 31-40 cover ElemRV-N:
 | 39 | N Zephyr Hello | Basic console |
 | 40 | N Zephyr Blinky | LED toggle |
 
+Phase G added six tests for the Quad I/O SPI / XIP / BMB digital twins
+(also counted as the N-specific 33b..33g):
+
+| Test | Name | Description |
+|------|------|-------------|
+| 33b | N SPI Quad Flash Co-simulation | `WishboneSpiControllerQuad` + MT25Q-style flash slave; RDID + FastRead single + Quad I/O FastRead via register pokes |
+| 33c | N SPI Quad Flash Bare-Metal | Same DT driven by a C firmware (`renode/firmware/samples/spi_quad_flash_test/`); UART logs RDID + QIO results |
+| 33d | N SPI Quad Flash Zephyr | Zephyr app `app/spi_quad_flash` uses `spi_transceive` for RDID and `sys_write32` pokes for QIO |
+| 33e | N BMB Bridge Co-simulation | `WishboneToBmbMaster` + `SimpleBmbRam` round-trip validates the BMB transaction path |
+| 33f | N BMB SpiXip Co-simulation | Full `BmbSpiXipController` wrap; reads route WB -> BMB -> SPI -> flash -> back |
+| 33g | N BMB SpiXip Image Container Boot | `gen_dt_image_container.sh` + `xip_boot_test` image; wrapper env var `BMBXIP_IMAGE_PATH` pre-loads the flash backing; test validates image words via XIP reads |
+
 ## Platform Files
 
 | File | Purpose |
@@ -220,6 +232,10 @@ Tests 31-40 cover ElemRV-N:
 | `elemrv_n_full_cosim.repl` | All 10 peripherals |
 | `elemrv_n_spi_sensor.repl` | With SPI sensor |
 | `elemrv_n_i2c_sensor.repl` | With I2C sensor |
+| `elemrv_n_cosim_spi_quad_flash.repl` | Quad I/O SPI + MT25Q flash slave DT (G.1b) |
+| `elemrv_n_cosim_bmb_bridge.repl` | Wishbone <-> BMB bridge round-trip DT (G.3) |
+| `elemrv_n_cosim_bmb_spi_xip.repl` | Full `BmbSpiXipController` DT (G.1c) |
+| `elemrv_n_bmb_spi_xip_boot.repl` | Image-container boot-flow DT (G.2) |
 
 ## Zephyr Board Support Package
 
