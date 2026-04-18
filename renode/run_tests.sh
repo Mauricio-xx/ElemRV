@@ -432,13 +432,23 @@ else
     echo "  libspi.so not found. Build with: bash build_n_cosim.sh release"
 fi
 
-# Test 33b: N SPI Quad I/O Flash Co-simulation (G.1b)
+# Test 33b: N SPI Quad I/O Flash Co-simulation (G.1b, register-poke)
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi_quad.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libspi_quad.so" ]; then
     run_test "N SPI Quad Flash Co-simulation" "run_n_cosim_spi_quad_flash_test.resc" "N SPI Quad Flash Co-simulation Test PASSED"
 else
     echo ""
     echo "=== TEST (skipped): N SPI Quad Flash Co-simulation ==="
     echo "  libspi_quad.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 33c: N SPI Quad I/O Flash bare-metal firmware (G.1b.2)
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi_quad.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libspi_quad.so" ]; } && \
+   [ -f "$SCRIPT_DIR/../renode/firmware/samples/spi_quad_flash_test/spi_quad_flash_test.bin" ]; then
+    run_test "N SPI Quad Flash Bare-Metal" "run_n_spi_quad_flash_firmware_test.resc" "SPI Quad Flash Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N SPI Quad Flash Bare-Metal ==="
+    echo "  Firmware not built: make -C renode/firmware/samples/spi_quad_flash_test"
 fi
 
 # Test 34: N I2C Lite Co-simulation
