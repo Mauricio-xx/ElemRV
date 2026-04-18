@@ -14,6 +14,11 @@ FAIL=0
 TOTAL=0
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Pre-load path for the BmbSpiXipController G.2 image-container test.
+# The bmb_spi_xip wrapper honours BMBXIP_IMAGE_PATH at init; export it
+# unconditionally so the image-container test works in fresh checkouts.
+export BMBXIP_IMAGE_PATH="${BMBXIP_IMAGE_PATH:-$SCRIPT_DIR/firmware/samples/xip_boot_test/xip_boot_image.img}"
+
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
     GREEN='\033[0;32m'
@@ -459,6 +464,34 @@ else
     echo ""
     echo "=== TEST (skipped): N SPI Quad Flash Zephyr ==="
     echo "  Zephyr ELF not built: west build -b elemrv_n app/spi_quad_flash -d build-n-spi-quad-flash"
+fi
+
+# Test 33e: N BMB Bridge round-trip DT (G.3)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_bridge.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_bridge.so" ]; then
+    run_test "N BMB Bridge Co-simulation" "run_n_cosim_bmb_bridge_test.resc" "N BMB Bridge Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N BMB Bridge Co-simulation ==="
+    echo "  libbmb_bridge.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 33f: N BmbSpiXipController DT (G.1c)
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; then
+    run_test "N BMB SpiXip Co-simulation" "run_n_cosim_bmb_spi_xip_test.resc" "N BMB SpiXip Co-simulation Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N BMB SpiXip Co-simulation ==="
+    echo "  libbmb_spi_xip.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
+# Test 33g: N BmbSpiXipController image-container boot flow (G.2)
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
+   [ -f "$SCRIPT_DIR/firmware/samples/xip_boot_test/xip_boot_image.img" ]; then
+    run_test "N BMB SpiXip Image Container Boot" "run_n_bmb_spi_xip_boot_test.resc" "N BMB SpiXip Image-Container Boot Flow Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N BMB SpiXip Image Container Boot ==="
+    echo "  Missing libbmb_spi_xip.so or xip_boot_image.img (run gen_dt_image_container.sh)"
 fi
 
 # Test 34: N I2C Lite Co-simulation

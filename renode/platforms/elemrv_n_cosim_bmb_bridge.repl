@@ -1,0 +1,16 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// Minimal ElemRV-N platform that maps only the Wishbone -> BMB bridge
+// co-simulated peripheral. Used by the BMB bridge round-trip DT test.
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imc"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00001000
+
+bmb_bridge: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0008000, +0x1000>
+    frequency: 30000000
+    limitBuffer: 10000

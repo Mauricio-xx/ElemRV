@@ -1,0 +1,20 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// G.2 platform: CPU boots from the BmbSpiXipController DT's data bank.
+// The wrapper's env var BMBXIP_IMAGE_PATH determines which firmware is
+// pre-loaded into the flash slave backing.
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imc"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00001000
+
+uart0: UART.LiteX_UART @ sysbus 0xF0006000
+    -> cpu@0
+
+bmb_spi_xip: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0009000, +0x4000>
+    frequency: 30000000
+    limitBuffer: 10000

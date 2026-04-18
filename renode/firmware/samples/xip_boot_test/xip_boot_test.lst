@@ -1,0 +1,35 @@
+
+xip_boot_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+f000b000 <_start>:
+f000b000:	80000137          	lui	sp,0x80000
+f000b004:	40010113          	add	sp,sp,1024 # 80000400 <_start-0x7000ac00>
+f000b008:	2011                	jal	f000b00c <main>
+f000b00a:	a001                	j	f000b00a <_start+0xa>
+
+f000b00c <main>:
+f000b00c:	f0006737          	lui	a4,0xf0006
+f000b010:	f000b6b7          	lui	a3,0xf000b
+f000b014:	05800613          	li	a2,88
+f000b018:	03868693          	add	a3,a3,56 # f000b038 <main+0x2c>
+f000b01c:	f00065b7          	lui	a1,0xf0006
+f000b020:	0711                	add	a4,a4,4 # f0006004 <_start-0x4ffc>
+f000b022:	0685                	add	a3,a3,1
+f000b024:	431c                	lw	a5,0(a4)
+f000b026:	8b85                	and	a5,a5,1
+f000b028:	fff5                	bnez	a5,f000b024 <main+0x18>
+f000b02a:	c190                	sw	a2,0(a1)
+f000b02c:	0006c603          	lbu	a2,0(a3)
+f000b030:	fa6d                	bnez	a2,f000b022 <main+0x16>
+f000b032:	0001                	nop
+f000b034:	0001                	nop
+f000b036:	bff5                	j	f000b032 <main+0x26>
+f000b038:	4958                	lw	a4,20(a0)
+f000b03a:	2050                	.insn	2, 0x2050
+f000b03c:	4f42                	lw	t5,16(sp)
+f000b03e:	4f20544f          	.insn	4, 0x4f20544f
+f000b042:	Address 0xf000b042 is out of bounds.
+
