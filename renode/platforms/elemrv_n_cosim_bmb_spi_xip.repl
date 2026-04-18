@@ -1,0 +1,19 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
+// ElemRV-N platform for the BmbSpiXipController DT (G.1c).
+// The wrapper exposes 16 KiB of Wishbone address space with three banks:
+//   0xF0009000 + 0x0000..0x0FFF  cfgSpiBus  (SPI master config)
+//   0xF0009000 + 0x1000..0x1FFF  cfgXipBus  (XIP engine config)
+//   0xF0009000 + 0x2000..0x2FFF  XIP data (BMB-bridged reads -> flash)
+
+cpu: CPU.VexRiscv @ sysbus
+    cpuType: "rv32imc"
+
+ram: Memory.MappedMemory @ sysbus 0x80000000
+    size: 0x00001000
+
+bmb_spi_xip: CoSimulated.CoSimulatedPeripheral @ sysbus <0xF0009000, +0x4000>
+    frequency: 30000000
+    limitBuffer: 10000
