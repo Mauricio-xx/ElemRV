@@ -15,7 +15,8 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 - **Fault Injection**: Verify firmware robustness through register corruption
 - **Multi-Node IoT Simulation**: Two SoC variants communicating over UART
 - **Quad I/O SPI Flash + BMB XIP**: Behavioral MT25Q flash slave, `BmbSpiXipController` DT, and image-container boot path (Phase G)
-- **58 Automated Tests**: Full regression test suite via Taskfile
+- **CPU-Driven XIP Execution**: VexRiscv executes directly from the co-sim XIP DT via tlib's executable-IO flag (Phase I)
+- **60 Automated Tests**: Full regression test suite via Taskfile
 
 ## Platform Variants
 
@@ -34,7 +35,7 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 # Install dependencies (run once)
 task install
 
-# Run full integration test suite (58 tests)
+# Run full integration test suite (60 tests)
 task dt-integration-test
 
 # Or step by step:
@@ -66,7 +67,7 @@ task dt-integration-test     # Run all tests
 - [Bare-metal Firmware](firmware/bare-metal.md) - Bare-metal development
 
 ### Reference
-- [Test Suite](reference/test-suite.md) - All 58 tests documented
+- [Test Suite](reference/test-suite.md) - All 60 tests documented
 - [Taskfile Commands](reference/taskfile-commands.md) - Build and test commands
 - [Memory Maps](reference/memory-maps.md) - Peripheral addresses
 
@@ -112,7 +113,7 @@ Learn embedded systems development with full visibility into both software execu
 
 ## Test Coverage
 
-The platform includes 52 automated tests covering:
+The platform includes 60 automated tests covering:
 
 - **Tests 1-2**: Base platform + PWM co-simulation
 - **Tests 3-8**: Zephyr apps (H)
@@ -121,7 +122,7 @@ The platform includes 52 automated tests covering:
 - **Tests 22-23**: Verilator + GDB validation
 - **Tests 24-28**: Fault injection
 - **Tests 29-30**: Sensor detection + capture (H)
-- **Tests 31-40**: ElemRV-N platform
+- **Tests 31-40**: ElemRV-N platform (incl. 33b-33i: Quad I/O SPI flash, BMB bridge, BmbSpiXip, image container, CPU-driven XIP)
 - **Tests 41-46**: RTOS debugging (H + N)
 - **Tests 47-51**: Sensor simulation (I2C + SPI + portable)
 - **Test 52**: Multi-node IoT (H edge + N gateway)
@@ -170,10 +171,34 @@ ElemRV/
 
 ---
 
-**Version**: 1.1  
+**Version**: 1.2  
 **Last Updated**: April 2026
 
 ## Changelog
+
+### 1.2 (April 2026) — Phase I: CPU-driven XIP fetch
+
+- Lifts the "Renode refuses CPU fetch from `CoSimulatedPeripheral`"
+  caveat noted in v1.1 by calling
+  `cpu RegisterAccessFlags <start> <size> true` in the `.resc` before
+  setting `PC`. This flips tlib's `IO_MEM_EXECUTABLE_IO` page flag
+  (already used internally for `ArrayMemory`) on the XIP range, so
+  VexRiscv can actually fetch and execute instructions arriving
+  through the BmbSpiXip RTL. No Renode patch required.
+- Two new tests (58 -> 60):
+  - Test 33h (`xip_exec_test`): 30-byte straight-line kernel proves
+    CPU fetch + execute from XIP (writes 0xCAFEBEEF to RAM). ~0.3 s
+    wall time.
+  - Test 33i (`xip_bootrom_test`): trimmed variant of
+    `software/elemrv_n/bootrom/start.s` running from XIP; validates
+    `jal`/`ret` + cfgXip-bank register writes. Requires `.option
+    norvc` to sidestep a VexRiscv-IBus + MMIO-fetch interaction that
+    misaligns PC after a compressed `c.jal`. ~60 s wall time (~30
+    instructions through Verilator).
+- Performance ceiling: ~30 instructions-per-wall-second for straight-
+  line XIP code, ~0.5 instructions-per-wall-second for branch-heavy
+  XIP code. Feasible for short boot kernels; full RTOS boot from XIP
+  is still impractical and should stage via RAM.
 
 ### 1.1 (April 2026) — upstream sync + Phase G
 

@@ -222,6 +222,16 @@ Phase G added six tests for the Quad I/O SPI / XIP / BMB digital twins
 | 33f | N BMB SpiXip Co-simulation | Full `BmbSpiXipController` wrap; reads route WB -> BMB -> SPI -> flash -> back |
 | 33g | N BMB SpiXip Image Container Boot | `gen_dt_image_container.sh` + `xip_boot_test` image; wrapper env var `BMBXIP_IMAGE_PATH` pre-loads the flash backing; test validates image words via XIP reads |
 
+Phase I added two CPU-fetch-from-XIP tests that lift the 33g caveat
+(Renode's default refusal to fetch instructions from
+`CoSimulatedPeripheral` ranges). They enable the executable-IO flag via
+`cpu RegisterAccessFlags <start> <size> true` — no Renode patch needed.
+
+| Test | Name | Description |
+|------|------|-------------|
+| 33h | N CPU-Driven XIP Execution | Minimal 30-byte kernel at 0xF000B000 writes 0xCAFEBEEF to RAM@0x80000100; proves CPU fetch + execute from the BmbSpiXip data bank (~0.3 s wall) |
+| 33i | N CPU-Driven XIP Bootrom-Adapted | Trimmed `software/elemrv_n/bootrom/start.s` (partial `_init_regs` + `_init_xip` with cfgXip writes + marker 0xBEADFACE); exercises `jal`/`ret` control flow from XIP (~60 s wall) |
+
 ## Platform Files
 
 | File | Purpose |
