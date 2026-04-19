@@ -32,7 +32,6 @@
 .equ MARKER_ADDR,   0x80000100
 .equ MARKER_VALUE,  0xBEADFACE
 
-.option norvc
 .section .text.init
 .global _start
 _start:

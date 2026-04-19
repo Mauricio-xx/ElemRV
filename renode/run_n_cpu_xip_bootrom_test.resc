@@ -36,7 +36,7 @@ log ""
 emulation RunFor "00:00:05.000000"
 
 log ""
-log "-- Post-run PC (expect 0xF000B024, the final spin loop) --"
+log "-- Post-run PC (expect spin loop in 0xF000B020..024 range) --"
 cpu PC
 
 log ""

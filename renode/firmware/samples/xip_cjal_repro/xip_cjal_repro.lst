@@ -1,0 +1,23 @@
+
+xip_cjal_repro.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+f000b000 <_start>:
+f000b000:	80000137          	lui	sp,0x80000
+f000b004:	40010113          	add	sp,sp,1024 # 80000400 <MARKER_ADDR+0x300>
+f000b008:	2821                	jal	f000b020 <_sub>
+f000b00a:	800002b7          	lui	t0,0x80000
+f000b00e:	10028293          	add	t0,t0,256 # 80000100 <MARKER_ADDR>
+f000b012:	cafec337          	lui	t1,0xcafec
+f000b016:	eef30313          	add	t1,t1,-273 # cafebeef <MARKER_VALUE>
+f000b01a:	0062a023          	sw	t1,0(t0)
+f000b01e:	a001                	j	f000b01e <_start+0x1e>
+
+f000b020 <_sub>:
+f000b020:	a5a5a2b7          	lui	t0,0xa5a5a
+f000b024:	5a528293          	add	t0,t0,1445 # a5a5a5a5 <MARKER_ADDR+0x25a5a4a5>
+f000b028:	a6a6a337          	lui	t1,0xa6a6a
+f000b02c:	6a630313          	add	t1,t1,1702 # a6a6a6a6 <MARKER_ADDR+0x26a6a5a6>
+f000b030:	8082                	ret

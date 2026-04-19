@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Test 33j: Narrow regression test for the BmbSpiXip sub-word read bug
+# (Gap 1). Runs xip_cjal_repro from the BmbSpiXip data bank with a
+# short firmware that uses a compressed c.jal to a 4-byte-aligned
+# target. Before the wrapper's sub-word shift fix, this would fail
+# because byte/half-word reads at non-zero byte offsets returned the
+# word's low bits instead of the requested byte/half. Passes iff the
+# marker 0xCAFEBEEF lands at RAM[0x100]. Complements 33i which also
+# exercises c.jal but via a longer bootrom-adapted flow.
+
+using sysbus
+
+mach create "xip_cjal_repro"
+
+machine LoadPlatformDescription @platforms/elemrv_n_bmb_spi_xip_boot.repl
+
+logLevel 3 sysbus
+
+$xip_lib?="/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so"
+bmb_spi_xip SimulationFilePathLinux $xip_lib
+
+cpu RegisterAccessFlags 0xF000B000 0x00001000 true
+
+cpu PC 0xF000B000
+
+log ""
+log "=== XIP c.jal Sub-Word Regression Test ==="
+log ""
+
+emulation RunFor "00:00:05.000000"
+
+log ""
+log "-- Post-run PC (expect spin loop somewhere in 0xF000B01c..01e) --"
+cpu PC
+
+log ""
+log "-- RAM@0x80000100 (expect 0xCAFEBEEF) --"
+sysbus ReadDoubleWord 0x80000100
+
+log ""
+log "=== XIP c.jal Sub-Word Regression Test PASSED ==="
+log ""
+
+quit
