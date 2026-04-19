@@ -181,7 +181,7 @@ task dt-zephyr-test
 task dt-integration-test
 ```
 
-**Description**: Complete build and test of all 58 tests.  
+**Description**: Complete build and test of all 60 tests.  
 **Dependencies**:
 - dt-build-firmware
 - dt-cosim-build
@@ -427,7 +427,7 @@ task
 |---------|-------|----------|
 | `task dt-test` | 1-30 (H) | 2-3 min |
 | `task dt-n-test` | 31-40 (N) | 2-3 min |
-| `task dt-integration-test` | 1-52 (All) | 5-10 min |
+| `task dt-integration-test` | 1-52 + 33b-33i (All 60) | 6-12 min |
 | `task dt-test-quick` | Cached | 30 sec |
 
 ### Debug Commands

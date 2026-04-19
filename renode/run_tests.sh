@@ -494,6 +494,44 @@ else
     echo "  Missing libbmb_spi_xip.so or xip_boot_image.img (run gen_dt_image_container.sh)"
 fi
 
+# Save the original BMBXIP_IMAGE_PATH so tests 33h/33i can override it
+# with their own firmware images and then restore it for later tests.
+_SAVED_BMBXIP_IMAGE_PATH="$BMBXIP_IMAGE_PATH"
+
+# Test 33h: CPU-driven XIP execution (tlib executable-IO flag trick).
+# Proves the VexRiscv actually fetches + executes instructions directly
+# from the BmbSpiXip data bank (not only data reads via sysbus). Uses
+# cpu.RegisterAccessFlags(start, size, isIoMemory=true) to flip tlib's
+# IO_MEM_EXECUTABLE_IO page flag; no Renode patch required.
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
+   [ -f "$SCRIPT_DIR/firmware/samples/xip_exec_test/xip_exec_image.img" ]; then
+    export BMBXIP_IMAGE_PATH="$SCRIPT_DIR/firmware/samples/xip_exec_test/xip_exec_image.img"
+    run_test "N CPU-Driven XIP Execution" "run_n_cpu_xip_exec_test.resc" "CPU-Driven XIP Execution Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N CPU-Driven XIP Execution ==="
+    echo "  Missing libbmb_spi_xip.so or xip_exec_image.img"
+fi
+
+# Test 33i: CPU-driven XIP bootrom-adapted flow.
+# Runs a trimmed variant of software/elemrv_n/bootrom/start.s from XIP
+# under the same executable-IO mechanism. Exercises jal/ret control flow
+# and _init_xip cfgXip-bank register writes; validates x20 register state
+# and RAM marker. Longer wall time (~60s) because the full ~30-inst boot
+# sequence fetches each instruction through the RTL SPI Quad I/O path.
+# Requires norvc to avoid VexRiscv-MMIO unaligned-fetch interactions.
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
+   [ -f "$SCRIPT_DIR/firmware/samples/xip_bootrom_test/xip_bootrom_image.img" ]; then
+    export BMBXIP_IMAGE_PATH="$SCRIPT_DIR/firmware/samples/xip_bootrom_test/xip_bootrom_image.img"
+    run_test "N CPU-Driven XIP Bootrom-Adapted" "run_n_cpu_xip_bootrom_test.resc" "CPU-Driven XIP Bootrom-Adapted Test PASSED"
+else
+    echo ""
+    echo "=== TEST (skipped): N CPU-Driven XIP Bootrom-Adapted ==="
+    echo "  Missing libbmb_spi_xip.so or xip_bootrom_image.img"
+fi
+
+export BMBXIP_IMAGE_PATH="$_SAVED_BMBXIP_IMAGE_PATH"
+
 # Test 34: N I2C Lite Co-simulation
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
     run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"

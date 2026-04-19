@@ -1,0 +1,44 @@
+
+xip_bootrom_test.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+f000b000 <_start>:
+f000b000:	80000137          	lui	sp,0x80000
+f000b004:	40010113          	add	sp,sp,1024 # 80000400 <MARKER_ADDR+0x300>
+f000b008:	020000ef          	jal	f000b028 <_init_regs>
+f000b00c:	060000ef          	jal	f000b06c <_init_xip>
+f000b010:	800002b7          	lui	t0,0x80000
+f000b014:	10028293          	add	t0,t0,256 # 80000100 <MARKER_ADDR>
+f000b018:	beae0337          	lui	t1,0xbeae0
+f000b01c:	ace30313          	add	t1,t1,-1330 # beadface <MARKER_VALUE>
+f000b020:	0062a023          	sw	t1,0(t0)
+f000b024:	0000006f          	j	f000b024 <_start+0x24>
+
+f000b028 <_init_regs>:
+f000b028:	a5a5a2b7          	lui	t0,0xa5a5a
+f000b02c:	5a528293          	add	t0,t0,1445 # a5a5a5a5 <MARKER_ADDR+0x25a5a4a5>
+f000b030:	a6a6a337          	lui	t1,0xa6a6a
+f000b034:	6a630313          	add	t1,t1,1702 # a6a6a6a6 <MARKER_ADDR+0x26a6a5a6>
+f000b038:	a7a7a3b7          	lui	t2,0xa7a7a
+f000b03c:	7a738393          	add	t2,t2,1959 # a7a7a7a7 <MARKER_ADDR+0x27a7a6a7>
+f000b040:	a8a8b437          	lui	s0,0xa8a8b
+f000b044:	8a840413          	add	s0,s0,-1880 # a8a8a8a8 <MARKER_ADDR+0x28a8a7a8>
+f000b048:	a9a9b4b7          	lui	s1,0xa9a9b
+f000b04c:	9a948493          	add	s1,s1,-1623 # a9a9a9a9 <MARKER_ADDR+0x29a9a8a9>
+f000b050:	b8b8c937          	lui	s2,0xb8b8c
+f000b054:	8b890913          	add	s2,s2,-1864 # b8b8b8b8 <MARKER_ADDR+0x38b8b7b8>
+f000b058:	b9b9c9b7          	lui	s3,0xb9b9c
+f000b05c:	9b998993          	add	s3,s3,-1607 # b9b9b9b9 <MARKER_ADDR+0x39b9b8b9>
+f000b060:	c0c0ca37          	lui	s4,0xc0c0c
+f000b064:	0c0a0a13          	add	s4,s4,192 # c0c0c0c0 <MARKER_VALUE+0x212c5f2>
+f000b068:	00008067          	ret
+
+f000b06c <_init_xip>:
+f000b06c:	f000a2b7          	lui	t0,0xf000a
+f000b070:	007f0337          	lui	t1,0x7f0
+f000b074:	70230313          	add	t1,t1,1794 # 7f0702 <CFGXIP_VALUE>
+f000b078:	0062a623          	sw	t1,12(t0) # f000a00c <CFGXIP_BASE+0xc>
+f000b07c:	0002a423          	sw	zero,8(t0)
+f000b080:	00008067          	ret
