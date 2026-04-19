@@ -42,6 +42,31 @@ static SpiQioFlashSlave g_flash;
 static bool g_flash_initialised = false;
 static uint8_t g_flash_rom[4096];
 
+// Opt-in "fast mode" for firmware that spin-loops on XIP (e.g. the
+// 33i CPU-driven bootrom test). Gated by BMBXIP_FAST=1 — default off
+// so CI keeps full-fidelity SPI Quad I/O pipeline coverage. Two
+// independent mechanisms, both correctness-preserving:
+//
+//   1. tick() idle shortcut: when no WB transaction is active and
+//      SPI CS is deasserted, skip the per-cycle Verilator eval. The
+//      RTL has no observable state in progress, so advancing virtual
+//      time without ticking is indistinguishable. This is where
+//      ~99% of the wall time goes (30 MHz x 5 s virtual = 150M
+//      ticks, each = 2 eval() calls).
+//
+//   2. evalModel() fetch cache for the XIP data bank (bank 2, byte
+//      0x2000-0x2FFF). First read of each 32-bit word runs the full
+//      pipeline and captures; subsequent reads short-circuit by
+//      poking DAT_MISO + ACK directly. Invalidated on any bank-1
+//      (cfgXip) write to stay correct across XIP mode changes.
+static bool     g_fast_mode = false;
+static uint32_t g_fetch_cache[1024];
+static bool     g_fetch_cache_valid[1024];
+
+static inline void invalidateFetchCache() {
+  for (size_t i = 0; i < 1024; ++i) g_fetch_cache_valid[i] = false;
+}
+
 static void initFlashRom() {
   // If BMBXIP_IMAGE_PATH is set, load the image container from disk;
   // otherwise fall back to the synthetic pattern rom[i] = i & 0xFF.
@@ -97,6 +122,24 @@ static void copyBridgeAndEval() {
 void evalModel() {
   if (!g_top) return;
 
+  // Bank and word index derived from byte offset in the wrapper's
+  // 16 KiB range (banks: 0 cfgSpi, 1 cfgXip, 2 XIP data).
+  const uint32_t addr_byte = (uint32_t)(g_bridge_addr & 0x3FFF);
+  const uint32_t bank      = (addr_byte >> 12) & 0x3;
+  const uint32_t word_idx  = (addr_byte & 0xFFF) >> 2;
+
+  // Fast path: cache hit on a bank-2 read. Short-circuit without
+  // touching the RTL — just drive DAT_MISO and assert ACK.
+  if (g_fast_mode &&
+      g_top->io_wb_CYC && g_top->io_wb_STB && !g_top->io_wb_WE &&
+      bank == 2 && g_fetch_cache_valid[word_idx]) {
+    const uint32_t v = g_fetch_cache[word_idx];
+    g_bridge_rd_dat       = (uint64_t)v;
+    g_top->io_wb_DAT_MISO = v;
+    g_top->io_wb_ACK      = 1;
+    return;
+  }
+
   copyBridgeAndEval();
 
   // Pump extra cycles while a Wishbone transaction is outstanding. XIP
@@ -108,6 +151,18 @@ void evalModel() {
     for (int i = 0; i < 5000 && !g_top->io_wb_ACK; ++i) {
       g_top->clk = 1; copyBridgeAndEval();
       g_top->clk = 0; copyBridgeAndEval();
+    }
+  }
+
+  if (g_fast_mode &&
+      g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK) {
+    if (!g_top->io_wb_WE && bank == 2) {
+      g_fetch_cache[word_idx]       = (uint32_t)g_bridge_rd_dat;
+      g_fetch_cache_valid[word_idx] = true;
+    } else if (g_top->io_wb_WE && bank == 1) {
+      // cfgXip mode/dummyCycles/evcr write — invalidate to avoid
+      // serving stale bytes if XIP mode changed.
+      invalidateFetchCache();
     }
   }
 }
@@ -140,6 +195,14 @@ class BmbSpiXipPeripheral : public RenodeAgent {
     addBus(bus);
 
     initFlashRom();
+    {
+      const char* c = getenv("BMBXIP_FAST");
+      g_fast_mode = (c && *c && c[0] != '0');
+      invalidateFetchCache();
+      if (g_fast_mode) {
+        fprintf(stderr, "[BMBXIP] BMBXIP_FAST enabled (idle-skip + fetch cache)\n");
+      }
+    }
     g_flash.reset();
     g_flash.setBacking(g_flash_rom, sizeof(g_flash_rom));
     g_flash.setDummyCycles(8);
@@ -174,6 +237,14 @@ class BmbSpiXipPeripheral : public RenodeAgent {
 
   void tick(bool countEnable, uint64_t steps) override {
     if (!top || steps == 0) return;
+    // Idle shortcut (BMBXIP_FAST): see top-of-file comment. Safe when
+    // no WB transaction is active and SPI CS is deasserted.
+    if (g_fast_mode &&
+        !top->io_wb_CYC &&
+        (top->io_spi_cs & 1)) {
+      if (countEnable) tickCounter += steps;
+      return;
+    }
     for (uint64_t i = 0; i < steps; ++i) {
       *bus->wb_clk = 1;
       top->eval();
@@ -204,6 +275,7 @@ class BmbSpiXipPeripheral : public RenodeAgent {
   void reset() {
     if (!top) return;
     tickCounter = 0;
+    invalidateFetchCache();
     *bus->wb_rst = 0;
     for (int i = 0; i < 10; ++i) bus->tick(true, 1);
     *bus->wb_rst = 1;
