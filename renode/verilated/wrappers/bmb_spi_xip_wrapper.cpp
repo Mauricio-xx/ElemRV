@@ -129,7 +129,9 @@ void evalModel() {
   const uint32_t word_idx  = (addr_byte & 0xFFF) >> 2;
 
   // Fast path: cache hit on a bank-2 read. Short-circuit without
-  // touching the RTL — just drive DAT_MISO and assert ACK.
+  // touching the RTL. The cache stores the UNSHIFTED 32-bit word so
+  // the sub-word shift below still applies uniformly.
+  bool cache_hit = false;
   if (g_fast_mode &&
       g_top->io_wb_CYC && g_top->io_wb_STB && !g_top->io_wb_WE &&
       bank == 2 && g_fetch_cache_valid[word_idx]) {
@@ -137,33 +139,59 @@ void evalModel() {
     g_bridge_rd_dat       = (uint64_t)v;
     g_top->io_wb_DAT_MISO = v;
     g_top->io_wb_ACK      = 1;
-    return;
+    cache_hit = true;
   }
 
-  copyBridgeAndEval();
+  if (!cache_hit) {
+    copyBridgeAndEval();
 
-  // Pump extra cycles while a Wishbone transaction is outstanding. XIP
-  // reads go: Wishbone -> WishboneToBmbMaster FSM -> BMB cmd ->
-  // SpiXipController (drives SPI, waits for flash) -> BMB rsp ->
-  // bridge ACK. That requires many bus clocks (on the order of 100+
-  // for a 32-bit quad read with dummy cycles).
-  if (g_top->io_wb_CYC && g_top->io_wb_STB && !g_top->io_wb_ACK) {
-    for (int i = 0; i < 5000 && !g_top->io_wb_ACK; ++i) {
-      g_top->clk = 1; copyBridgeAndEval();
-      g_top->clk = 0; copyBridgeAndEval();
+    // Pump extra cycles while a Wishbone transaction is outstanding.
+    // XIP reads go: Wishbone -> WishboneToBmbMaster FSM -> BMB cmd ->
+    // SpiXipController (drives SPI, waits for flash) -> BMB rsp ->
+    // bridge ACK. That requires many bus clocks (on the order of 100+
+    // for a 32-bit quad read with dummy cycles).
+    if (g_top->io_wb_CYC && g_top->io_wb_STB && !g_top->io_wb_ACK) {
+      for (int i = 0; i < 5000 && !g_top->io_wb_ACK; ++i) {
+        g_top->clk = 1; copyBridgeAndEval();
+        g_top->clk = 0; copyBridgeAndEval();
+      }
+    }
+
+    if (g_fast_mode &&
+        g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK) {
+      if (!g_top->io_wb_WE && bank == 2) {
+        g_fetch_cache[word_idx]       = (uint32_t)g_bridge_rd_dat;
+        g_fetch_cache_valid[word_idx] = true;
+      } else if (g_top->io_wb_WE && bank == 1) {
+        // cfgXip mode/dummyCycles/evcr write — invalidate to avoid
+        // serving stale bytes if XIP mode changed.
+        invalidateFetchCache();
+      }
     }
   }
 
-  if (g_fast_mode &&
-      g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK) {
-    if (!g_top->io_wb_WE && bank == 2) {
-      g_fetch_cache[word_idx]       = (uint32_t)g_bridge_rd_dat;
-      g_fetch_cache_valid[word_idx] = true;
-    } else if (g_top->io_wb_WE && bank == 1) {
-      // cfgXip mode/dummyCycles/evcr write — invalidate to avoid
-      // serving stale bytes if XIP mode changed.
-      invalidateFetchCache();
+  // Sub-word read fix: the Wishbone slave only speaks 32-bit words
+  // (ADR is word-addressed, DAT_MISO is 32-bit). Renode issues byte,
+  // half-word, and word reads at any byte alignment and takes the LOW
+  // N bits of whatever we return. If we hand back the full 32-bit word
+  // for every request, a byte read at offset +1 returns the byte at
+  // offset 0, half-word read at +2 returns the low half, etc.
+  // Mismatched bytes then compose into garbled instructions when the
+  // CPU fetches compressed code from XIP. Shift the word so low bits
+  // correspond to the actual requested slice. Applied uniformly for
+  // both cache-hit and miss paths, so g_fetch_cache can stay storing
+  // the raw 32-bit word.
+  if (g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK && !g_top->io_wb_WE) {
+    const int byte_off = (int)(g_bridge_addr & 3);
+    if (byte_off != 0) {
+      g_bridge_rd_dat = (g_bridge_rd_dat >> (byte_off * 8));
     }
+  }
+
+  if (getenv("BMBXIP_TRACE") && g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK) {
+    fprintf(stderr, "[BMBXIP-TRC2] byte=0x%llx bank=%u we=%d sel=0x%x rd=0x%08x\n",
+            (unsigned long long)g_bridge_addr, bank, (int)g_top->io_wb_WE,
+            (unsigned)g_dummy_sel, (unsigned)g_bridge_rd_dat);
   }
 }
 

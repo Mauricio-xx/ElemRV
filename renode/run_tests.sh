@@ -536,6 +536,26 @@ fi
 
 export BMBXIP_IMAGE_PATH="$_SAVED_BMBXIP_IMAGE_PATH"
 
+# Test 33j: XIP c.jal sub-word regression test.
+# Narrow regression guard for the BmbSpiXip wrapper's sub-word read fix
+# (see bmb_spi_xip_wrapper.cpp, Gap 1). Before the fix, compressed
+# instructions fetched from XIP caused a byte-replicated garbage to be
+# returned to the CPU and the firmware aborted. With the fix, the
+# minimal c.jal -> subroutine -> ret -> marker store sequence
+# completes cleanly. Exercises the same code path BMBXIP_FAST accelerates.
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
+   [ -f "$SCRIPT_DIR/firmware/samples/xip_cjal_repro/xip_cjal_repro.img" ]; then
+    export BMBXIP_IMAGE_PATH="$SCRIPT_DIR/firmware/samples/xip_cjal_repro/xip_cjal_repro.img"
+    export BMBXIP_FAST=1
+    run_test "N XIP c.jal Sub-Word Regression" "run_xip_cjal_repro.resc" "XIP c.jal Sub-Word Regression Test PASSED"
+    unset BMBXIP_FAST
+    export BMBXIP_IMAGE_PATH="$_SAVED_BMBXIP_IMAGE_PATH"
+else
+    echo ""
+    echo "=== TEST (skipped): N XIP c.jal Sub-Word Regression ==="
+    echo "  Missing libbmb_spi_xip.so or xip_cjal_repro.img"
+fi
+
 # Test 34: N I2C Lite Co-simulation
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
     run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"
