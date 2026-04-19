@@ -517,13 +517,17 @@ fi
 # Runs a trimmed variant of software/elemrv_n/bootrom/start.s from XIP
 # under the same executable-IO mechanism. Exercises jal/ret control flow
 # and _init_xip cfgXip-bank register writes; validates x20 register state
-# and RAM marker. Longer wall time (~60s) because the full ~30-inst boot
-# sequence fetches each instruction through the RTL SPI Quad I/O path.
+# and RAM marker.
+# BMBXIP_FAST=1 enables the wrapper's idle-tick shortcut + fetch cache
+# (both correctness-preserving) so this test runs in ~10 s instead of
+# ~25 s. Fidelity tests 33f/33g/33h stay on the default non-fast path.
 # Requires norvc to avoid VexRiscv-MMIO unaligned-fetch interactions.
 if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
    [ -f "$SCRIPT_DIR/firmware/samples/xip_bootrom_test/xip_bootrom_image.img" ]; then
     export BMBXIP_IMAGE_PATH="$SCRIPT_DIR/firmware/samples/xip_bootrom_test/xip_bootrom_image.img"
+    export BMBXIP_FAST=1
     run_test "N CPU-Driven XIP Bootrom-Adapted" "run_n_cpu_xip_bootrom_test.resc" "CPU-Driven XIP Bootrom-Adapted Test PASSED"
+    unset BMBXIP_FAST
 else
     echo ""
     echo "=== TEST (skipped): N CPU-Driven XIP Bootrom-Adapted ==="
