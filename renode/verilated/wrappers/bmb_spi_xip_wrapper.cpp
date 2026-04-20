@@ -157,6 +157,25 @@ void evalModel() {
       }
     }
 
+    // Write-latch fix: WishboneSlaveFactory's doWrite condition is
+    // CYC && STB && WE && ACK simultaneously, but ACK is registered
+    // (rises one posedge after CYC+STB). On the posedge where ACK
+    // first rises, the sync-write always block evaluated with the
+    // pre-edge (old) ACK=0 and skipped the register update. Renode
+    // drops CYC/STB immediately after seeing ACK=1, so without an
+    // extra posedge here the write never latches.
+    //
+    // Symptom without this fix: writes to cfgSpi/cfgXip registers
+    // silently no-op. Reads still work because doRead takes its data
+    // from the combinational read mux on the same posedge. Caught by
+    // Gap 3.2 #1 (xip_cache_invalidate test); same pattern is already
+    // in pwm_wrapper.cpp and pio_wrapper.cpp.
+    if (g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_WE &&
+        g_top->io_wb_ACK) {
+      g_top->clk = 1; copyBridgeAndEval();
+      g_top->clk = 0; copyBridgeAndEval();
+    }
+
     if (g_fast_mode &&
         g_top->io_wb_CYC && g_top->io_wb_STB && g_top->io_wb_ACK) {
       if (!g_top->io_wb_WE && bank == 2) {

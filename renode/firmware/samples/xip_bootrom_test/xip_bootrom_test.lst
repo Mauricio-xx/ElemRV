@@ -39,9 +39,7 @@ f000b066:	0001                	nop
 
 f000b068 <_init_xip>:
 f000b068:	f000a2b7          	lui	t0,0xf000a
-f000b06c:	007f0337          	lui	t1,0x7f0
-f000b070:	70230313          	add	t1,t1,1794 # 7f0702 <CFGXIP_VALUE>
-f000b074:	0062a623          	sw	t1,12(t0) # f000a00c <CFGXIP_BASE+0xc>
-f000b078:	0002a423          	sw	zero,8(t0)
-f000b07c:	8082                	ret
-	...
+f000b06c:	4301                	li	t1,0
+f000b06e:	0062a623          	sw	t1,12(t0) # f000a00c <CFGXIP_BASE+0xc>
+f000b072:	0002a423          	sw	zero,8(t0)
+f000b076:	8082                	ret

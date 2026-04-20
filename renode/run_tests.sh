@@ -556,6 +556,23 @@ else
     echo "  Missing libbmb_spi_xip.so or xip_cjal_repro.img"
 fi
 
+# Test 33k: XIP fetch-cache invalidation coverage (Gap 3.2 #1).
+# Firmware writes cfgXip (bank-1) between two reads of the same XIP
+# word. Pass marker is the verdict hex value stored at 0x80000100 by
+# the firmware: 0xCA5E0001 on success, 0xCA5EFAE1 on failure. Kills
+# mutation M8 in bmb_spi_xip_wrapper.cpp (invalidateFetchCache skipped
+# on bank-1 writes). BMBXIP_FAST=1 is required to populate the cache.
+if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
+   [ -f "$SCRIPT_DIR/firmware/samples/xip_cache_invalidate/xip_cache_invalidate.bin" ]; then
+    export BMBXIP_FAST=1
+    run_test "XIP Cache Invalidate Coverage" "run_xip_cache_invalidate.resc" "0xCA5E0001"
+    unset BMBXIP_FAST
+else
+    echo ""
+    echo "=== TEST (skipped): XIP Cache Invalidate Coverage ==="
+    echo "  Missing libbmb_spi_xip.so or xip_cache_invalidate.bin"
+fi
+
 # Test 34: N I2C Lite Co-simulation
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
     run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"
