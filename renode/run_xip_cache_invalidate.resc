@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Gap 3.2 #1 — XIP fetch-cache invalidation coverage test.
+# Firmware reads the same XIP word 3x, writes cfgXip (bank-1) between
+# reads 2 and 3, then stores verdict 0xCA5E0001 at 0x80000100 iff
+# read3 != read1. M8 mutation (bmb_spi_xip_wrapper.cpp removes the
+# invalidateFetchCache() call on bank-1 writes) fails this test.
+#
+# Pass is asserted by run_tests.sh grepping the log for the exact
+# verdict value 0xCA5E0001. Requires BMBXIP_FAST=1 to populate the
+# wrapper's fetch cache (otherwise reads go straight through RTL and
+# the cache path is not exercised).
+
+using sysbus
+
+mach create "elemrv_n_xip_cache_invalidate"
+
+machine LoadPlatformDescription @platforms/elemrv_n_bmb_spi_xip_boot.repl
+
+logLevel 3 sysbus
+
+$xip_lib?="/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so"
+bmb_spi_xip SimulationFilePathLinux $xip_lib
+
+sysbus LoadBinary @../renode/firmware/samples/xip_cache_invalidate/xip_cache_invalidate.bin 0x80000000
+cpu PC 0x80000000
+
+log ""
+log "=== XIP Cache Invalidate Coverage Test ==="
+
+emulation RunFor "00:00:02.000000"
+
+log ""
+log "-- Verdict (expect 0xCA5E0001) --"
+sysbus ReadDoubleWord 0x80000100
+log "-- s0 (read 1) --"
+sysbus ReadDoubleWord 0x80000104
+log "-- s1 (read 2, should equal s0) --"
+sysbus ReadDoubleWord 0x80000108
+log "-- s2 (read 3, should differ from s0) --"
+sysbus ReadDoubleWord 0x8000010C
+log "-- cfgXip readback (expect 0x00000F00) --"
+sysbus ReadDoubleWord 0x80000110
+
+log ""
+log "=== XIP Cache Invalidate Coverage Test DONE ==="
+
+quit
