@@ -79,17 +79,8 @@ sysbus WriteDoubleWord 0xF0005050 0x10000000
 # Let the controller play out the SPI transactions.
 emulation RunFor "00:00:00.001000"
 
-log "Rsp FIFO byte 0 (valid=bit31, expect 0x80000020 = manufacturer 0x20):"
-sysbus ReadDoubleWord 0xF0005050
-log "Rsp FIFO byte 1 (expect 0x800000BA = MT25Q family):"
-sysbus ReadDoubleWord 0xF0005050
-log "Rsp FIFO byte 2 (expect 0x80000018 = 128 Mbit capacity):"
-sysbus ReadDoubleWord 0xF0005050
-
 log ""
 log "-- Fast Read 0x0B single-I/O from addr 0x000020 --"
-# Drain any leftover rsp FIFO entries from RDID.
-sysbus ReadDoubleWord 0xF0005050
 
 # Re-open a new CS window.
 sysbus WriteDoubleWord 0xF0005050 0x11000000
@@ -109,11 +100,6 @@ sysbus WriteDoubleWord 0xF0005050 0x01000000
 sysbus WriteDoubleWord 0xF0005050 0x10000000
 
 emulation RunFor "00:00:00.001000"
-
-log "Rsp FIFO byte 0 (expect 0x80000020 = rom[0x20]):"
-sysbus ReadDoubleWord 0xF0005050
-log "Rsp FIFO byte 1 (expect 0x80000021 = rom[0x21]):"
-sysbus ReadDoubleWord 0xF0005050
 
 log ""
 log "-- Quad I/O Fast Read 0xEB from addr 0x000040 --"
@@ -138,13 +124,44 @@ sysbus WriteDoubleWord 0xF0005050 0x10000000
 
 emulation RunFor "00:00:00.001000"
 
-log "Rsp FIFO byte 0 (expect 0x80000040 = rom[0x40]):"
-sysbus ReadDoubleWord 0xF0005050
-log "Rsp FIFO byte 1 (expect 0x80000041 = rom[0x41]):"
-sysbus ReadDoubleWord 0xF0005050
+# Gap 3.2 #4 — assert returned bytes rather than just logging them.
+# Reads the response FIFO via the Monitor's Python bridge, compares each
+# byte against the expected value, and emits the PASS marker only when
+# all 7 bytes match. Any flash-slave data mutation (M1/M2/M3/M6/M7) now
+# changes at least one byte and flips the verdict to FAILED.
+#
+# Expected values (valid=bit31 set, byte in bits 7:0):
+#   RDID (0x9F):                 0x20, 0xBA, 0x18     (MT25Q / 128 Mbit)
+#   Fast Read 0x0B @ 0x0020:     0x20, 0x21           (rom[i] = i & 0xFF)
+#   Quad I/O Fast Read 0xEB @ 0x0040: 0x40, 0x41      (rom[i] = i & 0xFF)
+python """
+FIFO_ADDR = 0xF0005050
+bus = monitor.Machine.SystemBus
 
-log ""
-log "=== N SPI Quad Flash Co-simulation Test PASSED ==="
-log ""
+def rd():
+    return bus.ReadDoubleWord(FIFO_ADDR) & 0xFFFFFFFF
+
+def check(label, got, expected):
+    ok = (got == expected)
+    mark = 'PASS' if ok else 'FAIL'
+    print('[assert %s] %-36s got=0x%08X expected=0x%08X' % (mark, label, got, expected))
+    return ok
+
+all_ok = True
+all_ok &= check('rdid[0] manufacturer 0x20',        rd(), 0x80000020)
+all_ok &= check('rdid[1] MT25Q family 0xBA',        rd(), 0x800000BA)
+all_ok &= check('rdid[2] 128Mbit capacity 0x18',    rd(), 0x80000018)
+
+all_ok &= check('fast_read[0] rom[0x20]',           rd(), 0x80000020)
+all_ok &= check('fast_read[1] rom[0x21]',           rd(), 0x80000021)
+
+all_ok &= check('qio_fast_read[0] rom[0x40]',       rd(), 0x80000040)
+all_ok &= check('qio_fast_read[1] rom[0x41]',       rd(), 0x80000041)
+
+if all_ok:
+    print('=== N SPI Quad Flash Co-simulation Test PASSED ===')
+else:
+    print('=== N SPI Quad Flash Co-simulation Test FAILED ===')
+"""
 
 quit
