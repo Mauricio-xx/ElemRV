@@ -26,7 +26,7 @@ System Simulation Layer
   |  +-----------------+  +----------------+ |
   |  | VexRiscv CPU    |  | LiteX Models   | |
   |  | - RV32IC/IMC    |  | - UART         | |
-  |  | - 50/20 MHz     |  | - Timer        | |
+  |  | - 50/30 MHz     |  | - Timer        | |
   |  | - Memory mgmt   |  | - GPIO         | |
   |  |                 |  | - I2C          | |
   |  |                 |  | - Interrupts   | |
@@ -214,7 +214,7 @@ Minimal configuration for CPU debugging:
 
 ```
 Components:
-- VexRiscv CPU @ 50MHz (H) or 20MHz (N)
+- VexRiscv CPU @ 50MHz (H) or 30MHz (N, 60MHz input)
 - 8KB RAM (H) or 4KB RAM (N)
 - 64KB Flash
 - LiteX UART (for console output)
@@ -374,6 +374,34 @@ make BUILD_MODE=release
 # Reduce simulation duration
 task dt-test-quick
 ```
+
+## Wrapper-Level Patterns (Phase G / Phase I / Gap 3.2)
+
+The Phase G–I DTs and the Gap 3.2 hardening pass surfaced a handful of wrapper patterns that generalise to any `CoSimulatedPeripheral` talking to Renode's sysbus. These are documented in detail under [features/co-simulation.md](features/co-simulation.md), summarised here for architectural context.
+
+### Sub-word MMIO read shift
+
+Renode's bus framework issues byte (`sel=0x1`) and half-word (`sel=0x3`) reads at any byte alignment within a peripheral's window, then takes the low N bits of whatever the slave returns. Our Wishbone wrappers are 32-bit word-addressed: they always return the word at the nearest word boundary. For non-zero byte offsets that silently corrupts the data. `bmb_spi_xip_wrapper.cpp` therefore shifts `g_bridge_rd_dat` right by `(byte_off * 8)` on every read ACK so the low bits always hold the requested slice. Test 33j is the regression guard (9 scenarios across `byte_off` ∈ {0,1,2,3}).
+
+### Write-latch extra posedge
+
+SpinalHDL's `WishboneSlaveFactory` gates `doWrite` on `CYC && STB && WE && ACK` simultaneously. ACK is registered (rises one posedge after CYC+STB), but Renode drops CYC/STB as soon as ACK=1. Without help, the posedge at which all four are high together never happens. `pwm_wrapper.cpp`, `pio_wrapper.cpp`, and (since Gap 3.2 #1) `bmb_spi_xip_wrapper.cpp` inject an extra posedge inside `evalModel()` guarded by `WE=1` so writes land without affecting read timing.
+
+### Fetch-cache invalidation on bank-1 writes
+
+The BmbSpiXip wrapper caches the last word fetched from the XIP data bank (`bank 2`) to avoid re-running the SPI state machine for in-order sequential fetches. Firmware that rewrites the cfgXip protocol (`bank 1`) must see any subsequent fetch reflect the new protocol settings, so the wrapper invalidates the cache on any bank-1 write ACK. Test 33k is the coverage.
+
+### QPI handshake
+
+Micron MT25Q-family flashes enter QPI (Quad Peripheral Interface) mode via a handshake: the host issues `0x06 WREN` then `0x61 WRITE_REGISTER` with an EVCR byte whose bit 7 = 0. From the next CS assertion forward, commands arrive on all four IO lines. `spi_qio_flash_slave.cpp` tracks this through `m_qpi_enabled`: it captures EVCR on the 0x61 data byte, and on subsequent CS-asserts it selects `rx_width = m_qpi_enabled ? 4 : 1` for the CMD phase. 0xE7 (Quad I/O Fast Read — Micron) skips the MODE_BYTE phase between ADDR and DUMMY, unlike 0xEB. Test 33l runs the upstream bootrom's `cfgXip=0x007F0702` end-to-end.
+
+### CPU execution from `CoSimulatedPeripheral` via `RegisterAccessFlags`
+
+Renode's default sysbus aborts CPU fetch from anything that isn't `ArrayMemory`-backed ("Trying to execute code outside RAM or ROM"). The abort site in tlib (`tlib/include/exec-all.h:333`) explicitly excludes pages carrying the `IO_MEM_EXECUTABLE_IO` flag, which `ArrayMemory` sets automatically. The same flag can be set on any address range from a `.resc` by calling `cpu RegisterAccessFlags <start> <size> true`. Phase I (tests 33h–33i) uses this to execute instructions directly from the BmbSpiXip data bank. Performance ceiling: ~30 inst/s wall for straight-line XIP code, ~0.5 inst/s wall for `jal`/`ret`-heavy code — practical for short boot kernels, impractical for full RTOS boot.
+
+### `BMBXIP_FAST=1` idle-tick shortcut
+
+With `bmb_spi_xip` peripheral clocked at 30 MHz and CPU fetch through Verilator, over 99 % of wall time is spent in `tick()` when the bus is idle and the SPI master is between transactions. `BMBXIP_FAST=1` skips the `eval()` when both `!io_wb_CYC` and `io_spi_cs == 1`. Correctness-preserving because no state progresses that the outside world can observe. ~2.3× speedup on 33i. Opt-in (default off) so CI keeps full-fidelity coverage.
 
 ## Future Enhancements
 
