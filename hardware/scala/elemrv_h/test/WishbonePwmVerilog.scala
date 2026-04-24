@@ -13,7 +13,7 @@ import nafarr.peripherals.io.pwm._
 object WishbonePwmVerilog extends App {
   // Create PWM with 2 channels (matching ElemRV-H configuration)
   val pwmConfig = PwmCtrl.Parameter.default(2)
-  
+
   // Generate with 32-bit address for Renode IntegrationLibrary compatibility
   SpinalConfig(
     targetDirectory = "gen",
@@ -21,7 +21,7 @@ object WishbonePwmVerilog extends App {
   ).generateVerilog(
     WishbonePwm(
       parameter = pwmConfig,
-      busConfig = WishboneConfig(32, 32)  // 32-bit address, 32-bit data
+      busConfig = WishboneConfig(32, 32) // 32-bit address, 32-bit data
     )
   )
 }
