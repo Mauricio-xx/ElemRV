@@ -9,7 +9,7 @@ Simulates an IoT network with two ElemRV SoC variants communicating over UART, a
 │  h_edge (ElemRV-H)      │  uart0 ←──hub──→   │  n_gateway (ElemRV-N)   │
 │                         │   uart0             │                         │
 │  SI70xx sensor @ i2c0   │                     │  uart0 = console + data │
-│  50 MHz, 8 KB RAM       │                     │  20 MHz, 4 KB + HyperRAM│
+│  50 MHz, 8 KB RAM       │                     │  30 MHz, 4 KB + HyperRAM│
 │  Zephyr RTOS            │                     │  Zephyr RTOS            │
 └─────────────────────────┘                     └─────────────────────────┘
 ```

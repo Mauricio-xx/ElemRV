@@ -69,7 +69,7 @@ Applications
 
 **SoC**: `elemrv_n_vexriscv`
 - ISA: RV32IMC (adds M extension)
-- Clock: 20 MHz
+- Clock: 30 MHz peripheral / 60 MHz input
 - RAM: 4 KB
 - Flash: 64 KB
 - HyperRAM: 64 MB

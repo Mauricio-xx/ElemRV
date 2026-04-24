@@ -28,7 +28,7 @@ riscv-none-elf-gdb -x gdb/elemrv.gdb \
     software/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf
 ```
 
-### ElemRV-N (RV32IMC @ 20 MHz, 4KB RAM)
+### ElemRV-N (RV32IMC @ 30 MHz peripheral / 60 MHz input, 4KB RAM)
 
 ```bash
 # Build for N
