@@ -64,6 +64,14 @@ class SpiQioFlashSlave {
   size_t   m_backing_size;
   bool     m_debug;
 
+  // QPI (Quad Peripheral Interface) state. When enabled, every command
+  // following CS-assert is received on IO[3:0] in 4-bit nibbles instead
+  // of on IO[0] alone. Enabled by the controller via WRITE_REGISTER
+  // (0x61) writing an Enhanced Volatile Configuration Register value
+  // whose bit 7 is cleared (MT25Q convention: 0 = Quad I/O enabled).
+  // Latched on DATA_IN completion of the 0x61 transaction.
+  bool     m_qpi_enabled;
+
   void afterCmdDispatch();
   void loadNextTxByte();
   void shiftOutChunk();

@@ -27,16 +27,13 @@
 .equ CFGXIP_BASE,   0xF000A000
 .equ CFGXIP_OFF_0C, 0x0C
 .equ CFGXIP_OFF_08, 0x08
-# Upstream bootrom writes 0x007f0702 here (mode=2 quad, dummyCycles=7,
-# evcr=0x7f) to enable Quad I/O XIP. Our DT's slave + controller pair
-# does not yet fully implement the quad-mode fetch protocol (pending
-# Gap 3.2 #2 investigation), so we write 0x00000000 instead. The
-# configure pulse still runs WREN+WRITE_REGISTER on the flash, so the
-# bus-write path and configure state machine are still exercised;
-# subsequent XIP fetches continue to use cmd=0x03 single-IO reads that
-# the slave fully supports. Once Gap 3.2 #2 closes the quad path, this
-# value can be restored to match upstream.
-.equ CFGXIP_VALUE,  0x00000000
+# Matches upstream ElemRV-N bootrom's _init_xip write: mode=2 (quad,
+# cmd=0xE7), dummyCycles=7 (8 half-cycles = 4 SCLK), evcr=0x7F (MT25Q
+# bit 7 = 0 enables QPI). After the controller's configureFlash FSM
+# runs WREN + WRITE_REGISTER + latches this config, subsequent XIP
+# fetches use the Quad I/O path end-to-end through our QPI-capable
+# flash slave. Validated end-to-end by test 33l.
+.equ CFGXIP_VALUE,  0x007f0702
 
 .equ MARKER_ADDR,   0x80000100
 .equ MARKER_VALUE,  0xBEADFACE
