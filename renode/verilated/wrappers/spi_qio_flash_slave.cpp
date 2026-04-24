@@ -39,6 +39,7 @@ void SpiQioFlashSlave::reset() {
   m_backing = nullptr;
   m_backing_size = 0;
   m_debug = false;
+  m_qpi_enabled = false;
 }
 
 void SpiQioFlashSlave::setBacking(const uint8_t* data, size_t size) {
@@ -107,10 +108,16 @@ void SpiQioFlashSlave::afterCmdDispatch() {
       m_phase = Phase::DONE;
       break;
     case 0x61:
+      // WRITE_REGISTER — nafarr's SpiXipControllerCtrl.configureFlash
+      // emits exactly ONE data byte (the evcr from the config mapper)
+      // on IO[0] in single-IO width, regardless of the runtime mode
+      // register. Legacy behavior here waited for two bytes, which
+      // left the slave stuck mid-transaction; the evcr is captured at
+      // the end of DATA_IN below and drives m_qpi_enabled.
       m_phase = Phase::DATA_IN;
       m_rx_width = 1;
       m_rx_bits_needed = 8;
-      m_data_in_bytes_left = 2;
+      m_data_in_bytes_left = 1;
       break;
     case 0x81:
       m_phase = Phase::DATA_IN;
@@ -149,13 +156,16 @@ void SpiQioFlashSlave::tick(uint8_t cs, uint8_t sclk, uint8_t io_in,
   // CS edge detection.
   if (m_prev_cs == 1 && cs == 0) {
     m_phase = Phase::CMD;
-    m_rx_width = 1;
+    // Once QPI is enabled, all commands arrive on IO[3:0] in 4-bit
+    // nibbles (2 SCLK cycles per command byte) instead of IO[0] alone.
+    m_rx_width = m_qpi_enabled ? 4 : 1;
     m_rx_bits_needed = 8;
     m_rx_shift = 0;
     m_rx_bits = 0;
     m_tx_current = 0;
     m_tx_oe = 0;
-    if (m_debug) fprintf(stderr, "[QIOFLASH] CS asserted\n");
+    if (m_debug) fprintf(stderr, "[QIOFLASH] CS asserted (qpi=%d)\n",
+                         m_qpi_enabled ? 1 : 0);
   } else if (m_prev_cs == 0 && cs == 1) {
     if (m_debug) fprintf(stderr, "[QIOFLASH] CS deasserted\n");
     m_phase = Phase::IDLE;
@@ -203,12 +213,24 @@ void SpiQioFlashSlave::tick(uint8_t cs, uint8_t sclk, uint8_t io_in,
             if (m_debug) {
               fprintf(stderr, "[QIOFLASH] addr=0x%06X\n", m_addr);
             }
-            if (m_cmd == 0xEB || m_cmd == 0xE7) {
+            if (m_cmd == 0xEB) {
+              // Conventional Quad I/O Fast Read: ADDR -> MODE_BYTE
+              // -> DUMMY -> DATA_OUT. Matches the Micron MT25Q spec
+              // and what the non-BMB SPI controller test (33b/c/d)
+              // issues from bare-metal / Zephyr firmware.
               m_phase = Phase::MODE_BYTE;
               m_rx_width = 4;
               m_rx_bits_needed = 8;
               m_rx_shift = 0;
               m_rx_bits = 0;
+            } else if (m_cmd == 0xE7) {
+              // nafarr's SpiXipControllerCtrl issues 0xE7 without an
+              // intervening MODE_BYTE: its state machine transitions
+              // State.ADDRESS -> State.DUMMYCYCLES -> State.DATA
+              // directly. Mirror that here so the BmbSpiXip DT's QPI
+              // fetch path lines up end-to-end.
+              m_phase = Phase::DUMMY;
+              m_dummy_left = m_dummy_cycles;
             } else if (m_cmd == 0x0B) {
               m_phase = Phase::DUMMY;
               m_dummy_left = m_dummy_cycles;
@@ -221,6 +243,20 @@ void SpiQioFlashSlave::tick(uint8_t cs, uint8_t sclk, uint8_t io_in,
             m_phase = Phase::DUMMY;
             m_dummy_left = m_dummy_cycles;
           } else if (m_phase == Phase::DATA_IN) {
+            uint8_t rx_byte = (uint8_t)(m_rx_shift & 0xFF);
+            if (m_cmd == 0x61) {
+              // Enhanced Volatile Configuration Register write. MT25Q
+              // convention: bit 7 acts as Quad I/O enable, active-low
+              // (0 = enable QPI, 1 = disable). Upstream ElemRV-N
+              // bootrom drives evcr=0x7F here, arming QPI for the
+              // subsequent 0xE7 XIP reads emitted by the controller.
+              m_qpi_enabled = ((rx_byte >> 7) & 1) == 0;
+              if (m_debug) {
+                fprintf(stderr,
+                        "[QIOFLASH] WRITE_REGISTER evcr=0x%02X qpi=%d\n",
+                        rx_byte, m_qpi_enabled ? 1 : 0);
+              }
+            }
             m_data_in_bytes_left--;
             if (m_data_in_bytes_left <= 0) {
               m_phase = Phase::DONE;

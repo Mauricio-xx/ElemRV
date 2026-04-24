@@ -573,6 +573,25 @@ else
     echo "  Missing libbmb_spi_xip.so or xip_cache_invalidate.bin"
 fi
 
+# Test 33l: BmbSpiXipController Quad I/O fetch via QPI handshake
+# (Gap 3.2 #2). Sends the exact upstream bootrom cfgXip value
+# (0x007F0702) through the configure state machine, exercising the
+# full WREN + WRITE_REGISTER + latch + cmd=0xE7 quad fetch chain
+# against the QPI-capable flash slave. Baseline + post-configure reads
+# both must return the rom pattern; any slave/controller protocol
+# misalignment flips the verdict. The test expects the wrapper's
+# default flash backing (rom[i] = i & 0xFF), so temporarily unset
+# BMBXIP_IMAGE_PATH so the wrapper falls back to that pattern.
+if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libbmb_spi_xip.so" ]; then
+    unset BMBXIP_IMAGE_PATH
+    run_test "N BMB SpiXip Quad I/O Fetch" "run_n_cosim_bmb_spi_xip_quad_test.resc" "N BMB SpiXip Quad I/O Fetch Test PASSED"
+    export BMBXIP_IMAGE_PATH="$_SAVED_BMBXIP_IMAGE_PATH"
+else
+    echo ""
+    echo "=== TEST (skipped): N BMB SpiXip Quad I/O Fetch ==="
+    echo "  libbmb_spi_xip.so not found. Build with: bash build_n_cosim.sh release"
+fi
+
 # Test 34: N I2C Lite Co-simulation
 if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libi2c_lite.so" ] || [ -f "/workspace/elemrv/renode/verilated/libs/libi2c_lite.so" ]; then
     run_test "N I2C Lite Co-simulation" "run_n_cosim_i2c_lite_test.resc" "N I2C Lite Co-simulation Test PASSED"

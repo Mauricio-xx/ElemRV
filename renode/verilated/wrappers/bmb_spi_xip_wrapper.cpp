@@ -252,7 +252,13 @@ class BmbSpiXipPeripheral : public RenodeAgent {
     }
     g_flash.reset();
     g_flash.setBacking(g_flash_rom, sizeof(g_flash_rom));
-    g_flash.setDummyCycles(8);
+    // 4 SCLK dummy cycles aligns with nafarr's configureFlash default
+    // (dummyCycles=7 encoded as half-cycles => 4 SCLK) so upstream
+    // bootrom's cfgXip value 0x007F0702 clocks the wire correctly.
+    // Commands without an explicit DUMMY phase (0x03/0x9F/0x06/0x61)
+    // do not consume this setting, so the Phase G baseline tests
+    // (33f/33g/33h/33i/33j/33k) are unaffected.
+    g_flash.setDummyCycles(4);
     g_flash.setDeviceId(0x20, 0xBA, 0x18);
 #if DEBUG_ENABLE
     g_flash.setDebug(true);
