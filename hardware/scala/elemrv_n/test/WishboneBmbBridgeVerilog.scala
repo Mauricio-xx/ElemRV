@@ -23,8 +23,7 @@ import spinal.lib.bus.bmb._
 // pattern through the Wishbone port, reads it back; a PASS confirms the
 // WB -> BMB -> Mem -> BMB -> WB round trip works.
 
-case class WishboneToBmbMaster(wbConfig: WishboneConfig, bmbParam: BmbParameter)
-    extends Component {
+case class WishboneToBmbMaster(wbConfig: WishboneConfig, bmbParam: BmbParameter) extends Component {
   val io = new Bundle {
     val wb = slave(Wishbone(wbConfig))
     val bmb = master(Bmb(bmbParam))
@@ -44,8 +43,10 @@ case class WishboneToBmbMaster(wbConfig: WishboneConfig, bmbParam: BmbParameter)
   io.bmb.cmd.payload.address := (io.wb.ADR << 2).resized
   io.bmb.cmd.payload.length := bmbParam.access.byteCount - 1
   io.bmb.cmd.payload.data := io.wb.DAT_MOSI.asBits.resized
-  io.bmb.cmd.payload.mask := B((BigInt(1) << bmbParam.access.byteCount) - 1,
-                                bmbParam.access.byteCount bits)
+  io.bmb.cmd.payload.mask := B(
+    (BigInt(1) << bmbParam.access.byteCount) - 1,
+    bmbParam.access.byteCount bits
+  )
   io.bmb.cmd.payload.last := True
   io.bmb.cmd.payload.opcode := B(0, 1 bits)
 
@@ -95,12 +96,14 @@ case class SimpleBmbRam(bmbParam: BmbParameter, sizeWords: Int) extends Componen
   val ctxLatched = RegNextWhen(io.bmb.cmd.payload.context, cmdFired).init(0)
   val rspValid = RegNext(cmdFired).init(False)
 
-  val readData = mem.readSync(wordAddr, enable = io.bmb.cmd.valid &&
-                                                   !io.bmb.cmd.payload.isWrite)
+  val readData = mem.readSync(
+    wordAddr,
+    enable = io.bmb.cmd.valid &&
+      !io.bmb.cmd.payload.isWrite
+  )
 
   when(io.bmb.cmd.valid && io.bmb.cmd.payload.isWrite) {
-    mem.write(wordAddr, io.bmb.cmd.payload.data,
-              mask = io.bmb.cmd.payload.mask)
+    mem.write(wordAddr, io.bmb.cmd.payload.data, mask = io.bmb.cmd.payload.mask)
   }
 
   io.bmb.rsp.valid := rspValid
@@ -120,8 +123,7 @@ case class WishboneBmbBridge() extends Component {
     sourceWidth = 4,
     contextWidth = 4
   )
-  val wbConfig = WishboneConfig(addressWidth = bmbParam.access.addressWidth,
-                                 dataWidth = 32)
+  val wbConfig = WishboneConfig(addressWidth = bmbParam.access.addressWidth, dataWidth = 32)
 
   val io = new Bundle {
     val wb = slave(Wishbone(wbConfig))
@@ -137,8 +139,7 @@ case class WishboneBmbBridge() extends Component {
 object WishboneBmbBridgeVerilog extends App {
   SpinalConfig(
     targetDirectory = "gen_n",
-    defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC,
-                                                      resetActiveLevel = LOW),
+    defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(WishboneBmbBridge())
 }

@@ -43,24 +43,24 @@ case class WishboneBmbSpiXipController() extends Component {
 
   val cfgSpiWb = Wishbone(wbCfg.copy(addressWidth = 10))
   val cfgXipWb = Wishbone(wbCfg.copy(addressWidth = 10))
-  val dataWb   = Wishbone(wbCfg.copy(addressWidth = log2Up(dataRomBytes / 4)))
+  val dataWb = Wishbone(wbCfg.copy(addressWidth = log2Up(dataRomBytes / 4)))
 
-  cfgSpiWb.CYC      := False
-  cfgSpiWb.STB      := False
-  cfgSpiWb.WE       := io.wb.WE
-  cfgSpiWb.ADR      := io.wb.ADR.resized
+  cfgSpiWb.CYC := False
+  cfgSpiWb.STB := False
+  cfgSpiWb.WE := io.wb.WE
+  cfgSpiWb.ADR := io.wb.ADR.resized
   cfgSpiWb.DAT_MOSI := io.wb.DAT_MOSI
 
-  cfgXipWb.CYC      := False
-  cfgXipWb.STB      := False
-  cfgXipWb.WE       := io.wb.WE
-  cfgXipWb.ADR      := io.wb.ADR.resized
+  cfgXipWb.CYC := False
+  cfgXipWb.STB := False
+  cfgXipWb.WE := io.wb.WE
+  cfgXipWb.ADR := io.wb.ADR.resized
   cfgXipWb.DAT_MOSI := io.wb.DAT_MOSI
 
-  dataWb.CYC      := False
-  dataWb.STB      := False
-  dataWb.WE       := io.wb.WE
-  dataWb.ADR      := io.wb.ADR.resized
+  dataWb.CYC := False
+  dataWb.STB := False
+  dataWb.WE := io.wb.WE
+  dataWb.ADR := io.wb.ADR.resized
   dataWb.DAT_MOSI := io.wb.DAT_MOSI
 
   // Word-addressed WB: each 4 KiB byte bank = 1024 words, so bank bits
@@ -69,11 +69,12 @@ case class WishboneBmbSpiXipController() extends Component {
   val active = io.wb.CYC && io.wb.STB
   when(active && bank === U(0)) { cfgSpiWb.CYC := True; cfgSpiWb.STB := True }
   when(active && bank === U(1)) { cfgXipWb.CYC := True; cfgXipWb.STB := True }
-  when(active && bank === U(2)) { dataWb.CYC   := True; dataWb.STB   := True }
+  when(active && bank === U(2)) { dataWb.CYC := True; dataWb.STB := True }
 
   io.wb.ACK := cfgSpiWb.ACK | cfgXipWb.ACK | dataWb.ACK
   io.wb.DAT_MISO := Mux(
-    cfgSpiWb.ACK, cfgSpiWb.DAT_MISO,
+    cfgSpiWb.ACK,
+    cfgSpiWb.DAT_MISO,
     Mux(cfgXipWb.ACK, cfgXipWb.DAT_MISO, dataWb.DAT_MISO)
   )
 
@@ -91,8 +92,7 @@ case class WishboneBmbSpiXipController() extends Component {
 object WishboneBmbSpiXipControllerVerilog extends App {
   SpinalConfig(
     targetDirectory = "gen_n",
-    defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC,
-                                                      resetActiveLevel = LOW),
+    defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(WishboneBmbSpiXipController())
 }
