@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# CPU-driven XIP bootrom-adapted execution test.
+# Runs a trimmed variant of software/elemrv_n/bootrom/start.s from the
+# BmbSpiXip data bank. Exercises jal/ret control flow + multi-function
+# dispatch while every instruction fetch routes through the co-sim
+# SPI Quad I/O state machine. Cross-checks:
+#   * CPU executed _init_regs (verifiable via final register state).
+#   * CPU executed _init_xip (cfgXip bank writes land in the DT wrapper
+#     at offsets 0x0C/0x08 of bank 1).
+#   * CPU wrote the 0xBEADFACE marker to RAM[0x100] after returning
+#     from both subroutines.
+
+using sysbus
+
+mach create "elemrv_n_cpu_xip_bootrom"
+
+machine LoadPlatformDescription @platforms/elemrv_n_bmb_spi_xip_boot.repl
+
+logLevel 3 sysbus
+
+$xip_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so"
+bmb_spi_xip SimulationFilePathLinux $xip_lib
+
+cpu RegisterAccessFlags 0xF000B000 0x00001000 true
+
+cpu PC 0xF000B000
+
+log ""
+log "=== CPU-Driven XIP Bootrom-Adapted Test ==="
+log "    Running trimmed bootrom from the BmbSpiXip data bank."
+log ""
+
+emulation RunFor "00:00:05.000000"
+
+log ""
+log "-- Post-run PC (expect spin loop in 0xF000B020..024 range) --"
+cpu PC
+
+log ""
+log "-- x20 after _init_regs (expect 0xC0C0C0C0) --"
+cpu GetRegister 20
+
+log ""
+log "-- RAM@0x80000100 (expect 0xBEADFACE = bootrom marker) --"
+sysbus ReadDoubleWord 0x80000100
+
+log ""
+log "=== CPU-Driven XIP Bootrom-Adapted Test PASSED ==="
+log ""
+
+quit

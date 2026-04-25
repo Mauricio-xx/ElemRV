@@ -1,0 +1,139 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Pinmux+PWM Register Sequence Test
+# Simulates the firmware sequence a developer would use to route PWM to pins
+# and configure PWM channels. Validates register consistency across peripherals.
+
+using sysbus
+
+mach create "elemrv_h_pinmux_pwm_seq"
+
+machine LoadPlatformDescription @platforms/elemrv_h_full_cosim.repl
+
+logLevel 3 sysbus
+
+# Attach all 7 verilated libraries (full platform requires all)
+$gpio_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libgpio.so"
+$i2c_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libi2c.so"
+$pio_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpio.so"
+$pwm_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpwm.so"
+$uart_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libuart.so"
+$mtimer_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libmtimer.so"
+$pinmux_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpinmux.so"
+gpio0_cosim SimulationFilePathLinux $gpio_lib
+i2c0_cosim SimulationFilePathLinux $i2c_lib
+pio0_cosim SimulationFilePathLinux $pio_lib
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+uart0_cosim SimulationFilePathLinux $uart_lib
+timer0_cosim SimulationFilePathLinux $mtimer_lib
+pinmux_cosim SimulationFilePathLinux $pinmux_lib
+
+# Set CPU to tight loop (no firmware)
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== Pinmux+PWM Register Sequence Test ==="
+log "Simulates: route pin 0 to PWM CH0, configure PWM, verify consistency"
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# --- Step 1: Route pin 0 to PWM CH0 (option 1) ---
+log "Step 1: Pinmux pin 0 -> option 1 (PWM CH0)"
+sysbus WriteDoubleWord 0xF0010000 0x01
+emulation RunFor "00:00:00.000010"
+log "  Pinmux pin 0 read (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+# --- Step 2: Configure PWM CH0 ---
+log "Step 2: Configure PWM CH0 (clk_div=0, period=1000, pulse=500, enable)"
+
+# Clock divider = 0 (no division)
+sysbus WriteDoubleWord 0xF0003010 0x00
+emulation RunFor "00:00:00.000010"
+
+# CH0 period = 1000 (0x3E8)
+sysbus WriteDoubleWord 0xF0003018 0x3E8
+emulation RunFor "00:00:00.000010"
+
+# CH0 pulse = 500 (0x1F4)
+sysbus WriteDoubleWord 0xF000301C 0x1F4
+emulation RunFor "00:00:00.000010"
+
+# CH0 control = 0x01 (enable, no invert)
+sysbus WriteDoubleWord 0xF0003014 0x01
+emulation RunFor "00:00:00.000010"
+
+# --- Step 3: Read back Pinmux and PWM — all consistent ---
+log "Step 3: Read back Pinmux pin 0 and PWM CH0 registers"
+
+log "  Pinmux pin 0 (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+log "  PWM clk_div (expect 0x00):"
+sysbus ReadDoubleWord 0xF0003010
+
+log "  PWM CH0 ctrl (expect 0x01):"
+sysbus ReadDoubleWord 0xF0003014
+
+log "  PWM CH0 period (expect 0x3E8 = 1000):"
+sysbus ReadDoubleWord 0xF0003018
+
+log "  PWM CH0 pulse (expect 0x1F4 = 500):"
+sysbus ReadDoubleWord 0xF000301C
+
+# --- Step 4: Route pin 8 to PWM CH1 and configure ---
+log "Step 4: Pinmux pin 8 -> option 1 (PWM CH1), configure CH1"
+
+# Pinmux pin 8 (offset = 8*4 = 0x20) = option 1
+sysbus WriteDoubleWord 0xF0010020 0x01
+emulation RunFor "00:00:00.000010"
+
+# PWM CH1 period = 2000 (0x7D0)
+sysbus WriteDoubleWord 0xF0003024 0x7D0
+emulation RunFor "00:00:00.000010"
+
+# PWM CH1 pulse = 1000 (0x3E8)
+sysbus WriteDoubleWord 0xF0003028 0x3E8
+emulation RunFor "00:00:00.000010"
+
+# PWM CH1 control = 0x01 (enable)
+sysbus WriteDoubleWord 0xF0003020 0x01
+emulation RunFor "00:00:00.000010"
+
+# --- Step 5: Read back both Pinmux and both PWM channels ---
+log "Step 5: Final readback — both Pinmux pins and both PWM channels"
+
+log "  Pinmux pin 0 (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+log "  Pinmux pin 8 (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010020
+
+log "  PWM CH0 ctrl (expect 0x01):"
+sysbus ReadDoubleWord 0xF0003014
+
+log "  PWM CH0 period (expect 0x3E8):"
+sysbus ReadDoubleWord 0xF0003018
+
+log "  PWM CH0 pulse (expect 0x1F4):"
+sysbus ReadDoubleWord 0xF000301C
+
+log "  PWM CH1 ctrl (expect 0x01):"
+sysbus ReadDoubleWord 0xF0003020
+
+log "  PWM CH1 period (expect 0x7D0):"
+sysbus ReadDoubleWord 0xF0003024
+
+log "  PWM CH1 pulse (expect 0x3E8):"
+sysbus ReadDoubleWord 0xF0003028
+
+log ""
+log "=== Pinmux+PWM Register Sequence Test PASSED ==="
+log ""
+
+quit

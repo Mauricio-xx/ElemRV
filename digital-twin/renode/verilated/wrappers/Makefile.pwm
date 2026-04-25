@@ -1,0 +1,130 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Makefile for PWM RTL co-simulation
+
+WRAPPER_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+VERILATED_DIR := $(WRAPPER_DIR)/..
+GENERATED_DIR := $(VERILATED_DIR)/generated/Pwm
+LIBS_DIR := $(VERILATED_DIR)/libs
+RTL_DIR := /workspace/elemrv/digital-twin/gen
+RENODE_ROOT := /opt/renode_1.16.0_portable
+RENODE_INC := $(RENODE_ROOT)/plugins/IntegrationLibrary/src
+
+VERILATOR := verilator
+VERILATOR_ROOT := /usr/local/share/verilator
+VERILATOR_INC := $(VERILATOR_ROOT)/include
+
+VERILOG_TOP := $(RTL_DIR)/WishbonePwm.v
+WRAPPER_SRC := $(WRAPPER_DIR)/pwm_wrapper.cpp
+
+LIB_NAME := libpwm.so
+LIB_PATH := $(LIBS_DIR)/$(LIB_NAME)
+
+CXX := g++
+
+# Build mode: debug or release (default: debug for investigation)
+BUILD_MODE ?= debug
+
+# Base flags
+BASE_CXXFLAGS := -fPIC -std=c++17 \
+    -I$(RENODE_INC) \
+    -I$(RENODE_INC)/buses \
+    -I$(RENODE_ROOT)/plugins/IntegrationLibrary \
+    -I$(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp \
+    -I$(VERILATOR_INC) \
+    -I$(VERILATOR_INC)/vltstd \
+    -I$(GENERATED_DIR)
+
+# Mode-specific flags
+ifeq ($(BUILD_MODE),debug)
+  CXXFLAGS := $(BASE_CXXFLAGS) -g -O0 -DDEBUG_ENABLE=1 \
+      -DVM_COVERAGE=0 \
+      -DVM_SC=0 \
+      -DVM_TRACE=1 \
+      -DVM_TRACE_FST=0
+  $(info Building in DEBUG mode with symbols and logging)
+else
+  CXXFLAGS := $(BASE_CXXFLAGS) -O2 -DDEBUG_ENABLE=0 \
+      -DVM_COVERAGE=0 \
+      -DVM_SC=0 \
+      -DVM_TRACE=0 \
+      -DVM_TRACE_FST=0
+  $(info Building in RELEASE mode)
+endif
+
+LDFLAGS := -shared -fPIC -lpthread -latomic
+
+.PHONY: all clean debug release
+
+all: $(LIB_PATH)
+
+verilate: $(GENERATED_DIR)/VWishbonePwm.h
+
+$(GENERATED_DIR)/VWishbonePwm.h: $(VERILOG_TOP)
+	@echo "Running Verilator for PWM..."
+	@mkdir -p $(GENERATED_DIR)
+	$(VERILATOR) --cc \
+		--top-module WishbonePwm \
+		-Mdir $(GENERATED_DIR) \
+		$(VERILOG_TOP) \
+		|| (echo "Verilation failed"; exit 1)
+
+$(LIB_PATH): verilate $(WRAPPER_SRC)
+	@echo "Building PWM shared library ($(BUILD_MODE) mode)..."
+	@mkdir -p $(LIBS_DIR)
+	# Compile Verilated sources
+	$(CXX) $(CXXFLAGS) -c $(VERILATOR_INC)/verilated.cpp -o $(GENERATED_DIR)/verilated.o
+	$(CXX) $(CXXFLAGS) -c $(VERILATOR_INC)/verilated_threads.cpp -o $(GENERATED_DIR)/verilated_threads.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm.cpp -o $(GENERATED_DIR)/VWishbonePwm.o
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm__Dpi.cpp -o $(GENERATED_DIR)/VWishbonePwm__Dpi.o 2>/dev/null || true
+	$(CXX) $(CXXFLAGS) -c $(GENERATED_DIR)/VWishbonePwm__Syms.cpp -o $(GENERATED_DIR)/VWishbonePwm__Syms.o
+	# Compile all Verilator-generated root files
+	for f in $(GENERATED_DIR)/VWishbonePwm___024root*.cpp; do \
+		$(CXX) $(CXXFLAGS) -c $$f -o $${f%.cpp}.o; \
+	done
+	# Compile Renode IntegrationLibrary
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/renode_bus.cpp -o $(GENERATED_DIR)/renode_bus.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/communication/socket_channel.cpp -o $(GENERATED_DIR)/socket_channel.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/buses/wishbone.cpp -o $(GENERATED_DIR)/wishbone.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_INC)/buses/bus.cpp -o $(GENERATED_DIR)/bus.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/Socket.cpp -o $(GENERATED_DIR)/socket_lib.o
+	$(CXX) $(CXXFLAGS) -c $(RENODE_ROOT)/plugins/IntegrationLibrary/libs/socket-cpp/Socket/TCPClient.cpp -o $(GENERATED_DIR)/tcp_client.o
+	# Compile wrapper
+	$(CXX) $(CXXFLAGS) -c $(WRAPPER_SRC) -o $(GENERATED_DIR)/pwm_wrapper.o
+	# Create shared library
+	$(CXX) $(LDFLAGS) \
+		-o $(LIB_PATH) \
+		$(GENERATED_DIR)/pwm_wrapper.o \
+		$(GENERATED_DIR)/renode_bus.o \
+		$(GENERATED_DIR)/socket_channel.o \
+		$(GENERATED_DIR)/wishbone.o \
+		$(GENERATED_DIR)/bus.o \
+		$(GENERATED_DIR)/socket_lib.o \
+		$(GENERATED_DIR)/tcp_client.o \
+		$(GENERATED_DIR)/VWishbonePwm.o \
+		$(GENERATED_DIR)/VWishbonePwm__Syms.o \
+		$(GENERATED_DIR)/verilated.o \
+		$(GENERATED_DIR)/verilated_threads.o \
+		$$(ls $(GENERATED_DIR)/VWishbonePwm___024root*.o 2>/dev/null) \
+		|| (echo "Library build failed"; exit 1)
+	@echo "Created: $(LIB_PATH) ($(BUILD_MODE) mode)"
+
+clean:
+	@echo "Cleaning PWM..."
+	@rm -rf $(GENERATED_DIR)
+	@rm -f $(LIB_PATH)
+	@echo "Clean complete"
+
+release:
+	$(MAKE) BUILD_MODE=release
+
+debug:
+	$(MAKE) BUILD_MODE=debug
+
+info:
+	@echo "GENERATED_DIR: $(GENERATED_DIR)"
+	@echo "LIB_PATH: $(LIB_PATH)"
+	@echo "VERILOG_TOP: $(VERILOG_TOP)"
+	@echo "BUILD_MODE: $(BUILD_MODE)"
+	@echo "CXXFLAGS: $(CXXFLAGS)"

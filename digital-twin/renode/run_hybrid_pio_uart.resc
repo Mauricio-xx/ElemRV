@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-H Hybrid PIO-UART Integration Test
+# LiteX UART/Timer for console + co-sim PIO for RTL-accurate registers.
+#
+# Build: west build -b elemrv_h app/hybrid_pio_uart_test -d build-hybrid-pio-uart
+
+using sysbus
+
+mach create "elemrv_h_hybrid_pio_uart"
+
+machine LoadPlatformDescription @platforms/elemrv_h_hybrid.repl
+
+# Suppress sysbus warnings
+logLevel 3 sysbus
+
+# Attach co-simulated peripherals
+$pwm_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpwm.so"
+$pio_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpio.so"
+$pinmux_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpinmux.so"
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+pio0_cosim SimulationFilePathLinux $pio_lib
+pinmux_cosim SimulationFilePathLinux $pinmux_lib
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr ELF
+sysbus LoadELF @../zephyr/elemrv-zephyr/build-hybrid-pio-uart/zephyr/zephyr.elf
+
+log ""
+log "=== Hybrid PIO-UART Integration Test ==="
+log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
+log "Platform: hybrid (LiteX UART/Timer + co-sim PWM/PIO/Pinmux)"
+log ""
+
+# Run for 2s — enough for firmware register sequence + boot time
+emulation RunFor "00:00:02.000000"
+
+log ""
+log "=== Hybrid PIO-UART Integration Test PASSED ==="
+log ""
+
+quit

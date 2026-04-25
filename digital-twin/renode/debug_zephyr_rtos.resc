@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# GDB Debug Session: Zephyr RTOS Thread-Aware Debugging
+#
+# Usage:
+#   Terminal 1: renode --disable-xwt --console -e "include @debug_zephyr_rtos.resc"
+#   Terminal 2: riscv-none-elf-gdb -x gdb/elemrv.gdb zephyr/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf
+#
+# GDB commands (after connecting):
+#   zephyr-threads  — List all threads (name, state, priority)
+#   zephyr-stacks   — Show stack usage for all threads
+#   zephyr-info     — Show available RTOS debug commands
+#
+# The rtos_debug_demo firmware creates 3 named threads (sensor, uart, gpio)
+# plus main. All have CONFIG_DEBUG_THREAD_INFO=y for metadata visibility.
+
+using sysbus
+
+mach create "elemrv_rtos_debug"
+
+machine LoadPlatformDescription @platforms/elemrv_h_zephyr.repl
+
+logLevel 3 sysbus
+
+showAnalyzer uart0
+
+$elf ?= @../zephyr/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf
+sysbus LoadELF $elf
+
+machine StartGdbServer 3333 true
+
+log "GDB server listening on port 3333 (Zephyr RTOS debug)"
+log "Connect with: riscv-none-elf-gdb -x gdb/elemrv.gdb <rtos_debug_demo.elf>"
+log "Commands: zephyr-threads, zephyr-stacks, zephyr-info"

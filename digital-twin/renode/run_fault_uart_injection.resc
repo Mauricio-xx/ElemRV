@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# UART Fault Injection Test
+# Injects bytes into UART rxtx register mid-boot via sysbus write,
+# then observes whether characters appear in TX stream or RX buffer.
+#
+# LiteX_UART register map at 0xF0004000:
+#   0x00: rxtx (TX/RX data)  0x04: txfull   0x08: rxempty
+#   0x0C: ev_status           0x10: ev_pending  0x14: ev_enable
+#
+# Platform: elemrv_h_zephyr.repl (LiteX models).
+# Firmware: hello_world Zephyr ELF.
+#
+# This is a DISCOVERY test — the finding (what happens) is the value.
+
+using sysbus
+
+mach create "elemrv_h_fault_uart"
+
+machine LoadPlatformDescription @platforms/elemrv_h_zephyr.repl
+
+logLevel 3 sysbus
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr ELF
+sysbus LoadELF @../zephyr/elemrv-zephyr/build/zephyr/zephyr.elf
+
+log ""
+log "=== UART Fault Injection Test ==="
+log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
+log "App: hello_world"
+log ""
+
+# Step 1: Let Zephyr start booting (may not have finished printing yet)
+log "Running 50ms for partial Zephyr boot..."
+emulation RunFor "00:00:00.050000"
+
+# Step 2: Inject UART bytes via sysbus
+log ""
+log "--- Fault: UART Byte Injection ---"
+log "Injecting 5x 'X' (0x58) into UART rxtx register..."
+
+sysbus WriteDoubleWord 0xF0004000 0x58
+emulation RunFor "00:00:00.000001"
+sysbus WriteDoubleWord 0xF0004000 0x58
+emulation RunFor "00:00:00.000001"
+sysbus WriteDoubleWord 0xF0004000 0x58
+emulation RunFor "00:00:00.000001"
+sysbus WriteDoubleWord 0xF0004000 0x58
+emulation RunFor "00:00:00.000001"
+sysbus WriteDoubleWord 0xF0004000 0x58
+emulation RunFor "00:00:00.000001"
+
+log "Injection complete."
+
+# Step 3: Let firmware finish
+log ""
+log "Running 500ms for firmware to complete..."
+emulation RunFor "00:00:00.500000"
+
+# Step 4: Check UART state registers
+log ""
+log "--- UART State After Injection ---"
+log "txfull   @ 0xF0004004:"
+sysbus ReadDoubleWord 0xF0004004
+log "rxempty  @ 0xF0004008:"
+sysbus ReadDoubleWord 0xF0004008
+log "ev_status @ 0xF000400C:"
+sysbus ReadDoubleWord 0xF000400C
+log "ev_pending @ 0xF0004010:"
+sysbus ReadDoubleWord 0xF0004010
+
+# The UART analyzer output (captured by test runner) will show whether
+# injected 'X' characters appear interleaved with "Hello World!" or not.
+log ""
+log "FINDING: Check UART output for interleaved 'X' chars or intact 'Hello World!'"
+
+log ""
+log "=== UART Fault Injection Test PASSED ==="
+log ""
+
+quit

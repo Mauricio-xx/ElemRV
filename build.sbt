@@ -22,6 +22,7 @@ lazy val root = (project in file("."))
       "org.yaml" % "snakeyaml" % "1.8"
     ),
     Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "digital-twin" / "scala",
     Test / scalaSource := baseDirectory.value / "test" / "scala"
   )
   .dependsOn(nafarr, zibal)

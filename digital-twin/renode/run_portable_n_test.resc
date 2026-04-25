@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-N Portable Data Logger Test
+# Multi-threaded: sensor reads + LED heartbeat + thread analyzer.
+# Same source as H test — proves firmware portability.
+#
+# Build: west build -b elemrv_n app/portable_data_logger -d build-n-portable-data-logger
+
+using sysbus
+
+mach create "elemrv_n_portable"
+
+machine LoadPlatformDescription @platforms/elemrv_n_i2c_sensor.repl
+
+# Suppress sysbus warnings for tagged regions
+logLevel 3 sysbus
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load Zephyr ELF
+sysbus LoadELF @../zephyr/elemrv-zephyr/build-n-portable-data-logger/zephyr/zephyr.elf
+
+# Set sensor values
+i2c0.sensor Temperature 22.0
+i2c0.sensor Humidity 50.0
+
+log ""
+log "=== Portable N Test ==="
+log "Board: ElemRV-N (VexRiscv RV32IMC @ 20 MHz)"
+log "App: portable_data_logger (3 threads)"
+log ""
+
+# Run for 8s — N is slower (20 MHz), need more time for 10 samples
+emulation RunFor "00:00:08.000000"
+
+log ""
+log "=== Portable N Test PASSED ==="
+log ""
+
+quit

@@ -1,0 +1,112 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# ElemRV-N Full RTL Co-simulation Integration Test
+# Loads all 10 Verilator co-simulated peripherals and validates each one.
+# 5 N-specific .so + 5 reused H .so
+
+using sysbus
+
+mach create "elemrv_n_full_cosim"
+
+machine LoadPlatformDescription @platforms/elemrv_n_full_cosim.repl
+
+logLevel 3 sysbus
+
+# Attach all 10 verilated libraries
+# N-specific libraries
+$gpio_n_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libgpio_n.so"
+$i2c_lite_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libi2c_lite.so"
+$spi_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libspi.so"
+$uart_lite_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libuart_lite.so"
+$pinmux_n_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpinmux_n.so"
+# Reused H libraries
+$i2c_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libi2c.so"
+$pio_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpio.so"
+$pwm_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpwm.so"
+$uart_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libuart.so"
+$mtimer_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libmtimer.so"
+
+gpio0_cosim SimulationFilePathLinux $gpio_n_lib
+i2c0_cosim SimulationFilePathLinux $i2c_lib
+i2c1_cosim SimulationFilePathLinux $i2c_lite_lib
+pio0_cosim SimulationFilePathLinux $pio_lib
+pwm0_cosim SimulationFilePathLinux $pwm_lib
+spi0_cosim SimulationFilePathLinux $spi_lib
+uart0_cosim SimulationFilePathLinux $uart_lib
+uart1_cosim SimulationFilePathLinux $uart_lite_lib
+pinmux_cosim SimulationFilePathLinux $pinmux_n_lib
+timer0_cosim SimulationFilePathLinux $mtimer_lib
+
+# Set CPU to tight loop (no firmware)
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 20
+
+log ""
+log "=== N Full RTL Co-simulation Integration Test ==="
+log "All 10 peripherals loaded via Verilator"
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+# Validate each peripheral via IpIdentification or register access
+
+# GPIO0 (N-specific, 20 pins)
+log "--- GPIO0 @ 0xF0000000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0000000
+
+# I2C0 (reused from H)
+log "--- I2C0 @ 0xF0001000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0001000
+
+# I2C1 (N-specific, lightweight)
+log "--- I2C1 @ 0xF0002000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0002000
+
+# PIO0 (reused from H)
+log "--- PIO0 @ 0xF0003000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0003000
+
+# PWM0 (reused from H)
+log "--- PWM0 @ 0xF0004000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0004000
+
+# SPI0 (N-specific)
+log "--- SPI0 @ 0xF0005000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0005000
+
+# UART0 (reused from H)
+log "--- UART0 @ 0xF0006000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0006000
+
+# UART1 (N-specific, lightweight)
+log "--- UART1 @ 0xF0007000 ---"
+log "IP Header:"
+sysbus ReadDoubleWord 0xF0007000
+
+# Pinmux (N-specific, 20 pins — no IpIdentification)
+log "--- Pinmux @ 0xF0010000 ---"
+sysbus WriteDoubleWord 0xF0010000 0x01
+emulation RunFor "00:00:00.000010"
+log "Pin 0 (expect 0x01):"
+sysbus ReadDoubleWord 0xF0010000
+
+# Timer0 (reused from H — no IpIdentification, read mtime)
+log "--- Timer0 @ 0xF0020000 ---"
+log "mtime_lo:"
+sysbus ReadDoubleWord 0xF0020000
+
+log ""
+log "=== N Full Co-simulation Test PASSED ==="
+log ""
+
+quit

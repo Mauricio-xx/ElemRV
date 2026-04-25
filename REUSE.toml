@@ -1,5 +1,10 @@
 version = 1
 
+# ---------------------------------------------------------------------------
+# Upstream-conserved annotations (do not modify without coordinating with
+# aesc-silicon/ElemRV main).
+# ---------------------------------------------------------------------------
+
 [[annotations]]
 path = "images/*"
 SPDX-FileCopyrightText = "2025 aesc silicon"
@@ -26,98 +31,43 @@ SPDX-FileCopyrightText = "2026 aesc silicon"
 SPDX-License-Identifier = "CERN-OHL-W-2.0"
 
 # ---------------------------------------------------------------------------
-# Digital Twin branch annotations.
-# These fill in SPDX-FileCopyrightText for files that declare a license inline
-# but not a copyright (most of the Zephyr module + resc test drivers), and
-# give full SPDX info to generated artefacts and docs that never carried
-# headers. In-file headers, when present, take precedence over these entries.
+# Digital Twin sub-tree.
+# Everything under digital-twin/** is the Digital Twin work; in-file SPDX
+# headers (when present) take precedence. These fallbacks fill the gaps
+# for files that ship without inline headers (build artefacts, generated
+# Verilog, doc trees, session-tracked .gitignore, etc.).
 # ---------------------------------------------------------------------------
 
-# Zephyr out-of-tree module for ElemRV: drivers, boards, SoCs, DT bindings.
-# Most files already declare Apache-2.0 inline; this fills in the missing
-# copyright for them, and full SPDX for the remaining board/DT yaml/Kconfig
-# fragments that ship without headers.
 [[annotations]]
-path = "software/elemrv-zephyr/**"
+path = "digital-twin/**"
 SPDX-FileCopyrightText = "2025 aesc silicon"
 SPDX-License-Identifier = "Apache-2.0"
 
-# Digital twin documentation (both docs/digital-twin and the older
-# renode/docs tree).
+# Digital Twin documentation prefers the hardware-doc license.
 [[annotations]]
-path = "docs/digital-twin/**"
+path = "digital-twin/docs/**"
+SPDX-FileCopyrightText = "2025 aesc silicon"
+SPDX-License-Identifier = "CERN-OHL-W-2.0"
+
+# Generated Verilog — reproducible output of digital-twin/scala/**.
+[[annotations]]
+path = "digital-twin/gen/**"
 SPDX-FileCopyrightText = "2025 aesc silicon"
 SPDX-License-Identifier = "CERN-OHL-W-2.0"
 
 [[annotations]]
-path = "renode/docs/**"
+path = "digital-twin/gen_n/**"
 SPDX-FileCopyrightText = "2025 aesc silicon"
 SPDX-License-Identifier = "CERN-OHL-W-2.0"
 
-# Renode platform descriptions and test driver scripts. Most declare
-# Apache-2.0 inline but lack copyright; the annotation merges the two.
-[[annotations]]
-path = "renode/platforms/*.repl"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "renode/*.resc"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "renode/scripts/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-# Bare-metal firmware build artefacts. Sources carry inline Apache-2.0; the
-# compiled .bin/.elf/.lst/.img copies inherit the same SPDX.
-[[annotations]]
-path = "renode/firmware/samples/**/*.bin"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "renode/firmware/samples/**/*.elf"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "renode/firmware/samples/**/*.lst"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "renode/firmware/samples/**/*.img"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-# Legacy pwm_test build artefacts under software/elemrv_h.
-[[annotations]]
-path = "software/elemrv_h/pwm_test/*.bin"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-# SpinalHDL-generated Verilog (reproducible output of hardware/scala/**).
-[[annotations]]
-path = "gen/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-[[annotations]]
-path = "gen_n/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-# Tracked .gitignore files inside build/test subtrees.
+# Tracked .gitignore files anywhere in the tree.
 [[annotations]]
 path = "**/.gitignore"
 SPDX-FileCopyrightText = "2025 aesc silicon"
 SPDX-License-Identifier = "CERN-OHL-W-2.0"
 
-# Local developer settings (gitignored — included here so local reuse lint
-# stays clean even when these files happen to exist on disk).
+# Local developer settings (gitignored; included so reuse lint stays
+# clean even when these files happen to exist on disk).
 [[annotations]]
 path = ".claude/**"
 SPDX-FileCopyrightText = "2025 aesc silicon"

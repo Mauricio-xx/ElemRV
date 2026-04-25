@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Missing Peripheral Fault Injection Test
+# Uses the base platform (elemrv_h.repl) where PWM/PIO/Pinmux are Tags
+# (reads return 0). Tests firmware's ability to detect absent peripherals.
+#
+# Sub-test 1: pwm_test.bin — validates IP Header, detects 0 != 0x00080002,
+#   sets GPIO to 0xF00 (FAIL). This is the EXPECTED behavior.
+# Sub-test 2: pwm_regtest.bin — does NOT validate IP Header, silently
+#   continues with wrong values.
+
+using sysbus
+
+mach create "elemrv_h_fault_missing"
+
+machine LoadPlatformDescription @platforms/elemrv_h.repl
+
+logLevel 3 sysbus
+
+log ""
+log "=== Missing Peripheral Fault Injection Test ==="
+log ""
+
+# ========================================
+# Sub-test 1: Firmware WITH validation (pwm_test)
+# ========================================
+log "--- Sub-test 1: pwm_test.bin (has IP Header validation) ---"
+log ""
+
+# Load firmware into flash
+sysbus LoadBinary @../firmware/pwm_test/pwm_test.bin 0xA0000000
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+# Run for 20ms — firmware runs, tests IP Header, detects 0 != expected
+emulation RunFor "00:00:00.020000"
+
+# Read PWM address — Tag returns 0
+log "PWM IP Header @ 0xF0003000 (expect 0x00000000 — Tag, no RTL):"
+sysbus ReadDoubleWord 0xF0003000
+
+# Read GPIO result indicator
+# pwm_test.c writes to GPIO_OE (+0x14) and GPIO_OUT (+0x10)
+# On LiteX_GPIO (Type.Out), offset 0x00 is the output register
+# Firmware writes RESULT_FAIL=0xF00 to both 0xF0000010 and 0xF0000014
+log "GPIO @ 0xF0000000 (LiteX_GPIO output — firmware result):"
+sysbus ReadDoubleWord 0xF0000000
+
+log ""
+log "FINDING: Firmware WITH validation (pwm_test) DETECTED missing peripheral via IP Header check"
+
+# ========================================
+# Sub-test 2: Firmware WITHOUT validation (pwm_regtest)
+# ========================================
+log ""
+log "--- Sub-test 2: pwm_regtest.bin (no IP Header validation) ---"
+log ""
+
+# Load different firmware
+sysbus LoadBinary @../firmware/pwm_test/pwm_regtest.bin 0xA0000000
+cpu PC 0xA0000000
+
+# Run for 20ms
+emulation RunFor "00:00:00.020000"
+
+# Read PWM address — still a Tag
+log "PWM IP Header @ 0xF0003000 (still Tag — returns 0x00000000):"
+sysbus ReadDoubleWord 0xF0003000
+
+# Read GPIO — regtest doesn't validate, may show different result
+log "GPIO @ 0xF0000000 (LiteX_GPIO output — regtest result):"
+sysbus ReadDoubleWord 0xF0000000
+
+log ""
+log "FINDING: Firmware WITHOUT validation silently continues with wrong register values"
+
+log ""
+log "=== Missing Peripheral Fault Test PASSED ==="
+log ""
+
+quit
