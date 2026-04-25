@@ -17,7 +17,7 @@ object WishboneUartLiteVerilog extends App {
   // UART needs clock frequency for baud rate divider calculation.
   // ElemRV-N peripheral clock is 30 MHz (upstream rework on clock tree).
   SpinalConfig(
-    targetDirectory = "digital-twin/gen_n",
+    targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(

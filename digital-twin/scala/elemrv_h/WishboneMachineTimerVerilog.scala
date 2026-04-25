@@ -16,7 +16,7 @@ object WishboneMachineTimerVerilog extends App {
 
   // MachineTimer needs clock frequency for tick counter derivation
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(50 MHz)
   ).generateVerilog(

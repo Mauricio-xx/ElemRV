@@ -91,7 +91,7 @@ case class WishboneBmbSpiXipController() extends Component {
 
 object WishboneBmbSpiXipControllerVerilog extends App {
   SpinalConfig(
-    targetDirectory = "digital-twin/gen_n",
+    targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog(WishboneBmbSpiXipController())

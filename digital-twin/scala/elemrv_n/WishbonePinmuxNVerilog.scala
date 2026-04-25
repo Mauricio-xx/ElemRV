@@ -20,7 +20,7 @@ object WishbonePinmuxNVerilog extends App {
   val mapping = ArrayBuffer.tabulate(20)(i => (i, List(i * 2, i * 2 + 1)))
 
   SpinalConfig(
-    targetDirectory = "digital-twin/gen_n",
+    targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW)
   ).generateVerilog(
     WishbonePinmux(

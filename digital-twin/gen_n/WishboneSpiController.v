@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.13.0    git head : d9d72474863badf47d8585d187f3e04ae4749c59
 // Component : WishboneSpiController
-// Git hash  : c46981392eb50d83a12c687a69933cc658cd2128
+// Git hash  : 58d827afb766b3e54c8e02d57b05f468cf844e91
 
 `timescale 1ns/1ps
 

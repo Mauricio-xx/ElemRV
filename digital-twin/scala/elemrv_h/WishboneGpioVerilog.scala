@@ -15,7 +15,7 @@ object WishboneGpioVerilog extends App {
   val gpioConfig = GpioCtrl.Parameter(Gpio.Parameter(12), 3, null, null, null)
 
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW)
   ).generateVerilog(
     WishboneGpio(

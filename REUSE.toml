@@ -1,10 +1,5 @@
 version = 1
 
-# ---------------------------------------------------------------------------
-# Upstream-conserved annotations (do not modify without coordinating with
-# aesc-silicon/ElemRV main).
-# ---------------------------------------------------------------------------
-
 [[annotations]]
 path = "images/*"
 SPDX-FileCopyrightText = "2025 aesc silicon"
@@ -28,52 +23,4 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = "tmp/*/*"
 SPDX-FileCopyrightText = "2026 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-# ---------------------------------------------------------------------------
-# Digital Twin sub-tree.
-# Everything under digital-twin/** is the Digital Twin work; in-file SPDX
-# headers (when present) take precedence. These fallbacks fill the gaps
-# for files that ship without inline headers (build artefacts, generated
-# Verilog, doc trees, session-tracked .gitignore, etc.).
-# ---------------------------------------------------------------------------
-
-[[annotations]]
-path = "digital-twin/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "Apache-2.0"
-
-# Digital Twin documentation prefers the hardware-doc license.
-[[annotations]]
-path = "digital-twin/docs/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-# Generated Verilog — reproducible output of digital-twin/scala/**.
-[[annotations]]
-path = "digital-twin/gen/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-[[annotations]]
-path = "digital-twin/gen_n/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-# Tracked .gitignore files anywhere in the tree.
-[[annotations]]
-path = "**/.gitignore"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-# Local developer settings (gitignored; included so reuse lint stays
-# clean even when these files happen to exist on disk).
-[[annotations]]
-path = ".claude/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
-SPDX-License-Identifier = "CERN-OHL-W-2.0"
-
-[[annotations]]
-path = ".opencode/**"
-SPDX-FileCopyrightText = "2025 aesc silicon"
 SPDX-License-Identifier = "CERN-OHL-W-2.0"

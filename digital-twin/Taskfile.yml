@@ -72,13 +72,13 @@ tasks:
   dt-cosim-generate:
     desc: Generates all peripheral Verilog via SpinalHDL (requires sbt in Docker).
     cmds:
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePwmVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePioVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePinmuxVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneGpioVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneMachineTimerVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneI2cControllerVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneUartVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishbonePwmVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishbonePioVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishbonePinmuxVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishboneGpioVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishboneMachineTimerVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishboneI2cControllerVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_h.test.WishboneUartVerilog"
 
   dt-cosim-build:
     desc: Builds all 7 H co-simulation shared libraries.
@@ -172,11 +172,11 @@ tasks:
   dt-n-cosim-generate:
     desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).
     cmds:
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishbonePinmuxNVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneI2cLiteVerilog"
-      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneUartLiteVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_n.test.WishbonePinmuxNVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_n.test.WishboneI2cLiteVerilog"
+      - docker exec -w /workspace/elemrv/digital-twin elemrv-test sbt "runMain elemrv_n.test.WishboneUartLiteVerilog"
 
   dt-n-cosim-build:
     desc: Builds all 5 N-specific co-simulation shared libraries.

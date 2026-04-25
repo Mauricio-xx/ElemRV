@@ -50,7 +50,7 @@ case class SimpleWishboneReg() extends Component {
 // Generator object
 object SimpleWishboneRegVerilog extends App {
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW)
   ).generateVerilog(SimpleWishboneReg())
 }

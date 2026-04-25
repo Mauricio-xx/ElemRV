@@ -17,7 +17,7 @@ object WishboneSpiControllerQuadVerilog extends App {
   val spiConfig = SpiControllerCtrl.Parameter.xip()
 
   SpinalConfig(
-    targetDirectory = "digital-twin/gen_n",
+    targetDirectory = "gen_n",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(30 MHz)
   ).generateVerilog {
