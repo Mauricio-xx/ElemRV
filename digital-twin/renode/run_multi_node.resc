@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Multi-Node IoT Simulation: ElemRV-H (edge) + ElemRV-N (gateway) via UART Hub
+# Edge reads I2C sensor, sends DATA frames to gateway, gateway aggregates and reports.
+#
+# Protocol (text over UART):
+#   Edge -> Gateway: DATA:<id>,<temp_x100>,<hum_x100>\n
+#   Gateway -> Edge: ACK:<id>\n
+#   Gateway console: REPORT: samples=10, avg_temp=..., avg_hum=...\n
+
+using sysbus
+
+emulation CreateUARTHub "uartHub"
+
+# --- H Edge Node ---
+mach create "h_edge"
+machine LoadPlatformDescription @platforms/elemrv_h_i2c_sensor.repl
+logLevel 3 sysbus
+connector Connect sysbus.uart0 uartHub
+sysbus LoadELF @../zephyr/elemrv-zephyr/build-multi-node-edge/zephyr/zephyr.elf
+
+# Set sensor values: temperature 22.0 C, humidity 45.0 %
+i2c0.sensor Temperature 22.0
+i2c0.sensor Humidity 45.0
+
+# --- N Gateway Node ---
+mach create "n_gateway"
+machine LoadPlatformDescription @platforms/elemrv_n_zephyr.repl
+logLevel 3 sysbus
+connector Connect sysbus.uart0 uartHub
+showAnalyzer uart0
+sysbus LoadELF @../zephyr/elemrv-zephyr/build-n-multi-node-gateway/zephyr/zephyr.elf
+
+log ""
+log "=== Multi-Node IoT Simulation ==="
+log "Edge: ElemRV-H (RV32IC @ 50 MHz) with SI70xx sensor"
+log "Gateway: ElemRV-N (RV32IMC @ 20 MHz)"
+log "Link: UART Hub (uart0 <-> uart0)"
+log ""
+
+# Run for 15 seconds — enough for Zephyr boot on both + 10 samples + margin
+emulation RunFor "00:00:15.000000"
+
+log ""
+log "=== Multi-Node IoT Simulation Complete ==="
+log ""
+
+quit

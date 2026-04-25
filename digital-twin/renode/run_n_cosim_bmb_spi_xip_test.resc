@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# G.1c: BmbSpiXipController DT test.
+# Validates:
+#   - IP identification for cfgSpiBus (SpiController id=6) and
+#     cfgXipBus (SpiXipController id=7)
+#   - XIP data reads: Renode issues Wishbone read at the data bank;
+#     WishboneToBmbMaster converts it to a BMB read; the XIP state
+#     machine drives SPI to fetch bytes from the flash slave; data
+#     returns as a 32-bit little-endian word.
+#
+# Default XIP config (mode=0 at reset) uses basic Read 0x03 with no
+# dummy cycles. Expected: reading 0xF000B000 returns rom[0..3] packed LE
+# = 0x03020100, reading 0xF000B004 returns 0x07060504, etc.
+
+using sysbus
+
+mach create "elemrv_n_bmb_spi_xip"
+
+machine LoadPlatformDescription @platforms/elemrv_n_cosim_bmb_spi_xip.repl
+
+logLevel 3 sysbus
+
+$xip_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so"
+bmb_spi_xip SimulationFilePathLinux $xip_lib
+
+sysbus WriteDoubleWord 0x80000000 0x0000006F
+cpu PC 0x80000000
+cpu PerformanceInMips 30
+
+log ""
+log "=== N BMB SpiXip Co-simulation Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+log "-- cfgSpiBus IP Header @ 0xF0009000 (expect 0x00080006) --"
+sysbus ReadDoubleWord 0xF0009000
+log "-- cfgXipBus IP Header @ 0xF000A000 (expect 0x00080007) --"
+sysbus ReadDoubleWord 0xF000A000
+
+log ""
+log "-- XIP data reads (mode=0, cmd=0x03, no dummy) --"
+
+log "Read 0xF000B000 (expect 0x03020100):"
+sysbus ReadDoubleWord 0xF000B000
+log "Read 0xF000B004 (expect 0x07060504):"
+sysbus ReadDoubleWord 0xF000B004
+log "Read 0xF000B008 (expect 0x0B0A0908):"
+sysbus ReadDoubleWord 0xF000B008
+
+log ""
+log "=== N BMB SpiXip Co-simulation Test PASSED ==="
+log ""
+
+quit

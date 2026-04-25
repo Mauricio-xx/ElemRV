@@ -1,0 +1,115 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# Gap 3.2 #2 — BmbSpiXipController Quad I/O (QPI) fetch path.
+#
+# Validates the full configure-to-latch-to-fetch chain through the DT:
+#
+#   1. Baseline XIP read with mode=0 / cmd=0x03 (default reset config).
+#   2. Write cfgXip mode=2 / dummyCycles=7 / evcr=0x7F via bank 1
+#      (0xF000A00C) — the exact value upstream ElemRV-N bootrom uses —
+#      then trigger the configure state machine via 0xF000A008.
+#      SpiXipControllerCtrl drives WRITE_ENABLE (0x06) and
+#      WRITE_REGISTER (0x61 + evcr) over SPI, then latches the new
+#      config. The QPI-capable flash slave (spi_qio_flash_slave.cpp)
+#      sees the WRITE_REGISTER evcr byte, flips into QPI mode
+#      (bit 7 == 0 enables, MT25Q convention).
+#   3. Follow-up XIP read: controller now emits cmd 0xE7 in quad on
+#      all four IO lines, then addr-in-quad, then 4 dummy SCLK
+#      cycles (dummyCycles=7 -> 8 half-cycles), then 4 data bytes in
+#      quad. Slave's m_dummy_cycles default (4) matches.
+#
+# Expected data (backing rom[i] = i & 0xFF) is identical regardless of
+# protocol — only the shape of the SPI wire changes, not the payload.
+# A FAILED verdict therefore means the QPI handshake or the quad
+# fetch protocol is misaligned between slave and controller.
+#
+# XIP config bank-1 word layout (Mapper regOffset+0x4 = byte 0x0C):
+#   word[ 7: 0] = mode       (modeWidth=4 bits used)
+#   word[15: 8] = dummyCycles (log2Up(maxDummyCycles*2)=5 bits used)
+#   word[23:16] = evcr        (8 bits)
+# So 0x007F0702 = evcr=0x7F, dummyCycles=0x07 (7 half-cycles = 4 SCLK),
+# mode=0x02 (quad, cmd=0xE7). Matches upstream ElemRV-N bootrom.
+
+using sysbus
+
+mach create "elemrv_n_bmb_spi_xip_quad"
+
+machine LoadPlatformDescription @platforms/elemrv_n_cosim_bmb_spi_xip.repl
+
+logLevel 3 sysbus
+
+$xip_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so"
+bmb_spi_xip SimulationFilePathLinux $xip_lib
+
+sysbus WriteDoubleWord 0x80000000 0x0000006F
+cpu PC 0x80000000
+cpu PerformanceInMips 30
+
+log ""
+log "=== N BMB SpiXip Quad I/O Fetch Test ==="
+log ""
+
+emulation RunFor "00:00:00.000100"
+
+python """
+bus = monitor.Machine.SystemBus
+
+def rd(addr):
+    return bus.ReadDoubleWord(addr) & 0xFFFFFFFF
+
+def wr(addr, value):
+    bus.WriteDoubleWord(addr, value)
+
+def run_for(span):
+    monitor.Parse('emulation RunFor \"' + span + '\"')
+
+def check(label, got, expected):
+    ok = (got == expected)
+    mark = 'PASS' if ok else 'FAIL'
+    print('[assert %s] %-44s got=0x%08X expected=0x%08X' %
+          (mark, label, got, expected))
+    return ok
+
+all_ok = True
+
+# --- 1) Baseline reads at mode=0 (default, cmd=0x03) ---
+# Backing rom[i] = i & 0xFF, read as 32-bit LE words => 0x03020100 etc.
+print('-- Baseline XIP reads (mode=0, cmd=0x03) --')
+all_ok &= check('mode=0 read @ 0xF000B000',  rd(0xF000B000), 0x03020100)
+all_ok &= check('mode=0 read @ 0xF000B004',  rd(0xF000B004), 0x07060504)
+all_ok &= check('mode=0 read @ 0xF000B008',  rd(0xF000B008), 0x0B0A0908)
+
+# --- 2) Configure cfgXip for QPI (mode=2, dummyCycles=7, evcr=0x7F) ---
+# Writing the config word stages the new values in the mapper regs.
+# Writing 0xF000A008 pulses the 'configure' trigger; the controller's
+# configureFlash FSM emits WREN (0x06) + WRITE_REGISTER (0x61 + evcr)
+# on the SPI wire, then latches mode/dummyCycles into the XIP engine.
+# The 0x007F0702 value is identical to the upstream ElemRV-N bootrom's
+# _init_xip write, so this test also stands in for the bootrom's QPI
+# handshake end-to-end.
+print('-- Configuring QPI mode (mode=2, dummyCycles=7, evcr=0x7F) --')
+wr(0xF000A00C, 0x007F0702)
+wr(0xF000A008, 0x00000000)
+
+# Give the configure state machine time to run WREN + WRITE_REGISTER
+# + CS-deassert transitions. At 30 MHz sysclk with the slave in 'fast'
+# init (~5 MHz SCLK), each 8-bit SPI byte takes ~1.6 us; the full
+# sequence is ~30-50 us. 2 ms is well over the margin.
+run_for('00:00:02.000000')
+
+# --- 3) Quad I/O reads (mode=2, cmd=0xE7) through QPI-enabled slave ---
+# Same backing => same expected bytes; only the wire protocol changes.
+print('-- Quad I/O XIP reads (mode=2, cmd=0xE7, 4 dummy SCLK) --')
+all_ok &= check('mode=2 QPI read @ 0xF000B000', rd(0xF000B000), 0x03020100)
+all_ok &= check('mode=2 QPI read @ 0xF000B004', rd(0xF000B004), 0x07060504)
+all_ok &= check('mode=2 QPI read @ 0xF000B008', rd(0xF000B008), 0x0B0A0908)
+
+if all_ok:
+    print('=== N BMB SpiXip Quad I/O Fetch Test PASSED ===')
+else:
+    print('=== N BMB SpiXip Quad I/O Fetch Test FAILED ===')
+"""
+
+quit

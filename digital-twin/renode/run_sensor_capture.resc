@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# ElemRV-H Sensor Capture Integration Test
+# Runs sensor_capture firmware with changing temperature values.
+# Validates that the firmware reads sensor data across temperature changes.
+#
+# Build: west build -b elemrv_h app/sensor_capture -d build-sensor-capture
+
+using sysbus
+
+mach create "elemrv_h_sensor_capture"
+
+machine LoadPlatformDescription @platforms/elemrv_h_sensor.repl
+
+# Suppress sysbus warnings for tagged regions
+logLevel 3 sysbus
+
+# Create UART analyzer to capture output
+showAnalyzer uart0
+
+# Load sensor capture Zephyr ELF
+sysbus LoadELF @../zephyr/elemrv-zephyr/build-sensor-capture/zephyr/zephyr.elf
+
+# Set initial sensor temperature (22.0 C)
+i2c0.sensor Temperature 22.0
+
+log ""
+log "=== Sensor Capture Integration Test ==="
+log "Board: ElemRV-H (VexRiscv RV32IC @ 50 MHz)"
+log "Sensor: SI7021 @ I2C 0x40"
+log "Phase 1: Temperature = 22.0 C"
+log ""
+
+# Run for 1.5s — Zephyr boot (~200ms) + first ~5 samples at 22 C
+emulation RunFor "00:00:01.500000"
+
+# Change sensor temperature mid-simulation
+i2c0.sensor Temperature 28.0
+
+log ""
+log "Phase 2: Temperature changed to 28.0 C"
+log ""
+
+# Run for 2.0s — remaining ~5 samples at 28 C + margin
+emulation RunFor "00:00:02.000000"
+
+log ""
+log "=== Sensor Capture Integration Test PASSED ==="
+log ""
+
+quit

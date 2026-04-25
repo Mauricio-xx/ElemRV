@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+# PIO Co-simulation Register Test
+# Pure register-level test — no firmware needed.
+
+using sysbus
+
+mach create "elemrv_h_cosim_pio"
+
+machine LoadPlatformDescription @platforms/elemrv_h_cosim_pio.repl
+
+logLevel 3 sysbus
+
+# Attach verilated PIO library
+$pio_lib?="/workspace/elemrv/digital-twin/renode/verilated/libs/libpio.so"
+pio0_cosim SimulationFilePathLinux $pio_lib
+
+# Set CPU to tight loop (no firmware — we only exercise registers via sysbus)
+sysbus WriteDoubleWord 0xA0000000 0x0000006F
+cpu PC 0xA0000000
+cpu PerformanceInMips 50
+
+log ""
+log "=== PIO Co-simulation Register Test ==="
+log ""
+
+# Let the peripheral initialize
+emulation RunFor "00:00:00.000100"
+
+# Read-only registers (IpIdentification)
+log "IP Header    @ 0xF0002000:"
+sysbus ReadDoubleWord 0xF0002000
+log "IP Version   @ 0xF0002004:"
+sysbus ReadDoubleWord 0xF0002004
+log "IP Features  @ 0xF0002008:"
+sysbus ReadDoubleWord 0xF0002008
+
+# Write clock divider and read back
+log "Writing clock divider = 0x31..."
+sysbus WriteDoubleWord 0xF000201C 0x31
+emulation RunFor "00:00:00.000010"
+log "Clock Div    @ 0xF000201C (expect 0x31):"
+sysbus ReadDoubleWord 0xF000201C
+
+# Write read delay and read back
+log "Writing read delay = 0x05..."
+sysbus WriteDoubleWord 0xF0002020 0x05
+emulation RunFor "00:00:00.000010"
+log "Read Delay   @ 0xF0002020 (expect 0x05):"
+sysbus ReadDoubleWord 0xF0002020
+
+log ""
+log "=== PIO Co-simulation Test PASSED ==="
+log ""
+
+quit

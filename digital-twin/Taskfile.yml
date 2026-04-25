@@ -1,0 +1,200 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: Apache-2.0
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+# Digital Twin Taskfile.
+#
+# Included from the root Taskfile.yml via:
+#   includes:
+#     dt:
+#       taskfile: ./digital-twin/Taskfile.yml
+#       optional: true
+#       flatten: true
+#
+# All tasks here keep their `dt-*` prefix on the public name so they
+# remain reachable as `task dt-*` from the repo root regardless of
+# whether the include flatten setting changes.
+#
+# Path conventions inside cmds (running on the host that owns the
+# Docker container; the container has /workspace/elemrv mounted to
+# the repo root):
+#   /workspace/elemrv/digital-twin/...  for everything DT-owned
+#   /workspace/elemrv/...               for the few upstream paths
+#                                       still referenced (e.g. sbt
+#                                       runMain target classes)
+
+version: '3'
+
+tasks:
+  build-container:
+    desc: Builds the Digital Twin simulation Docker image (elemrv-sim:latest).
+    cmds:
+      - docker build -t elemrv-sim:latest -f digital-twin/docker/Dockerfile.simulation digital-twin/docker/
+
+  dt-build-firmware:
+    desc: Compiles bare-metal firmware for digital twin testing.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/firmware/pwm_test && make clean && make all && make regtest'
+
+  dt-build-verilated:
+    desc: Builds Verilator co-simulation libraries.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode/verilated/wrappers && make -f Makefile.pwm clean && make -f Makefile.pwm BUILD_MODE=release'
+
+  dt-test:
+    desc: Runs all digital twin co-simulation tests (rebuilds first).
+    deps: [dt-build-firmware, dt-build-verilated]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-test-quick:
+    desc: Runs digital twin tests without rebuilding (assumes artifacts exist).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-zephyr-init:
+    desc: Initializes the Zephyr west workspace and fetches dependencies.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/zephyr && west init -l elemrv-zephyr 2>/dev/null || true && west update'
+
+  dt-zephyr-build:
+    desc: Builds all Zephyr apps for ElemRV-H.
+    cmds:
+      - docker exec elemrv-test bash -c 'export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.17.0 && export ZEPHYR_BASE=/workspace/elemrv/digital-twin/zephyr/zephyr && cd /workspace/elemrv/digital-twin/zephyr/elemrv-zephyr && bash build_all_apps.sh'
+
+  dt-zephyr-test:
+    desc: Builds all Zephyr apps and runs the full test suite.
+    deps: [dt-build-firmware, dt-build-verilated, dt-zephyr-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-cosim-generate:
+    desc: Generates all peripheral Verilog via SpinalHDL (requires sbt in Docker).
+    cmds:
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePwmVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePioVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishbonePinmuxVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneGpioVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneMachineTimerVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneI2cControllerVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.WishboneUartVerilog"
+
+  dt-cosim-build:
+    desc: Builds all 7 H co-simulation shared libraries.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode/verilated/wrappers && bash build_all_cosim.sh release'
+
+  dt-cosim-test:
+    desc: Generates Verilog, builds co-sim libraries, and runs the full test suite.
+    deps: [dt-build-firmware, dt-cosim-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-integration-test:
+    desc: Builds firmware + co-sim libs + Zephyr apps and runs the full 63-test suite.
+    deps: [dt-build-firmware, dt-cosim-build, dt-zephyr-build, dt-n-zephyr-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-verilator-test:
+    desc: Builds and runs pure Verilator testbenches (no Renode).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode/verilated/testbenches && make run'
+
+  dt-validate-cosim:
+    desc: Cross-validates Verilator testbenches against Renode co-sim results.
+    deps: [dt-cosim-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash validate_cosim.sh'
+
+  dt-debug-bare-metal:
+    desc: Starts Renode with GDB server for bare-metal debugging (port 3333).
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @debug_bare_metal.resc"'
+
+  dt-debug-zephyr:
+    desc: Starts Renode with GDB server for Zephyr debugging (port 3333).
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @debug_zephyr.resc"'
+
+  dt-debug-cosim:
+    desc: Starts Renode with GDB server + full RTL co-simulation (port 3333).
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @debug_cosim.resc"'
+
+  dt-debug-connect:
+    desc: Connects GDB to running Renode debug session.
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv && riscv-none-elf-gdb -x digital-twin/renode/gdb/elemrv.gdb {{.ELF | default "digital-twin/firmware/pwm_test/pwm_test.elf"}}'
+
+  dt-fault-test:
+    desc: Runs fault injection tests (subset of full test suite).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-sensor-test:
+    desc: Runs I2C sensor capture test.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-rtos-debug:
+    desc: Starts Renode with GDB server for Zephyr RTOS thread-aware debugging.
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos.resc"'
+
+  dt-rtos-test:
+    desc: Runs RTOS debug tests (Tests 41-46).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-n-rtos-debug:
+    desc: Starts Renode with GDB server for N Zephyr RTOS thread-aware debugging.
+    cmds:
+      - docker exec -it elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @debug_zephyr_rtos_n.resc"'
+
+  dt-portable-test:
+    desc: Runs portable data logger tests on both H and N (Tests 50-51).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-multi-node:
+    desc: Runs the multi-node IoT simulation (H edge + N gateway via UART hub).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @run_multi_node.resc"'
+
+  dt-multi-node-test:
+    desc: Builds edge+gateway apps and runs multi-node IoT test (Test 52).
+    deps: [dt-zephyr-build, dt-n-zephyr-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-n-cosim-generate:
+    desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).
+    cmds:
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneGpioNVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishbonePinmuxNVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneSpiControllerVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneI2cLiteVerilog"
+      - docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_n.test.WishboneUartLiteVerilog"
+
+  dt-n-cosim-build:
+    desc: Builds all 5 N-specific co-simulation shared libraries.
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode/verilated/wrappers && bash build_n_cosim.sh release'
+
+  dt-n-zephyr-build:
+    desc: Builds N Zephyr apps (hello_world, blinky).
+    cmds:
+      - docker exec elemrv-test bash -c 'export ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-0.17.0 && export ZEPHYR_BASE=/workspace/elemrv/digital-twin/zephyr/zephyr && cd /workspace/elemrv/digital-twin/zephyr/elemrv-zephyr && bash build_n_apps.sh'
+
+  dt-n-test:
+    desc: Full N test suite (generates, builds, tests).
+    deps: [dt-n-cosim-build, dt-n-zephyr-build]
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
+
+  dt-n-test-quick:
+    desc: Runs N tests without rebuild (assumes artifacts exist).
+    cmds:
+      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
