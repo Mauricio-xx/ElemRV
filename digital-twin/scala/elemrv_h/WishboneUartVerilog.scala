@@ -16,7 +16,7 @@ object WishboneUartVerilog extends App {
 
   // NOTE: UartCtrl needs clock frequency for baud rate divider calculation
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(50 MHz)
   ).generateVerilog(

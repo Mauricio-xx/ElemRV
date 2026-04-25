@@ -16,7 +16,7 @@ object WishbonePioVerilog extends App {
 
   // Generate with 32-bit address for Renode IntegrationLibrary compatibility
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW)
   ).generateVerilog(
     WishbonePio(

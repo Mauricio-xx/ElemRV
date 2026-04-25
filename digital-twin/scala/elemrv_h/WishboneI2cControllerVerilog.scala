@@ -16,7 +16,7 @@ object WishboneI2cControllerVerilog extends App {
 
   // I2C controller needs clock frequency for SCL clock divider calculation
   SpinalConfig(
-    targetDirectory = "digital-twin/gen",
+    targetDirectory = "gen",
     defaultConfigForClockDomains = ClockDomainConfig(resetKind = ASYNC, resetActiveLevel = LOW),
     defaultClockDomainFrequency = FixedFrequency(50 MHz)
   ).generateVerilog(
