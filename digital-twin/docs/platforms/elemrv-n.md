@@ -218,34 +218,17 @@ Tests 31-40 cover the original ElemRV-N peripherals:
 | 37 | N Full Co-simulation | All 10 peripherals |
 | 38 | N Pure Verilator | RTL validation |
 | 39 | N Zephyr Hello | Basic console |
-| 40 | N Zephyr Blinky | LED toggle |
 
-Phase G added six tests for the Quad I/O SPI / XIP / BMB digital twins
-(also counted as the N-specific 33b..33g):
+Phase G + Phase I + the v1.4 slim leave four N-specific tests for the Quad I/O SPI / XIP / BMB digital twins:
 
 | Test | Name | Description |
 |------|------|-------------|
-| 33b | N SPI Quad Flash Co-simulation | `WishboneSpiControllerQuad` + MT25Q-style flash slave; RDID + FastRead single + Quad I/O FastRead via register pokes |
-| 33c | N SPI Quad Flash Bare-Metal | Same DT driven by a C firmware (`digital-twin/renode/firmware/samples/spi_quad_flash_test/`); UART logs RDID + QIO results |
-| 33d | N SPI Quad Flash Zephyr | Zephyr app `app/spi_quad_flash` uses `spi_transceive` for RDID and `sys_write32` pokes for QIO |
-| 33e | N BMB Bridge Co-simulation | `WishboneToBmbMaster` + `SimpleBmbRam` round-trip validates the BMB transaction path |
-| 33f | N BMB SpiXip Co-simulation | Full `BmbSpiXipController` wrap; reads route WB -> BMB -> SPI -> flash -> back |
+| 33b | N SPI Quad Flash Co-simulation | `WishboneSpiControllerQuad` + MT25Q-style flash slave; RDID + FastRead single + Quad I/O FastRead via register pokes (response-FIFO bytes asserted) |
 | 33g | N BMB SpiXip Image Container Boot | `gen_dt_image_container.sh` + `xip_boot_test` image; wrapper env var `BMBXIP_IMAGE_PATH` pre-loads the flash backing; test validates image words via XIP reads |
+| 33i | N CPU-Driven XIP Bootrom-Adapted | Trimmed `software/elemrv_n/bootrom/start.s` runs from XIP via `cpu RegisterAccessFlags ... true`; exercises `jal`/`ret` + cfgXip writes end-to-end (~5-7 s wall with `BMBXIP_FAST=1`) |
+| 33j | N XIP c.jal Sub-Word Regression | 9-scenario harness covering `byte_off` ∈ {0,1,2,3} via instruction fetch (c.jal/c.nop-shim/uncompressed jal at word+2) and data loads (lw/lhu/lbu at word+0/+1/+2/+3). Mutation-verified regression guard for the wrapper's sub-word shift. |
 
-Phase I added two CPU-fetch-from-XIP tests that lift the 33g caveat (Renode's default refusal to fetch instructions from `CoSimulatedPeripheral` ranges). They enable the executable-IO flag via `cpu RegisterAccessFlags <start> <size> true` — no Renode patch needed.
-
-| Test | Name | Description |
-|------|------|-------------|
-| 33h | N CPU-Driven XIP Execution | Minimal 30-byte kernel at 0xF000B000 writes 0xCAFEBEEF to RAM@0x80000100; proves CPU fetch + execute from the BmbSpiXip data bank (~0.3 s wall) |
-| 33i | N CPU-Driven XIP Bootrom-Adapted | Trimmed `software/elemrv_n/bootrom/start.s` (partial `_init_regs` + `_init_xip` with `CFGXIP_VALUE=0x007F0702` upstream value + marker 0xBEADFACE); exercises `jal`/`ret` control flow through QPI fetches end-to-end (~5-7 s wall with `BMBXIP_FAST=1`) |
-
-Gap 3.2 added three more tests. Together with Gap 3.1's mutation audit, they close the XIP DT coverage holes surfaced after Phase I:
-
-| Test | Name | Description |
-|------|------|-------------|
-| 33j | N XIP c.jal Sub-Word Regression | 9-scenario harness exercising `bmb_spi_xip_wrapper.cpp`'s sub-word shift across `byte_off` ∈ {0,1,2,3}. Instruction fetch paths (c.jal to word-aligned + word+2 subs, uncompressed jal at word+2 PC, mixed C+uncompressed arithmetic) plus data loads (`lw`/`lhu`/`lbu` at offsets 0/2/1/3). Python block asserts all 9 marker slots. |
-| 33k | XIP Cache Invalidate Coverage | Reads the same XIP word before and after a cfgXip bank-1 write. Post-write read must reflect the new protocol settings, which requires `invalidateFetchCache()` to fire on the cfgXip write. Also surfaced (and fixed) a missing write-latch extra-posedge in the wrapper. |
-| 33l | N BMB SpiXip Quad I/O Fetch | End-to-end QPI handshake. Writes `cfgXip=0x007F0702` (upstream bootrom value), lets WREN + WRITE_REGISTER + EVCR latch, then asserts subsequent XIP reads return the wrapper's built-in rom pattern through cmd=0xE7 quad fetches. Requires the flash slave's `m_qpi_enabled` handshake. |
+Phase G originally shipped six XIP-related tests (33b-33g) and Phase I added two more (33h, 33i); Gap 3.2 added three additional coverage tests (33j, 33k, 33l). The v1.4 slim folded the redundant variants (33c bare-metal driver firmware, 33d Zephyr driver wrapper, 33e BMB bridge stand-alone, 33f BmbSpiXip stand-alone, 33h straight-line CPU XIP, 33k cache-invalidate, 33l QPI handshake) into the four end-to-end tests above. The wrapper-side fixes (sub-word shift, fetch-cache invalidation, QPI EVCR handshake) remain in the codebase.
 
 ## Platform Files
 
@@ -257,10 +240,8 @@ Gap 3.2 added three more tests. Together with Gap 3.1's mutation audit, they clo
 | `elemrv_n_full_cosim.repl` | All 10 peripherals |
 | `elemrv_n_spi_sensor.repl` | With SPI sensor |
 | `elemrv_n_i2c_sensor.repl` | With I2C sensor |
-| `elemrv_n_cosim_spi_quad_flash.repl` | Quad I/O SPI + MT25Q flash slave DT (G.1b, tests 33b-33d) |
-| `elemrv_n_cosim_bmb_bridge.repl` | Wishbone <-> BMB bridge round-trip DT (G.3, test 33e) |
-| `elemrv_n_cosim_bmb_spi_xip.repl` | Full `BmbSpiXipController` DT (G.1c, tests 33f / 33h / 33j / 33k / 33l) |
-| `elemrv_n_bmb_spi_xip_boot.repl` | Image-container boot-flow DT (G.2, tests 33g / 33i) |
+| `elemrv_n_cosim_spi_quad_flash.repl` | Quad I/O SPI + MT25Q flash slave DT (test 33b) |
+| `elemrv_n_bmb_spi_xip_boot.repl` | Image-container + CPU-fetch XIP DT (tests 33g / 33i / 33j) |
 
 ## Zephyr Board Support Package
 

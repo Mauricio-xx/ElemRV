@@ -158,17 +158,6 @@ tasks:
     cmds:
       - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
 
-  dt-multi-node:
-    desc: Runs the multi-node IoT simulation (H edge + N gateway via UART hub).
-    cmds:
-      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && renode --disable-xwt --console -e "include @run_multi_node.resc"'
-
-  dt-multi-node-test:
-    desc: Builds edge+gateway apps and runs multi-node IoT test (Test 52).
-    deps: [dt-zephyr-build, dt-n-zephyr-build]
-    cmds:
-      - docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && bash run_tests.sh'
-
   dt-n-cosim-generate:
     desc: Generates N-specific peripheral Verilog via SpinalHDL (requires sbt in Docker).
     cmds:

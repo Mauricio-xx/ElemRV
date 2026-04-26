@@ -43,13 +43,6 @@ west build -b elemrv_h app/sensor_capture -d build-sensor-capture
 
 ## Renode Tests
 
-### Test 29: Sensor Detection
-
-Runs the existing `i2c_scan` firmware on the sensor platform.
-Verifies the SI7021 is visible at address 0x40 on the I2C bus.
-
-**Script**: `renode/run_sensor_detect.resc`
-
 ### Test 30: Sensor Capture
 
 Runs `sensor_capture` firmware with dynamic temperature changes:

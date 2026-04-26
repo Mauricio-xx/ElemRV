@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Builds ElemRV-N Zephyr apps (hello_world, blinky).
+# Builds ElemRV-N Zephyr apps.
 # Run from the elemrv-zephyr directory (west workspace must be initialized).
 #
 # Usage: bash build_n_apps.sh
@@ -40,15 +40,8 @@ echo "  ZEPHYR_BASE: ${ZEPHYR_BASE:-<not set>}"
 echo "  ZEPHYR_SDK:  ${ZEPHYR_SDK_INSTALL_DIR:-<not set>}"
 echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
-build_app app/hello_world    build-n-hello
-build_app app/blinky         build-n-blinky
-build_app app/rtos_debug_demo  build-n-rtos-debug-demo
-build_app app/rtos_diagnostics  build-n-rtos-diagnostics
-build_app app/sensor_i2c_capture  build-n-sensor-i2c-capture
+build_app app/hello_world         build-n-hello
 build_app app/sensor_spi_capture  build-n-sensor-spi-capture
-build_app app/spi_quad_flash        build-n-spi-quad-flash
-build_app app/portable_data_logger  build-n-portable-data-logger
-build_app app/multi_node_gateway    build-n-multi-node-gateway
 
 echo ""
 echo "============================================"

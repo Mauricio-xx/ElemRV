@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
 // Pure Verilator testbench for WishbonePwm.
-// Matches register operations from run_pwm_test.resc and
-// run_cosim_pinmux_pwm_seq_test.resc.
+// Matches register operations from run_pwm_test.resc.
 
 #include "verilated.h"
 #include "VWishbonePwm.h"

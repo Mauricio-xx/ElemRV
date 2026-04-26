@@ -16,18 +16,9 @@ providing temperature and humidity readings via the SI7021 protocol.
 | `elemrv_h_i2c_sensor.repl` | H | H Zephyr base + SI70xx @ i2c0 0x48 |
 | `elemrv_n_i2c_sensor.repl` | N | N Zephyr base + SI70xx @ i2c0 0x48 |
 
-### Firmware
-
-`app/sensor_i2c_capture` — identical source runs on both boards (zero `#ifdef`).
-
-Protocol:
-- Write `0xE3` → read 2 bytes (raw temperature)
-- Write `0xE5` → read 2 bytes (raw humidity)
-- Conversion: `T = 175.72 * raw / 65536 - 46.85`
-
 ### Renode Interaction
 
-Sensor values can be changed mid-simulation:
+The H and N I2C sensor platform files are still present (for ad-hoc debugging or follow-up work); the v1.4 slim removed the dedicated I2C sensor capture tests, but the sensor models can still be exercised manually:
 ```
 i2c0.sensor Temperature 28.0
 i2c0.sensor Humidity 60.0

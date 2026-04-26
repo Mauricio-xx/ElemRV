@@ -265,7 +265,7 @@ Single `CoSimulatedPeripheral` muxing three internal buses via `ADR[10..11]` ban
 | 1 — cfgXip | 0xF000A400 – 0xF000A7FF | R/W | XIP controller registers: readCommand `mode`/`dummyCycles`/`evcr` at +0x00, trigger at +0x08 (write starts a WREN + WRITE_REGISTER configure transaction; writes to this bank also invalidate the wrapper's fetch cache). |
 | 2 — XIP data | 0xF000B000 – 0xF000BFFF | RO, executable-IO | Byte-addressable XIP mapping of the external flash. Reads go through the XIP state machine (cmd=0x03 by default; cmd=0xE7 after QPI handshake). CPU instruction fetch requires `cpu RegisterAccessFlags 0xF000B000 0x1000 true` in the `.resc` to set `IO_MEM_EXECUTABLE_IO` on the page. |
 
-See [architecture.md](../architecture.md#wrapper-level-patterns-phase-g--phase-i--gap-32) for the sub-word shift, write-latch, fetch-cache invalidation, and QPI handshake patterns used by this wrapper, and [retrospective/gaps.md](../retrospective/gaps.md) for the journey behind them.
+See [architecture.md](../architecture.md#wrapper-level-patterns-phase-g--phase-i--gap-32) for the sub-word shift, write-latch, fetch-cache invalidation, and QPI handshake patterns used by this wrapper.
 
 ## Platform Variants
 

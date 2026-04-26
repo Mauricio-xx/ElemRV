@@ -25,9 +25,6 @@ For **Tag** addresses (base platform), reads always return 0 — simulating a mi
 | Test | Script | Platform | Target |
 |------|--------|----------|--------|
 | PWM Register Corruption | `run_fault_pwm_corruption.resc` | Full co-sim | PWM RTL registers |
-| GPIO Register Corruption | `run_fault_gpio_corruption.resc` | Full co-sim | GPIO RTL registers |
-| Timer Perturbation | `run_fault_timer_perturb.resc` | Zephyr | LiteX_Timer_CSR32 |
-| UART Injection | `run_fault_uart_injection.resc` | Zephyr | LiteX_UART |
 | Missing Peripheral | `run_fault_missing_peripheral.resc` | Base (Tags) | PWM absent |
 
 ## Findings

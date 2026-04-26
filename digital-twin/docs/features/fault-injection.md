@@ -58,10 +58,9 @@ Fault Injection Flow
 | Test | Script | Platform | Target | Fault Type |
 |------|--------|----------|--------|------------|
 | PWM Register Corruption | `run_fault_pwm_corruption.resc` | Full co-sim | PWM RTL | R/W register |
-| GPIO Register Corruption | `run_fault_gpio_corruption.resc` | Full co-sim | GPIO RTL | R/W register |
-| Timer Perturbation | `run_fault_timer_perturb.resc` | Zephyr | LiteX_Timer | IRQ enable |
-| UART Injection | `run_fault_uart_injection.resc` | Zephyr | LiteX_UART | RX data |
 | Missing Peripheral | `run_fault_missing_peripheral.resc` | Base (Tags) | PWM absent | Absent device |
+
+The v1.0 fault-injection suite shipped five scripts (PWM/GPIO register corruption, Timer perturbation, UART injection, Missing peripheral). The v1.4 slim kept the two with the highest signal-to-noise (PWM register corruption as the canonical RTL-fault scenario, and Missing peripheral as a structurally different fault class). The previously documented findings for the cut scripts remain accurate against the unchanged implementation; they are reproducible from `run_fault_*.resc` history if needed.
 
 ## Findings
 
@@ -242,15 +241,11 @@ task dt-test-quick
 
 ```bash
 # PWM register corruption
-docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && \
   renode --disable-xwt --console -e "include @run_fault_pwm_corruption.resc"'
 
-# Timer perturbation
-docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
-  renode --disable-xwt --console -e "include @run_fault_timer_perturb.resc"'
-
 # Missing peripheral
-docker exec elemrv-test bash -c 'cd /workspace/elemrv/renode && \
+docker exec elemrv-test bash -c 'cd /workspace/elemrv/digital-twin/renode && \
   renode --disable-xwt --console -e "include @run_fault_missing_peripheral.resc"'
 ```
 

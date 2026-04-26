@@ -13,13 +13,10 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 - **Sensor Simulation**: I2C and SPI sensor models for IoT application testing
 - **RTOS Debugging**: Thread-aware GDB debugging with stack analysis
 - **Fault Injection**: Verify firmware robustness through register corruption
-- **Multi-Node IoT Simulation**: Two SoC variants communicating over UART
 - **Quad I/O SPI Flash + BMB XIP**: Behavioral MT25Q flash slave, `BmbSpiXipController` DT, and image-container boot path (Phase G)
 - **CPU-Driven XIP Execution**: VexRiscv executes directly from the co-sim XIP DT via tlib's executable-IO flag (Phase I)
-- **Sub-word MMIO Read Correctness**: Byte/half-word fetches from a 32-bit word-addressed wrapper validated end-to-end (Gap 1, regression-guarded by test 33j)
-- **QPI Handshake Coverage**: Flash slave tracks `EVCR` bit 7 and toggles CMD sampling width; end-to-end cmd=0xE7 quad fetch through `BmbSpiXipController` (Gap 3.2 #2, test 33l)
-- **Fetch-Cache Invalidation on cfgXip Writes**: Data-bank cache invalidated whenever the firmware reconfigures the XIP protocol (Gap 3.2 #1, test 33k)
-- **63 Automated Tests**: Full regression test suite via Taskfile
+- **Sub-word MMIO Read Correctness**: Byte/half-word fetches from a 32-bit word-addressed wrapper validated end-to-end (regression-guarded by test 33j)
+- **36 Automated Tests**: Slimmed regression suite via Taskfile
 
 ## Platform Variants
 
@@ -38,7 +35,7 @@ The ElemRV Digital Twin Platform enables firmware development and hardware verif
 # Install dependencies (run once)
 task install
 
-# Run full integration test suite (63 tests)
+# Run full integration test suite (36 tests)
 task dt-integration-test
 
 # Or step by step:
@@ -62,16 +59,14 @@ task dt-integration-test     # Run all tests
 - [Sensor Simulation](features/sensors.md) - I2C and SPI sensor testing
 - [RTOS Debugging](features/rtos-debugging.md) - Thread-aware debugging
 - [GDB Debugging](features/gdb-debugging.md) - Interactive debugging guide
-- [Multi-Node IoT](features/multi-node-iot.md) - Multi-machine IoT simulation
 - [Fault Injection](features/fault-injection.md) - Robustness testing
-- [Digital Twin Gap Journey](retrospective/gaps.md) - Post-Phase-I maturation: sub-word fix, mutation audit, QPI, pre-PR hygiene
 
 ### Firmware Development
 - [Zephyr Setup](firmware/zephyr-setup.md) - Zephyr RTOS configuration
 - [Bare-metal Firmware](firmware/bare-metal.md) - Bare-metal development
 
 ### Reference
-- [Test Suite](reference/test-suite.md) - All 63 tests documented
+- [Test Suite](reference/test-suite.md) - All 36 tests documented
 - [Taskfile Commands](reference/taskfile-commands.md) - Build and test commands
 - [Memory Maps](reference/memory-maps.md) - Peripheral addresses
 
@@ -117,22 +112,23 @@ Learn embedded systems development with full visibility into both software execu
 
 ## Test Coverage
 
-The platform includes 63 automated tests covering:
+The platform includes 36 automated tests covering:
 
 - **Tests 1-2**: Base platform + PWM co-simulation
-- **Tests 3-8**: Zephyr apps (H)
-- **Tests 9-15**: Co-sim per-peripheral + full integration (H)
-- **Tests 16-21**: Cross-peripheral + hybrid tests
-- **Tests 22-23**: Verilator + GDB validation
-- **Tests 24-28**: Fault injection
-- **Tests 29-30**: Sensor detection + capture (H)
-- **Tests 31-40**: ElemRV-N platform
-  - **33b-33g** (Phase G): Quad I/O SPI flash + BMB bridge + BmbSpiXipController + image-container boot
-  - **33h-33i** (Phase I): CPU-driven XIP execution (tlib executable-IO flag)
-  - **33j-33l** (Gap 3.2): sub-word regression harness, fetch-cache invalidate coverage, QPI handshake end-to-end
-- **Tests 41-46**: RTOS debugging (H + N)
-- **Tests 47-51**: Sensor simulation (I2C + SPI + portable)
-- **Test 52**: Multi-node IoT (H edge + N gateway)
+- **Tests 3-6**: Core Zephyr H apps (hello world, blinky, PWM)
+- **Tests 9-15**: Per-peripheral H co-sim + full integration
+- **Tests 16, 18, 21**: Cross-peripheral, Zephyr Timer-UART interrupt, hybrid multi-cosim
+- **Tests 22-23**: Pure Verilator testbench + GDB server
+- **Tests 24, 28**: Fault injection (register corruption, missing peripheral)
+- **Test 30**: I2C sensor capture
+- **Tests 31-37**: ElemRV-N base + per-peripheral co-sim + full integration
+- **Tests 33b, 33g**: Phase G Quad I/O SPI flash + image-container boot
+- **Tests 33i, 33j**: Phase I CPU-driven XIP (bootrom-adapted) + sub-word regression guard
+- **Test 38**: Pure Verilator N testbench
+- **Test 39**: N Zephyr hello world
+- **Tests 41, 43**: H RTOS debug demo + GDB threads
+- **Test 49**: N SPI sensor capture
+- **Test 50**: H portable data logger
 
 Run all tests:
 ```bash
@@ -167,7 +163,7 @@ ElemRV/
 │   │   ├── verilated/libs/               # Built .so libraries
 │   │   ├── verilated/testbenches/        # Pure Verilator testbenches
 │   │   ├── firmware/samples/              # Bare-metal firmware for tests
-│   │   ├── run_tests.sh                   # Test runner (63 tests)
+│   │   ├── run_tests.sh                   # Test runner (36 tests)
 │   │   └── *.resc                         # Renode test scripts
 │   ├── zephyr/
 │   │   ├── elemrv-zephyr/                # Zephyr out-of-tree module + apps
@@ -210,10 +206,14 @@ The only intrusions into the upstream tree are three small additive touches:
 
 ---
 
-**Version**: 1.3  
+**Version**: 1.4  
 **Last Updated**: April 2026
 
 ## Changelog
+
+### 1.4 (April 2026) — pre-PR test-suite slim
+
+Trimmed the integration suite from 63 to 36 tests before opening the upstream PR. The cuts target redundancy, not coverage: every peripheral wrapper, every kept feature (XIP, BMB, sensors, RTOS debug, fault injection, hybrid co-sim) still has a representative test. Cuts include duplicate Zephyr-driver tests already covered by per-peripheral co-sim (5, 7, 8), variant fault-injection tests collapsed to PWM corruption + missing peripheral (25, 26, 27), redundant XIP exploratory tests folded into 33g/33i/33j (33c, 33d, 33e, 33f, 33h, 33k, 33l), cross-board sensor variants (47, 48, 51), N-side RTOS variants (44, 45, 46), the Pinmux+PWM register sequence subsumed by 16 (17), and the multi-node IoT demo (52). Orphaned `.resc` scripts, `.repl` platform files, firmware sample dirs, and Zephyr apps were removed in the same pass.
 
 ### 1.3 (April 2026) — Gap 3.2 + Gap 4: DT hardening & pre-PR hygiene
 
@@ -227,7 +227,7 @@ Digital-twin maturation pass after Phase I. Fixes one load-bearing wrapper bug, 
 - **Gap 3.2 #2 — Test 33l + QPI handshake**: flash slave now tracks `m_qpi_enabled`, captures `EVCR` from `0x61 WRITE_REGISTER`, and switches CMD sampling width on the next transaction. 33l exercises the upstream bootrom's `cfgXip=0x007F0702` end-to-end (cmd=0xE7 quad fetch through the data bank). 33i restored to upstream parity.
 - **Gap 3.2 #3 — Test 33j parameterized**: replaces the previous one-shot repro with a 9-scenario harness covering `byte_off` ∈ {0,1,2,3} via instruction fetch (c.jal/c.nop-shim/uncompressed jal at word+2) and data loads (lw/lhu/lbu at word+0/+1/+2/+3). Mutation-verified: wrapping the sub-word shift in `if (false && ...)` crashes the CPU and kills the pass marker.
 - **Gap 4 — `reuse lint` + `scalafmt --check hardware/` both clean**. `REUSE.toml` grew 103 lines of path annotations covering the DT tree buckets (Zephyr module, docs, platforms, .resc drivers, firmware build artefacts, generated Verilog, `.gitignore` files). Four DT-added Scala generators reformatted (whitespace only).
-- Suite: **60 → 63 tests**. All green.
+- Suite: **60 → 63 tests** (later trimmed to 36 in 1.4). All green.
 
 ### 1.2 (April 2026) — Phase I: CPU-driven XIP fetch
 

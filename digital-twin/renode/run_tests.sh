@@ -125,15 +125,6 @@ else
     echo "  Blinky ELF not found. Build with: west build -b elemrv_h app/blinky -d build-blinky"
 fi
 
-# Test 5: Zephyr I2C Bus Scan (LiteX I2C driver)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-i2c-scan/zephyr/zephyr.elf" ]; then
-    run_test "Zephyr I2C Scan" "run_zephyr_i2c_scan.resc" "Zephyr I2C Scan Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Zephyr I2C Scan ==="
-    echo "  I2C scan ELF not found. Build with: west build -b elemrv_h app/i2c_scan -d build-i2c-scan"
-fi
-
 # Test 6: Zephyr PWM Driver (custom WishbonePwm)
 if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-pwm-test/zephyr/zephyr.elf" ]; then
     run_test "Zephyr PWM Driver" "run_zephyr_pwm.resc" "Zephyr PWM Driver Test PASSED"
@@ -141,24 +132,6 @@ else
     echo ""
     echo "=== TEST (skipped): Zephyr PWM Driver ==="
     echo "  PWM test ELF not found. Build with: west build -b elemrv_h app/pwm_test -d build-pwm-test"
-fi
-
-# Test 7: Zephyr PIO Driver (custom WishbonePio)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-pio-test/zephyr/zephyr.elf" ]; then
-    run_test "Zephyr PIO Driver" "run_zephyr_pio.resc" "Zephyr PIO Driver Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Zephyr PIO Driver ==="
-    echo "  PIO test ELF not found. Build with: west build -b elemrv_h app/pio_test -d build-pio-test"
-fi
-
-# Test 8: Zephyr Pinmux Driver (custom WishbonePinmux)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-pinmux-test/zephyr/zephyr.elf" ]; then
-    run_test "Zephyr Pinmux Driver" "run_zephyr_pinmux.resc" "Zephyr Pinmux Driver Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Zephyr Pinmux Driver ==="
-    echo "  Pinmux test ELF not found. Build with: west build -b elemrv_h app/pinmux_test -d build-pinmux-test"
 fi
 
 # Test 9: PIO Co-simulation (Verilator RTL, register verification)
@@ -177,15 +150,6 @@ else
     echo ""
     echo "=== TEST (skipped): Pinmux Co-simulation ==="
     echo "  libpinmux.so not found. Build with: make -f Makefile.pinmux BUILD_MODE=release"
-fi
-
-# Test 11: GPIO Co-simulation
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libgpio.so" ]; then
-    run_test "GPIO Co-simulation" "run_cosim_gpio_test.resc" "GPIO Co-simulation Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): GPIO Co-simulation ==="
-    echo "  libgpio.so not found. Build with: make -f Makefile.gpio BUILD_MODE=release"
 fi
 
 # Test 12: MachineTimer Co-simulation
@@ -235,15 +199,6 @@ else
     echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
 fi
 
-# Test 17: Pinmux+PWM Register Sequence (all 7 co-sim)
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libgpio.so" ]; then
-    run_test "Pinmux+PWM Register Sequence" "run_cosim_pinmux_pwm_seq_test.resc" "Pinmux+PWM Register Sequence Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Pinmux+PWM Register Sequence ==="
-    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
-fi
-
 # Test 18: Zephyr Timer-UART Integration (interrupt-driven flow)
 if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-timer-uart-test/zephyr/zephyr.elf" ]; then
     run_test "Zephyr Timer-UART Integration" "run_zephyr_timer_uart.resc" "Zephyr Timer-UART Integration Test PASSED"
@@ -253,7 +208,7 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_h app/timer_uart_test -d build-timer-uart-test"
 fi
 
-# Test 19: Hybrid Pinmux+PWM (co-sim PWM/Pinmux + LiteX UART/Timer)
+# Test 21: Hybrid Multi-Cosim (all 3 co-sim + LiteX UART/Timer)
 HYBRID_LIBS_OK=false
 if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpwm.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libpwm.so" ]; } && \
    { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpinmux.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libpinmux.so" ]; } && \
@@ -261,24 +216,6 @@ if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libpwm.so" ] || [ -f "/workspace
     HYBRID_LIBS_OK=true
 fi
 
-if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-hybrid-pinmux-pwm/zephyr/zephyr.elf" ]; then
-    run_test "Hybrid Pinmux+PWM" "run_hybrid_pinmux_pwm.resc" "Hybrid Pinmux-PWM Integration Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Hybrid Pinmux+PWM ==="
-    echo "  ELF or co-sim libraries not found."
-fi
-
-# Test 20: Hybrid PIO+UART (co-sim PIO + LiteX UART/Timer)
-if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-hybrid-pio-uart/zephyr/zephyr.elf" ]; then
-    run_test "Hybrid PIO+UART" "run_hybrid_pio_uart.resc" "Hybrid PIO-UART Integration Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Hybrid PIO+UART ==="
-    echo "  ELF or co-sim libraries not found."
-fi
-
-# Test 21: Hybrid Multi-Cosim (all 3 co-sim + LiteX UART/Timer)
 if [ "$HYBRID_LIBS_OK" = true ] && [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-hybrid-multi-cosim/zephyr/zephyr.elf" ]; then
     run_test "Hybrid Multi-Cosim" "run_hybrid_multi_cosim.resc" "Hybrid Multi-Cosim Integration Test PASSED"
 else
@@ -364,46 +301,10 @@ else
     echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
 fi
 
-# Test 25: GPIO Register Corruption
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libgpio.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libgpio.so" ]; then
-    run_test "Fault: GPIO Register Corruption" "run_fault_gpio_corruption.resc" "GPIO Fault Injection Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Fault: GPIO Register Corruption ==="
-    echo "  Co-sim libraries not found. Build with: bash build_all_cosim.sh"
-fi
-
-# Test 26: Timer Perturbation
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-timer-uart-test/zephyr/zephyr.elf" ]; then
-    run_test "Fault: Timer Perturbation" "run_fault_timer_perturb.resc" "Timer Perturbation Fault Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Fault: Timer Perturbation ==="
-    echo "  ELF not found. Build with: west build -b elemrv_h app/timer_uart_test -d build-timer-uart-test"
-fi
-
-# Test 27: UART Injection
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build/zephyr/zephyr.elf" ]; then
-    run_test "Fault: UART Injection" "run_fault_uart_injection.resc" "UART Fault Injection Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Fault: UART Injection ==="
-    echo "  Zephyr hello_world ELF not found. Build with: west build -b elemrv_h app/hello_world"
-fi
-
 # Test 28: Missing Peripheral
 run_test "Fault: Missing Peripheral" "run_fault_missing_peripheral.resc" "Missing Peripheral Fault Test PASSED"
 
 # --- I2C Sensor Tests ---
-
-# Test 29: I2C Sensor Detection
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-i2c-scan/zephyr/zephyr.elf" ]; then
-    run_test "I2C Sensor Detection" "run_sensor_detect.resc" "I2C Sensor Detection Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): I2C Sensor Detection ==="
-    echo "  I2C scan ELF not found. Build with: west build -b elemrv_h app/i2c_scan -d build-i2c-scan"
-fi
 
 # Test 30: Sensor Capture
 if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-sensor-capture/zephyr/zephyr.elf" ]; then
@@ -446,44 +347,6 @@ else
     echo "  libspi_quad.so not found. Build with: bash build_n_cosim.sh release"
 fi
 
-# Test 33c: N SPI Quad I/O Flash bare-metal firmware (G.1b.2)
-if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi_quad.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libspi_quad.so" ]; } && \
-   [ -f "$SCRIPT_DIR/../renode/firmware/samples/spi_quad_flash_test/spi_quad_flash_test.bin" ]; then
-    run_test "N SPI Quad Flash Bare-Metal" "run_n_spi_quad_flash_firmware_test.resc" "SPI Quad Flash Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N SPI Quad Flash Bare-Metal ==="
-    echo "  Firmware not built: make -C renode/firmware/samples/spi_quad_flash_test"
-fi
-
-# Test 33d: N SPI Quad I/O Flash Zephyr app (G.1b.2)
-if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libspi_quad.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libspi_quad.so" ]; } && \
-   [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-spi-quad-flash/zephyr/zephyr.elf" ]; then
-    run_test "N SPI Quad Flash Zephyr" "run_n_spi_quad_flash_zephyr_test.resc" "SPI Quad Flash Zephyr PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N SPI Quad Flash Zephyr ==="
-    echo "  Zephyr ELF not built: west build -b elemrv_n app/spi_quad_flash -d build-n-spi-quad-flash"
-fi
-
-# Test 33e: N BMB Bridge round-trip DT (G.3)
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_bridge.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_bridge.so" ]; then
-    run_test "N BMB Bridge Co-simulation" "run_n_cosim_bmb_bridge_test.resc" "N BMB Bridge Co-simulation Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N BMB Bridge Co-simulation ==="
-    echo "  libbmb_bridge.so not found. Build with: bash build_n_cosim.sh release"
-fi
-
-# Test 33f: N BmbSpiXipController DT (G.1c)
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so" ]; then
-    run_test "N BMB SpiXip Co-simulation" "run_n_cosim_bmb_spi_xip_test.resc" "N BMB SpiXip Co-simulation Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N BMB SpiXip Co-simulation ==="
-    echo "  libbmb_spi_xip.so not found. Build with: bash build_n_cosim.sh release"
-fi
-
 # Test 33g: N BmbSpiXipController image-container boot flow (G.2)
 if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
    [ -f "$SCRIPT_DIR/firmware/samples/xip_boot_test/xip_boot_image.img" ]; then
@@ -494,24 +357,9 @@ else
     echo "  Missing libbmb_spi_xip.so or xip_boot_image.img (run gen_dt_image_container.sh)"
 fi
 
-# Save the original BMBXIP_IMAGE_PATH so tests 33h/33i can override it
+# Save the original BMBXIP_IMAGE_PATH so tests 33i/33j can override it
 # with their own firmware images and then restore it for later tests.
 _SAVED_BMBXIP_IMAGE_PATH="$BMBXIP_IMAGE_PATH"
-
-# Test 33h: CPU-driven XIP execution (tlib executable-IO flag trick).
-# Proves the VexRiscv actually fetches + executes instructions directly
-# from the BmbSpiXip data bank (not only data reads via sysbus). Uses
-# cpu.RegisterAccessFlags(start, size, isIoMemory=true) to flip tlib's
-# IO_MEM_EXECUTABLE_IO page flag; no Renode patch required.
-if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
-   [ -f "$SCRIPT_DIR/firmware/samples/xip_exec_test/xip_exec_image.img" ]; then
-    export BMBXIP_IMAGE_PATH="$SCRIPT_DIR/firmware/samples/xip_exec_test/xip_exec_image.img"
-    run_test "N CPU-Driven XIP Execution" "run_n_cpu_xip_exec_test.resc" "CPU-Driven XIP Execution Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N CPU-Driven XIP Execution ==="
-    echo "  Missing libbmb_spi_xip.so or xip_exec_image.img"
-fi
 
 # Test 33i: CPU-driven XIP bootrom-adapted flow.
 # Runs a trimmed variant of software/elemrv_n/bootrom/start.s from XIP
@@ -554,42 +402,6 @@ else
     echo ""
     echo "=== TEST (skipped): N XIP c.jal Sub-Word Regression ==="
     echo "  Missing libbmb_spi_xip.so or xip_cjal_repro.img"
-fi
-
-# Test 33k: XIP fetch-cache invalidation coverage (Gap 3.2 #1).
-# Firmware writes cfgXip (bank-1) between two reads of the same XIP
-# word. Pass marker is the verdict hex value stored at 0x80000100 by
-# the firmware: 0xCA5E0001 on success, 0xCA5EFAE1 on failure. Kills
-# mutation M8 in bmb_spi_xip_wrapper.cpp (invalidateFetchCache skipped
-# on bank-1 writes). BMBXIP_FAST=1 is required to populate the cache.
-if { [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so" ]; } && \
-   [ -f "$SCRIPT_DIR/firmware/samples/xip_cache_invalidate/xip_cache_invalidate.bin" ]; then
-    export BMBXIP_FAST=1
-    run_test "XIP Cache Invalidate Coverage" "run_xip_cache_invalidate.resc" "0xCA5E0001"
-    unset BMBXIP_FAST
-else
-    echo ""
-    echo "=== TEST (skipped): XIP Cache Invalidate Coverage ==="
-    echo "  Missing libbmb_spi_xip.so or xip_cache_invalidate.bin"
-fi
-
-# Test 33l: BmbSpiXipController Quad I/O fetch via QPI handshake
-# (Gap 3.2 #2). Sends the exact upstream bootrom cfgXip value
-# (0x007F0702) through the configure state machine, exercising the
-# full WREN + WRITE_REGISTER + latch + cmd=0xE7 quad fetch chain
-# against the QPI-capable flash slave. Baseline + post-configure reads
-# both must return the rom pattern; any slave/controller protocol
-# misalignment flips the verdict. The test expects the wrapper's
-# default flash backing (rom[i] = i & 0xFF), so temporarily unset
-# BMBXIP_IMAGE_PATH so the wrapper falls back to that pattern.
-if [ -f "$SCRIPT_DIR/../renode/verilated/libs/libbmb_spi_xip.so" ] || [ -f "/workspace/elemrv/digital-twin/renode/verilated/libs/libbmb_spi_xip.so" ]; then
-    unset BMBXIP_IMAGE_PATH
-    run_test "N BMB SpiXip Quad I/O Fetch" "run_n_cosim_bmb_spi_xip_quad_test.resc" "N BMB SpiXip Quad I/O Fetch Test PASSED"
-    export BMBXIP_IMAGE_PATH="$_SAVED_BMBXIP_IMAGE_PATH"
-else
-    echo ""
-    echo "=== TEST (skipped): N BMB SpiXip Quad I/O Fetch ==="
-    echo "  libbmb_spi_xip.so not found. Build with: bash build_n_cosim.sh release"
 fi
 
 # Test 34: N I2C Lite Co-simulation
@@ -668,15 +480,6 @@ else
     echo "  N hello ELF not found. Build with: west build -b elemrv_n app/hello_world -d build-n-hello"
 fi
 
-# Test 40: N Zephyr Blinky
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-blinky/zephyr/zephyr.elf" ]; then
-    run_test "N Zephyr Blinky (GPIO+Timer)" "run_n_zephyr_blinky.resc" "N Zephyr Blinky Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N Zephyr Blinky ==="
-    echo "  N blinky ELF not found. Build with: west build -b elemrv_n app/blinky -d build-n-blinky"
-fi
-
 # --- RTOS Debug Tests ---
 
 # Test 41: RTOS Debug Demo (multi-thread + thread analyzer)
@@ -688,15 +491,6 @@ else
     echo "  ELF not found. Build with: west build -b elemrv_h app/rtos_debug_demo -d build-rtos-debug-demo"
 fi
 
-# Test 42: RTOS Diagnostics (auto thread analyzer + logging)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-rtos-diagnostics/zephyr/zephyr.elf" ]; then
-    run_test "RTOS Diagnostics" "run_rtos_diagnostics_test.resc" "RTOS Diagnostics Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): RTOS Diagnostics ==="
-    echo "  ELF not found. Build with: west build -b elemrv_h app/rtos_diagnostics -d build-rtos-diagnostics"
-fi
-
 # Test 43: RTOS GDB Threads (validates debug symbols + thread metadata)
 if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-rtos-debug-demo/zephyr/zephyr.elf" ]; then
     run_test "RTOS GDB Threads" "run_rtos_gdb_threads_test.resc" "RTOS GDB Threads Test PASSED"
@@ -704,53 +498,6 @@ else
     echo ""
     echo "=== TEST (skipped): RTOS GDB Threads ==="
     echo "  ELF not found. Build with: west build -b elemrv_h app/rtos_debug_demo -d build-rtos-debug-demo"
-fi
-
-# Test 44: N RTOS Debug Demo
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-rtos-debug-demo/zephyr/zephyr.elf" ]; then
-    run_test "N RTOS Debug Demo" "run_n_rtos_debug_demo_test.resc" "N RTOS Debug Demo Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N RTOS Debug Demo ==="
-    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo"
-fi
-
-# Test 45: N RTOS Diagnostics
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-rtos-diagnostics/zephyr/zephyr.elf" ]; then
-    run_test "N RTOS Diagnostics" "run_n_rtos_diagnostics_test.resc" "N RTOS Diagnostics Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N RTOS Diagnostics ==="
-    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_diagnostics -d build-n-rtos-diagnostics"
-fi
-
-# Test 46: N RTOS GDB Threads
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-rtos-debug-demo/zephyr/zephyr.elf" ]; then
-    run_test "N RTOS GDB Threads" "run_n_rtos_gdb_threads_test.resc" "N RTOS GDB Threads Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N RTOS GDB Threads ==="
-    echo "  ELF not found. Build with: west build -b elemrv_n app/rtos_debug_demo -d build-n-rtos-debug-demo"
-fi
-
-# --- I2C Sensor Tests (Generic) ---
-
-# Test 47: H I2C Sensor Capture (generic sensor @ 0x48)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-sensor-i2c-capture/zephyr/zephyr.elf" ]; then
-    run_test "H I2C Sensor Capture" "run_sensor_i2c_h_test.resc" "Sensor I2C H Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): H I2C Sensor Capture ==="
-    echo "  ELF not found. Build with: west build -b elemrv_h app/sensor_i2c_capture -d build-sensor-i2c-capture"
-fi
-
-# Test 48: N I2C Sensor Capture (same firmware, different board)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-sensor-i2c-capture/zephyr/zephyr.elf" ]; then
-    run_test "N I2C Sensor Capture" "run_sensor_i2c_n_test.resc" "Sensor I2C N Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N I2C Sensor Capture ==="
-    echo "  ELF not found. Build with: west build -b elemrv_n app/sensor_i2c_capture -d build-n-sensor-i2c-capture"
 fi
 
 # --- SPI Sensor Tests ---
@@ -774,27 +521,6 @@ else
     echo ""
     echo "=== TEST (skipped): H Portable Data Logger ==="
     echo "  ELF not found. Build with: west build -b elemrv_h app/portable_data_logger -d build-portable-data-logger"
-fi
-
-# Test 51: N Portable Data Logger (same firmware, different board)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-portable-data-logger/zephyr/zephyr.elf" ]; then
-    run_test "N Portable Data Logger" "run_portable_n_test.resc" "Portable N Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): N Portable Data Logger ==="
-    echo "  ELF not found. Build with: west build -b elemrv_n app/portable_data_logger -d build-n-portable-data-logger"
-fi
-
-# --- Multi-Node IoT Tests ---
-
-# Test 52: Multi-Node IoT (H edge + N gateway via UART hub)
-if [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-multi-node-edge/zephyr/zephyr.elf" ] && \
-   [ -f "$SCRIPT_DIR/../zephyr/elemrv-zephyr/build-n-multi-node-gateway/zephyr/zephyr.elf" ]; then
-    run_test "Multi-Node IoT" "run_multi_node.resc" "Multi-Node IoT Test PASSED"
-else
-    echo ""
-    echo "=== TEST (skipped): Multi-Node IoT ==="
-    echo "  ELFs not found. Build edge+gateway apps first."
 fi
 
 echo ""

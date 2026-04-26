@@ -389,11 +389,11 @@ SpinalHDL's `WishboneSlaveFactory` gates `doWrite` on `CYC && STB && WE && ACK` 
 
 ### Fetch-cache invalidation on bank-1 writes
 
-The BmbSpiXip wrapper caches the last word fetched from the XIP data bank (`bank 2`) to avoid re-running the SPI state machine for in-order sequential fetches. Firmware that rewrites the cfgXip protocol (`bank 1`) must see any subsequent fetch reflect the new protocol settings, so the wrapper invalidates the cache on any bank-1 write ACK. Test 33k is the coverage.
+The BmbSpiXip wrapper caches the last word fetched from the XIP data bank (`bank 2`) to avoid re-running the SPI state machine for in-order sequential fetches. Firmware that rewrites the cfgXip protocol (`bank 1`) must see any subsequent fetch reflect the new protocol settings, so the wrapper invalidates the cache on any bank-1 write ACK.
 
 ### QPI handshake
 
-Micron MT25Q-family flashes enter QPI (Quad Peripheral Interface) mode via a handshake: the host issues `0x06 WREN` then `0x61 WRITE_REGISTER` with an EVCR byte whose bit 7 = 0. From the next CS assertion forward, commands arrive on all four IO lines. `spi_qio_flash_slave.cpp` tracks this through `m_qpi_enabled`: it captures EVCR on the 0x61 data byte, and on subsequent CS-asserts it selects `rx_width = m_qpi_enabled ? 4 : 1` for the CMD phase. 0xE7 (Quad I/O Fast Read — Micron) skips the MODE_BYTE phase between ADDR and DUMMY, unlike 0xEB. Test 33l runs the upstream bootrom's `cfgXip=0x007F0702` end-to-end.
+Micron MT25Q-family flashes enter QPI (Quad Peripheral Interface) mode via a handshake: the host issues `0x06 WREN` then `0x61 WRITE_REGISTER` with an EVCR byte whose bit 7 = 0. From the next CS assertion forward, commands arrive on all four IO lines. `spi_qio_flash_slave.cpp` tracks this through `m_qpi_enabled`: it captures EVCR on the 0x61 data byte, and on subsequent CS-asserts it selects `rx_width = m_qpi_enabled ? 4 : 1` for the CMD phase. 0xE7 (Quad I/O Fast Read on Micron parts) skips the MODE_BYTE phase between ADDR and DUMMY, unlike 0xEB. Test 33i exercises this end-to-end from XIP bootrom code through the QPI fetch path.
 
 ### CPU execution from `CoSimulatedPeripheral` via `RegisterAccessFlags`
 

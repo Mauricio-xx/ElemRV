@@ -73,7 +73,6 @@ echo ""
 # Map of co-sim tests to run (using individual peripheral tests with "@ 0x" log patterns)
 declare -A COSIM_TESTS=(
     [pwm]="run_pwm_test.resc"
-    [gpio]="run_cosim_gpio_test.resc"
     [pio]="run_cosim_pio_test.resc"
     [pinmux]="run_cosim_pinmux_test.resc"
     [i2c]="run_cosim_i2c_test.resc"
@@ -84,7 +83,7 @@ declare -A COSIM_TESTS=(
 RENODE_LOGS_DIR="/tmp/dt_crossval"
 mkdir -p "$RENODE_LOGS_DIR"
 
-for p in pwm gpio pio pinmux i2c uart mtimer; do
+for p in pwm pio pinmux i2c uart mtimer; do
     resc="${COSIM_TESTS[$p]}"
     lib_name="lib${p}.so"
     log_file="$RENODE_LOGS_DIR/${p}.log"

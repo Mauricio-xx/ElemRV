@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
 // Pure Verilator testbench for WishboneGpio.
-// Matches register operations from run_cosim_gpio_test.resc.
+// Mirrors the register operations exercised by the GPIO co-sim wrapper.
 //
 // RTL register map (from WishboneGpio.v):
 //   0x000: IP Header (RO)
