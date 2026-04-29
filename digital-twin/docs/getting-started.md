@@ -101,7 +101,7 @@ Expected output:
   ...
 
 ============================================
-  SUMMARY: 63/63 passed
+  SUMMARY: 36/36 passed
 ============================================
 ```
 
@@ -117,7 +117,7 @@ This command:
 2. Generates RTL from SpinalHDL
 3. Builds co-simulation libraries
 4. Builds Zephyr applications
-5. Runs all 63 tests
+5. Runs all 36 tests
 
 ## Understanding the Platform
 
@@ -229,22 +229,26 @@ docker exec -w /workspace/elemrv elemrv-test sbt "runMain elemrv_h.test.Wishbone
 
 ```
 ElemRV/
-├── digital-twin/gen/                        # Generated H Verilog (pre-committed)
-│   ├── WishbonePwm.v
-│   ├── WishboneGpio.v
-│   └── ...
-├── digital-twin/gen_n/                      # Generated N Verilog (via sbt)
-├── renode/
-│   ├── platforms/              # Platform definitions
-│   ├── verilated/
-│   │   ├── wrappers/           # C++ co-sim wrappers
-│   │   └── libs/               # Compiled .so libraries
-│   ├── run_tests.sh            # Test runner
-│   └── *.resc                  # Test scripts
-├── software/
-│   ├── elemrv_h/               # Bare-metal apps
-│   └── elemrv-zephyr/          # Zephyr apps
-└── build/                      # Build artifacts
+├── digital-twin/
+│   ├── gen/                          # Generated H Verilog (pre-committed)
+│   │   ├── WishbonePwm.v
+│   │   ├── WishboneGpio.v
+│   │   └── ...
+│   ├── gen_n/                        # Generated N Verilog (pre-committed)
+│   ├── renode/
+│   │   ├── platforms/                # Platform definitions
+│   │   ├── verilated/
+│   │   │   ├── wrappers/             # C++ co-sim wrappers
+│   │   │   └── libs/                 # Compiled .so libraries
+│   │   ├── run_tests.sh              # Test runner
+│   │   ├── firmware/samples/         # Bare-metal test firmware
+│   │   └── *.resc                    # Test scripts
+│   ├── firmware/pwm_test/            # Bare-metal PWM firmware
+│   ├── zephyr/elemrv-zephyr/         # Zephyr module (boards/SoCs/drivers/apps)
+│   ├── scala/                        # SpinalHDL DT generators (H + N)
+│   ├── build.sbt                     # Standalone DT SBT sub-project
+│   └── Taskfile.yml                  # DT task definitions
+└── ...                               # Upstream ElemRV files (unchanged)
 ```
 
 ## Task Reference
@@ -258,7 +262,7 @@ Quick command reference:
 | `task dt-n-cosim-build` | Build N co-sim libraries |
 | `task dt-zephyr-build` | Build H Zephyr apps |
 | `task dt-n-zephyr-build` | Build N Zephyr apps |
-| `task dt-integration-test` | Run all 63 tests |
+| `task dt-integration-test` | Run all 36 tests |
 | `task dt-test-quick` | Run tests without rebuild |
 | `task dt-debug-cosim` | Start GDB server |
 

@@ -226,7 +226,7 @@ void gpio_set_output_safe(uint32_t pin, uint8_t value) {
 ### Full Test Suite
 
 ```bash
-# All 63 tests including fault injection
+# All 36 tests including fault injection
 task dt-integration-test
 ```
 

@@ -181,7 +181,7 @@ task dt-zephyr-test
 task dt-integration-test
 ```
 
-**Description**: Complete build and test of all 63 tests.  
+**Description**: Complete build and test of all 36 tests.  
 **Dependencies**:
 - dt-build-firmware
 - dt-cosim-build
